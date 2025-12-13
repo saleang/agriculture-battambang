@@ -4,6 +4,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import { PageProps } from "@/types";
 import { route } from "@/lib/route";
 import { Search, Plus, Edit2, Trash2, Mail, Phone, Store, Calendar, Shield, User as UserIcon, ShoppingCart } from 'lucide-react';
+import { toast } from "sonner";
 
 interface User {
     user_id: number;
@@ -59,7 +60,16 @@ export default function UserIndex({
         if (confirm(`Are you sure you want to delete user "${username}"?`)) {
             router.get(route("admin.users.destroy", userId), {
                 preserveScroll: true,
-            });
+                // onSuccess: () => {
+                //     toast.success(`Seller`);
+                // }
+            //     onSuccess: () => {
+            // toast.success(`User "${username}" deleted successfully.`);
+            // },
+            //     onError: (error) => {
+            //         toast.error('Failed to delete user "${username}". ${error}');
+                }
+            );
         }
     };
 
@@ -121,7 +131,7 @@ export default function UserIndex({
 
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
                 {/* Header Section */}
-                <div className="bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-sm bg-white/80">
+                <div className="bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-sm ">
                     <div className="max-w-7xl mx-auto px-6 py-6">
                         <div className="flex justify-between items-start mb-6">
                             <div>

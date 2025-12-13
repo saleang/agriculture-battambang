@@ -13,8 +13,8 @@ class CheckRole
         if (!$request->user()) {
             return redirect()->route('login');
         }
-
-        if ($request->user()->status !== 'active') {
+        // error is user'status is inactive. so need to change to banned.
+        if ($request->user()->status !== 'active' && $request->user()->status !== 'inactive') {
             auth()->Auth::logout();
             return redirect()->route('login')
                 ->with('error', 'Your account is ' . $request->user()->status);

@@ -4,7 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { route } from '@/lib/route';
 import { Search, Filter, Plus, Edit2, Trash2, MapPin, Calendar, Mail, Phone, Store } from 'lucide-react';
-
+import { toast } from 'sonner';
 interface Seller {
     user_id: number;
     username: string;
@@ -46,6 +46,12 @@ export default function SellersIndex({ sellers, filters }: SellersPageProps) {
         if (confirm(`Delete seller "${name}"? This cannot be undone.`)) {
             router.delete(route('admin.sellers.destroy', id), {
                 preserveScroll: true,
+                onSuccess: () => {
+            toast.success(`Seller "${name}" has been deleted successfully.`);
+        },
+        onError: (errors) => {
+            toast.error('Failed to delete seller. Please try again.');
+        },
             });
         }
     };
@@ -80,7 +86,7 @@ export default function SellersIndex({ sellers, filters }: SellersPageProps) {
 
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
                 {/* Header Section */}
-                <div className="bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-sm bg-white/80">
+                <div className="bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-sm bg-opacity-90">
                     <div className="max-w-7xl mx-auto px-6 py-6">
                         <div className="flex justify-between items-start mb-6">
                             <div>

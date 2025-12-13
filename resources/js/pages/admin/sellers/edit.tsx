@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { route } from "@/lib/route";
 import { ArrowLeft, User, Mail, Phone, Store, MapPin, Lock, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import {toast} from 'sonner';
 
 interface Seller {
     user_id: number;
@@ -37,7 +38,18 @@ export default function EditSeller({ seller }: Props) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('admin.sellers.update', seller.user_id), {
-            onSuccess: () => reset('password', 'password_confirmation'),
+            // onSuccess: () => reset('password', 'password_confirmation'),
+            onSuccess: () => {
+      toast.success('Seller information updated successfully!');
+      reset('password', 'password_confirmation');
+    },
+    onError: (errors) => {
+      if (errors.password) {
+        toast.error('Password update failed. Make sure passwords match and meet requirements.');
+      } else {
+        toast.error('Failed to update seller. Please check the form.');
+      }
+    },
         });
     };
 

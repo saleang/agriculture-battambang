@@ -149,7 +149,7 @@ export default function Login({
     return (
         <>
             <Head title="Log in" />
-            
+
             <div className="min-h-screen flex">
                 {/* Left Side - Illustration */}
                 <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 relative overflow-hidden">
@@ -157,7 +157,7 @@ export default function Login({
                     <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
                     <div className="absolute top-40 right-20 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
                     <div className="absolute bottom-20 left-40 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-                    
+
                     {/* Content Container */}
                     <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
                         {/* Logo/Brand */}
@@ -191,7 +191,7 @@ export default function Login({
                                             </p>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Decorative Elements */}
                                     <div className="absolute -top-10 -left-10 w-20 h-20 bg-white/10 rounded-full"></div>
                                     <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-white/10 rounded-full"></div>
@@ -345,8 +345,8 @@ export default function Login({
                                         <div className="text-center pt-4">
                                             <p className="text-slate-600">
                                                 Don't have an account?{' '}
-                                                <TextLink 
-                                                    href={register()} 
+                                                <TextLink
+                                                    href={register()}
                                                     tabIndex={5}
                                                     className="text-emerald-600 hover:text-emerald-700 font-semibold"
                                                 >

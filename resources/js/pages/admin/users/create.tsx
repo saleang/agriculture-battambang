@@ -2,7 +2,7 @@ import { FormEventHandler, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { ArrowLeft, User, Mail, Phone, Lock, Store, MapPin, FileText, Shield, ShoppingCart } from 'lucide-react';
-
+import {toast} from 'sonner';
 export default function CreateUser() {
     const { data, setData, post, processing, errors, reset } = useForm({
         username: '',
@@ -38,9 +38,13 @@ export default function CreateUser() {
         post('/admin/users', {
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Ner User created successfully!');
                 reset();
                 router.visit('/admin/users');
             },
+            onError: (errors) => {
+                toast.error('Failed to create user. Please check the data.');
+            }
         });
     };
 

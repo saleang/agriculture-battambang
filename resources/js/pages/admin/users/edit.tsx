@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { ArrowLeft, User, Mail, Phone, Lock, Store, MapPin, FileText, Shield, ShoppingCart, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface UserData {
     user_id: number;
@@ -50,8 +51,16 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
         router.post(updateUrl, data, {
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('User updated successfully!');
                 reset('password', 'password_confirmation');
             },
+            onError: (errors) =>{
+                if(errors.password){
+                    toast.error('Password update failed. Make sure passwords match and meet requirements.');
+                }else{
+                    toast.error('Failed to update user. Please check the data.');
+                }
+            }
         });
     };
 

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { route } from "@/lib/route";
 import { ArrowLeft, User, Mail, Phone, Store, MapPin, Lock, FileText, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function CreateSeller() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -21,8 +22,12 @@ export default function CreateSeller() {
         e.preventDefault();
         post(route('admin.sellers.store'), {
             onSuccess: () => {
-                reset();
-            },
+        toast.success('New seller created successfully!');
+        reset();
+        },
+        onError: (errors) => {
+        toast.error('Failed to create seller. Please check the form.');
+        },
         });
     };
 

@@ -17,12 +17,22 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
+                        <SidebarMenuButton 
                             asChild
+                             className={page.url.startsWith(resolveUrl(item.href))
+        ? "bg-green-500 text-white ":" hover:bg-green-600"
+        // : "hover:bg-green-100"
+    }
                             isActive={page.url.startsWith(
-                                resolveUrl(item.href),
-                            )}
+                                resolveUrl(item.href)
+                                  ? "bg-green-500 text-white ":" hover:bg-green-600"
+                                
+                            )
+                            
+                            
+                        }
                             tooltip={{ children: item.title }}
+                           
                         >
                             <Link href={item.href} prefetch>
                                 {item.icon && <item.icon />}
