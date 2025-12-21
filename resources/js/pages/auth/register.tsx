@@ -1,5 +1,6 @@
 // import { login } from '@/routes';
 // import { store } from '@/stores/auth/register';
+//why?
 // import { store } from '@/routes/register';
 // import { Form, Head } from '@inertiajs/react';
 
