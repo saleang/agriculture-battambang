@@ -33,6 +33,9 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username',
+        //maybe extra more fields
+        // gender(Male,Female)
+        // address
         'email',
         'password',
         'role',
@@ -54,20 +57,16 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-            'last_login' => 'datetime',
-        ];
-
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'two_factor_confirmed_at' => 'datetime',
+        'last_login' => 'datetime',
+    ];
 
     //Relationships
     public function seller():HasOne

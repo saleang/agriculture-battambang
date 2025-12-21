@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Seller\SellerProfileController;
 // use App\Http\Controllers\SellerManagementController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -67,8 +68,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
               $seller = Auth::user()->seller;
             return Inertia::render('seller/dashboard', compact('seller'));
         })->name('dashboard');
-    });
 
+        // Route::get('/profile', [SellerProfileController::class, 'edit'])->name('profile.edit');
+        // Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
+
+        // // AJAX endpoints for location dropdowns
+        // Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
+        // Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
+        // Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
+    });
+    // Seller profile routes are defined below with role checks
+        // Seller profile routes (requires authentication, verification and seller role)
+        Route::middleware(['auth', 'verified', 'role:seller'])->group(function () {
+            Route::prefix('seller')->name('seller.')->group(function () {
+                Route::get('/profile', [SellerProfileController::class, 'edit'])->name('profile.edit');
+                Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
+
+                // AJAX endpoints for location dropdowns
+                Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
+                Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
+                Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
+            });
+        });
     // Customer Routes
     Route::middleware(['role:customer'])->prefix('customer')->name('customer.')->group(function () {
         Route::get('/dashboard', function () {
@@ -84,3 +105,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+use Illuminate\Http\Request;
+// use App\Models\User;
+
+// Availability check endpoints for AJAX (used by registration form)
+Route::get('/check-username', function (Request $request) {
+    $username = (string) $request->query('username', '');
+    if ($username === '') {
+        return response()->json(['available' => null], 200);
+    }
+    $exists = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->exists();
+    return response()->json(['available' => !$exists]);
+});
+
+Route::get('/check-email', function (Request $request) {
+    $email = (string) $request->query('email', '');
+    if ($email === '') {
+        return response()->json(['available' => null], 200);
+    }
+    $exists = User::whereRaw('LOWER(email) = ?', [strtolower($email)])->exists();
+    return response()->json(['available' => !$exists]);
+});

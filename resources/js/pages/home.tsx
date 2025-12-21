@@ -3,7 +3,7 @@
 // import { PageProps } from '@/types';
 // import { useState } from 'react';
 // import { Header } from '@/components/header-customer';
-import { Footer } from '@/components/footer-customer';
+// import { Footer } from '@/components/footer-customer';
 
 // export default function Home({ auth }: PageProps) {
 //     const user = auth.user;
@@ -133,10 +133,14 @@ import { Footer } from '@/components/footer-customer';
 // }
 import React, { useState } from 'react';
 import { ShoppingCart, Heart, User, Search, ChevronLeft, ChevronRight, Star, Phone, Mail, Facebook, Instagram, MapPin } from 'lucide-react';
-// import { Footer } from '@/components/footer-customer';
+import { Head, Link } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import { Header } from './customer/header-customer';
+import { Footer } from './customer/footer-customer';
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function Home({ auth }: PageProps) {
+  const [searchQuery, setSearchQueryHeader] = useState('');
+  const user = auth?.user ?? null;
 
   const categories = [
     { name: 'Vegetables', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop' },
@@ -172,44 +176,23 @@ export default function Home() {
       <div className="bg-gray-900 text-white py-2.5 px-4 text-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex gap-6">
-            <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" />+84 387 945 346</span>
-            <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />homedokan@gmail.com</span>
+            <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" />+855 123 456 789</span>
+            <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />agriconnectbtb312@gmail.com</span>
           </div>
           <div className="flex gap-4"><span>My Account</span><span>USD 💵</span></div>
         </div>
       </div>
 
       {/* Header */}
-      <header className="border-b sticky top-0 bg-white z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-8">
-            <div className="text-2xl font-bold"><span className="text-orange-500">HOME</span><span className="text-green-500">DOKAN</span></div>
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">Grocery Items</a>
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">Islands</a>
-              <a href="#" className="text-green-600">Org.Foods</a>
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">Best Deals</a>
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">All Products</a>
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">Pages</a>
-              <a href="#" className="text-gray-600 hover:text-green-600 transition">Blog</a>
-            </nav>
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <select className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-sm pr-8 focus:outline-none">
-                  <option>All Categories</option>
-                </select>
-                <input type="text" placeholder="Search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-40 pr-12 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative hover:text-green-600 transition"><User className="w-6 h-6 text-gray-600" /></button>
-              <button className="relative hover:text-green-600 transition"><Heart className="w-6 h-6 text-gray-600" /><span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">2</span></button>
-              <button className="relative hover:text-green-600 transition"><ShoppingCart className="w-6 h-6 text-gray-600" /><span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">5</span></button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        cartCount={0}
+        wishlistCount={0}
+        onNavigate={() => {}}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQueryHeader}
+        isAuthenticated={!!user}
+        userName={user?.username ?? ''}
+      />
 
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-green-50 via-white to-green-50 overflow-hidden">
@@ -219,8 +202,12 @@ export default function Home() {
               <p className="text-green-600 font-semibold mb-3 text-sm uppercase tracking-wide">UPTO 50% OFF</p>
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">Farm Fresh Organic<br /><span className="text-green-600">Vegetables.</span></h1>
               <p className="text-gray-600 mb-8 text-lg leading-relaxed">Get our lorem ipsum suspendisse ultrices gravida.<br />Risus commodo viverra maecenas accumsan.</p>
-              
-              <button className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Shop Online →</button>
+
+              {user ? (
+                <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Shop Online →</Link>
+              ) : (
+                <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Login to Shop →</Link>
+              )}
             </div>
             <div className="relative">
               <div className="absolute top-0 right-0 w-full h-full bg-green-400 rounded-full blur-3xl opacity-20"></div>
@@ -238,7 +225,11 @@ export default function Home() {
               <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center text-xs font-bold shadow-lg">OFF<br />30%</div>
               <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">{item.title}</p>
               <h3 className="text-3xl font-bold text-gray-900 mb-4">{item.subtitle}</h3>
-              <button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</button>
+              {user ? (
+                <Link href="/shop" className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</Link>
+              ) : (
+                <Link href="/login" className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</Link>
+              )}
               <img src={item.image} alt={item.subtitle} className="absolute bottom-0 right-0 w-40 h-40 object-cover opacity-60 rounded-tl-3xl" />
             </div>
           ))}
@@ -287,7 +278,11 @@ export default function Home() {
                 <li key={i} className="hover:text-green-600 cursor-pointer transition font-medium">{cat}</li>
               ))}
             </ul>
-            <button className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg">Shop Now →</button>
+            {user ? (
+              <Link href="/shop" className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg text-center block">Shop Now →</Link>
+            ) : (
+              <Link href="/login" className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg text-center block">Login to Shop →</Link>
+            )}
           </div>
           {featuredProducts.map((p, i) => (
             <div key={i} className="bg-white border rounded-2xl p-6 hover:shadow-xl transition group">
@@ -304,9 +299,13 @@ export default function Home() {
                 {[...Array(5)].map((_, j) => <Star key={j} className={`w-4 h-4 ${j < Math.floor(p.rating) ? 'fill-orange-400 text-orange-400' : 'text-gray-300'}`} />)}
                 <span className="text-sm text-gray-500 ml-1">({p.rating})</span>
               </div>
-              <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                 <div><span className="text-xl font-bold text-gray-900">{p.price}</span>{p.oldPrice && <span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice}</span>}</div>
-                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Shop Now</button>
+                {user ? (
+                  <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Shop Now</Link>
+                ) : (
+                  <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Login to Shop</Link>
+                )}
               </div>
             </div>
           ))}
@@ -319,12 +318,20 @@ export default function Home() {
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
             <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">UPTO 15% OFF</p>
             <h3 className="text-4xl font-bold text-gray-900 mb-6">Fresh Vegetable</h3>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</button>
+            {user ? (
+              <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</Link>
+            ) : (
+              <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Login to Shop →</Link>
+            )}
             <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop" alt="Vegetables" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-40 rounded-tl-3xl" />
           </div>
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
             <h3 className="text-4xl font-bold mb-6">All Tasted Organic &<br />Fresh Products</h3>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</button>
+            {user ? (
+              <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</Link>
+            ) : (
+              <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Login to Shop →</Link>
+            )}
             <img src="https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=400&h=400&fit=crop" alt="Products" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-30 rounded-tl-3xl" />
           </div>
         </div>
@@ -350,7 +357,11 @@ export default function Home() {
                 <button className="p-2 rounded-full border-2 bg-green-500 text-white hover:bg-green-600 border-green-500 transition"><ShoppingCart className="w-4 h-4" /></button>
                 <button className="p-2 rounded-full border-2 hover:bg-green-50 hover:border-green-500 transition"><Search className="w-4 h-4" /></button>
               </div>
-              <button className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Shop Now</button>
+              {user ? (
+                <Link href="/shop" className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Shop Now</Link>
+              ) : (
+                <Link href="/login" className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Login to Shop</Link>
+              )}
             </div>
           ))}
         </div>

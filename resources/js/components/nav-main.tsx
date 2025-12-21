@@ -17,22 +17,23 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
+                        <SidebarMenuButton
                             asChild
-                             className={page.url.startsWith(resolveUrl(item.href))
-        ? "bg-green-500 text-white ":" hover:bg-green-600"
+                             className={page.url.startsWith(resolveUrl(item.href)) ?"bg-green-500 text-white hover:bg-green-500 h-10":
+    "h-10"
+        // ? "bg-green-500 text-white h-10":" h-10"
         // : "hover:bg-green-100"
     }
                             isActive={page.url.startsWith(
                                 resolveUrl(item.href)
-                                  ? "bg-green-500 text-white ":" hover:bg-green-600"
+                                  ? "bg-green-500 text-white h-10":"hover:bg-green-100 h-10"
                                 
                             )
                             
                             
                         }
                             tooltip={{ children: item.title }}
-                           
+                 
                         >
                             <Link href={item.href} prefetch>
                                 {item.icon && <item.icon />}

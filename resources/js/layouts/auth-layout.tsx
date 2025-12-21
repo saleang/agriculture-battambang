@@ -5,6 +5,7 @@ export default function AuthLayout({
     title,
     description,
     ...props
+    
 }: {
     children: React.ReactNode;
     title: string;

@@ -13,7 +13,7 @@ import {
 // import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid,Package } from 'lucide-react';
+import { BookOpen, Box, ChartColumnIncreasing, DollarSign, Folder, House, LayoutGrid,Package, Package2, Star, Truck, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
 // const {auth} = usePage().props;
@@ -59,19 +59,41 @@ const sellerNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/seller/dashboard',
-        icon: LayoutGrid,
+        icon: House,
+    },
+    {
+        title: 'Profile Management',
+        href: '/seller/profile',
+        icon: User,
+    },
+    {
+        title: 'Product Management',
+        href: '/seller/products',
+        icon: Box,
+    },
+    {
+        title: 'Order Processing',
+        href: '/seller/orders',
+        icon: Truck,
+    },
+    {
+        title: 'Payment Management',
+        href: '/seller/payments',
+        icon: DollarSign,
+    },
+    {
+        title: ' Reviews & Ratings',
+        href: '/seller/reviews',
+        icon: Star,
+    },
+    {
+        title: ' Reports',
+        href: '/seller/reports',
+        icon: ChartColumnIncreasing
     },
 
-    // {
-    //     title: 'My Store',
-    //     href: '/seller/dashboard',
-    //     icon: LayoutGrid,
-    // },
-    {
-        title: 'Products',
-        href: '/seller/products',
-        icon: Folder,
-    },
+
+
 ];
 
 // const adminNavItems: NavItem[] = [
@@ -142,7 +164,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={roleBasedNavItems} />
+                <NavMain items={roleBasedNavItems}  />
             </SidebarContent>
 
             <SidebarFooter>

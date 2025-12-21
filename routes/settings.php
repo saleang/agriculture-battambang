@@ -34,10 +34,39 @@ Route::middleware('auth')->group(function () {
     //         ->name('profile.show');
     // });
 
+    // Seller Routes - Protected for sellers only
+    // Route::middleware('role:seller')->prefix('settings/seller')->name('seller.')->group(function () {
+    //     Route::get('/profile', [SellerProfileController::class, 'editSeller'])->name('profile.edit');
+    //     Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
+
+    //     // AJAX endpoints for cascading dropdowns
+    //     Route::get('/provinces/{province}/districts', [SellerProfileController::class, 'getDistricts'])
+    //         ->name('districts.get');
+    //     Route::get('/districts/{district}/communes', [SellerProfileController::class, 'getCommunes'])
+    //         ->name('communes.get');
+    //     Route::get('/communes/{commune}/villages', [SellerProfileController::class, 'getVillages'])
+    //         ->name('villages.get');
+    // });
+
+
     // Add Seller Routes - Protected for sellers only
-    Route::middleware('role:seller')->prefix('seller')->name('seller.')->group(function () {
-        Route::get('/profile', [SellerProfileController::class, 'editseller'])->name('seller.profile.edit');
-        Route::patch('/profile', [SellerProfileController::class, 'update'])->name('seller.profile.update');
-    
-    });
+    // Route::middleware('role:seller')->prefix('seller')->name('seller.')->group(function () {
+    //     Route::get('/profile', [SellerProfileController::class, 'editseller'])->name('seller.profile.edit');
+    //     Route::patch('/profile', [SellerProfileController::class, 'update'])->name('seller.profile.update');
+
+    // });
+
+    // // Seller Routes - Protected for sellers only
+    // Route::middleware('role:seller')->prefix('seller')->name('seller.')->group(function () {
+    //     Route::get('/profile', [SellerProfileController::class, 'editseller'])->name('profile.edit');
+    //     Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
+
+    //     // AJAX endpoints for cascading dropdowns
+    //     Route::get('/provinces/{province}/districts', [SellerProfileController::class, 'getDistricts'])
+    //         ->name('districts.get');
+    //     Route::get('/districts/{district}/communes', [SellerProfileController::class, 'getCommunes'])
+    //         ->name('communes.get');
+    //     Route::get('/communes/{commune}/villages', [SellerProfileController::class, 'getVillages'])
+    //         ->name('villages.get');
+    // });
 });
