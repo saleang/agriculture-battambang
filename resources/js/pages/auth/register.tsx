@@ -1,4 +1,5 @@
 // import { login } from '@/routes';
+// import { store } from '@/stores/auth/register';
 // import { store } from '@/routes/register';
 // import { Form, Head } from '@inertiajs/react';
 
@@ -483,7 +484,7 @@ export default function Register() {
   return (
     <>
       <Head title="Register" />
-      
+
       <div className="min-h-screen flex">
         {/* Left Panel - Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
@@ -503,19 +504,19 @@ export default function Register() {
             </div>
 
             <div className="flex gap-4 mb-6">
-              <button 
+              <button
                 type="button"
                 className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
                 <span className="text-xl">f</span>
               </button>
-              <button 
+              <button
                 type="button"
                 className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
                 <span className="text-xl">in</span>
               </button>
-              <button 
+              <button
                 type="button"
                 className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
