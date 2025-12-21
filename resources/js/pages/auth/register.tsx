@@ -353,6 +353,7 @@
 //         </GuestLayout>
 //     );
 // }
+
 import { FormEventHandler, useEffect, useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
