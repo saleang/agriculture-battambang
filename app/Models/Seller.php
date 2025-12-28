@@ -11,8 +11,9 @@ class Seller extends Model
     use HasFactory;
 
     protected $primaryKey = 'seller_id';
-    //chnage to false if we don't want timestamps
+    //change to false if we don't want timestamps
     public $timestamps = true;
+    protected $appends = ['certification_url','full_location'];
 
     protected $fillable = [
         'user_id',
@@ -41,6 +42,17 @@ class Seller extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get full URL for the seller's certification file stored on the `public` disk.
+     */
+    public function getCertificationUrlAttribute(): ?string
+    {
+        if (!$this->certification) {
+            return null;
+        }
+        return asset('storage/' . ltrim($this->certification, '/'));
     }
 
     public function province(): BelongsTo
@@ -73,6 +85,7 @@ class Seller extends Model
             $this->province?->name_en,
         ]);
 
-        return implode(', ', $parts);
+        // return implode(', ', $parts);
+        return !empty($parts) ? implode(', ', $parts) : '-';
     }
 }

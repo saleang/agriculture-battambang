@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
-// use App\Http\Controllers\SellerManagementController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use Illuminate\Http\Request;
 
 
 Route::get('/',function(){
@@ -62,34 +63,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     });
 
-    //seller route
+    // Seller routes
     Route::middleware(['role:seller'])->prefix('seller')->name('seller.')->group(function () {
         Route::get('/dashboard', function () {
-              $seller = Auth::user()->seller;
+            $seller = Auth::user()->seller;
             return Inertia::render('seller/dashboard', compact('seller'));
         })->name('dashboard');
 
-        // Route::get('/profile', [SellerProfileController::class, 'edit'])->name('profile.edit');
-        // Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
+        // Profile routes - FIXED: Accept both POST and PATCH methods
+        Route::get('/profile', [SellerProfileController::class, 'edit'])->name('profile.edit');
+        Route::match(['post', 'patch'], '/profile', [SellerProfileController::class, 'update'])->name('profile.update');
 
-        // // AJAX endpoints for location dropdowns
-        // Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
-        // Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
-        // Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
+        // Farm info routes - FIXED: Accept both POST and PATCH methods
+        Route::get('/farm_info', [SellerProfileController::class, 'editFarmInfo'])->name('farm-info.edit');
+        Route::match(['post', 'patch'], '/farm_info', [SellerProfileController::class, 'updateFarmInfo'])->name('farm-info.update');
+
+        // Payment routes - FIXED: Accept both POST and PATCH methods
+        Route::get('/payment_info', [SellerProfileController::class, 'editPayment'])->name('payment.edit');
+        Route::match(['post', 'patch'], '/payment_info', [SellerProfileController::class, 'updatePayment'])->name('payment.update');
+
+        //password routes
+        Route::get('/password', [SellerPasswordController::class, 'edit'])->name('user-password.edit');
+
+        Route::put('/password', [SellerPasswordController::class, 'update'])
+            ->middleware('throttle:6,1')
+            ->name('user-password.update');
+
+        // AJAX endpoints for location dropdowns
+        Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
+        Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
+        Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
     });
-    // Seller profile routes are defined below with role checks
-        // Seller profile routes (requires authentication, verification and seller role)
-        Route::middleware(['auth', 'verified', 'role:seller'])->group(function () {
-            Route::prefix('seller')->name('seller.')->group(function () {
-                Route::get('/profile', [SellerProfileController::class, 'edit'])->name('profile.edit');
-                Route::patch('/profile', [SellerProfileController::class, 'update'])->name('profile.update');
 
-                // AJAX endpoints for location dropdowns
-                Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
-                Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
-                Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
-            });
-        });
     // Customer Routes
     Route::middleware(['role:customer'])->prefix('customer')->name('customer.')->group(function () {
         Route::get('/dashboard', function () {
@@ -106,8 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 
-use Illuminate\Http\Request;
-// use App\Models\User;
+
 
 // Availability check endpoints for AJAX (used by registration form)
 Route::get('/check-username', function (Request $request) {

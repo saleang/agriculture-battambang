@@ -40,7 +40,7 @@ export function Header({
   const hrefMap: Record<string, string> = {
     home: '/',
     login: '/login',
-    profile: '/seller/profile',
+    profile: '/profile',
     cart: '/cart',
     wishlist: '/wishlist',
     orders: '/orders',

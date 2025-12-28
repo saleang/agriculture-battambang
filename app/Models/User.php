@@ -21,6 +21,8 @@ class User extends Authenticatable
     protected $primaryKey = 'user_id';
     public $incrementing = true;
     protected $keyType = 'int';
+    protected $appends = ['photo_url'];
+
 
     /**
      * Get the route key for the model.
@@ -37,6 +39,8 @@ class User extends Authenticatable
         // gender(Male,Female)
         // address
         'email',
+        'gender',
+        'photo',
         'password',
         'role',
         'phone',
@@ -72,6 +76,17 @@ class User extends Authenticatable
     public function seller():HasOne
     {
         return $this->hasOne(Seller::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get full URL for the user's photo (storage disk `public`).
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo) {
+            return null;
+        }
+        return asset('storage/' . ltrim($this->photo, '/'));
     }
 
     //role checking
