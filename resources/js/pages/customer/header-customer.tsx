@@ -40,7 +40,7 @@ export function Header({
   const hrefMap: Record<string, string> = {
     home: '/',
     login: '/login',
-    profile: '/profile',
+    profile: '/customer/profile',
     cart: '/cart',
     wishlist: '/wishlist',
     orders: '/orders',
@@ -55,7 +55,7 @@ export function Header({
   };
 
   const cleanup = useMobileNavigation();
-  
+
       const handleLogout = () => {
           cleanup();
           router.flushAll();
@@ -76,20 +76,7 @@ export function Header({
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-[#f7f7f7] border-b">
 
-      {/* 🔹 Top info bar */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-6 h-10 flex items-center justify-between text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-green-600" />
-            <span>Call us: (1800) 88-66-991</span>
-          </div>
-          <div className="flex gap-4">
-            <a href={hrefMap.about} className="hover:text-green-600">About</a>
-            <a href={hrefMap.faq} className="hover:text-green-600">FAQ</a>
-            <a href={hrefMap.contact} className="hover:text-green-600">Contact</a>
-          </div>
-        </div>
-      </div>
+      
 
       {/* 🔹 Main header */}
       <div className="bg-white">
@@ -157,17 +144,17 @@ export function Header({
 
                 {menuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg py-1 z-50">
-                    <a 
-                      href={hrefMap.profile} 
-                      onClick={() => setMenuOpen(false)} 
+                    <a
+                      href={hrefMap.profile}
+                      onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition"
                     >
                       <User className="w-4 h-4 text-gray-600" />
                       <span>My Profile</span>
                     </a>
-                    <a 
-                      href={hrefMap.orders} 
-                      onClick={() => setMenuOpen(false)} 
+                    <a
+                      href={hrefMap.orders}
+                      onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition"
                     >
                       <Package className="w-4 h-4 text-gray-600" />
@@ -195,7 +182,7 @@ export function Header({
       {/* 🔹 Navigation bar */}
       <div className="bg-green-700">
         <div className="container mx-auto px-6 h-12 flex items-center gap-8 text-white text-sm">
-        
+
           <a
   href="/shop-by-department"
   className="font-semibold hover:opacity-80"
