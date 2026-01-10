@@ -4,13 +4,14 @@ use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
+use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Product\CategoryController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Illuminate\Http\Request;
-
 
 Route::get('/',function(){
     return Inertia::render('home',[
@@ -93,6 +94,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/districts/{provinceId}', [SellerProfileController::class, 'getDistricts'])->name('districts.get');
         Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
         Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
+
+    
+            // Product Routes
+        Route::prefix('product')->name('product.')->group(function () {
+            Route::get('/', [ProductController::class, 'index'])->name('index');        // GET /product
+            Route::get('/create', [ProductController::class, 'create'])->name('create'); // GET /product/create
+            Route::post('/', [ProductController::class, 'store'])->name('store');       // POST /product
+            Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+        });
+    // Category Routes
+        Route::prefix('category')->name('category.')->group(function () {
+            Route::get('/', [CategoryController::class, 'index'])->name('index');
+            Route::get('/create', [CategoryController::class, 'create'])->name('create');
+            Route::post('/', [CategoryController::class, 'store'])->name('store');
+            Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+            Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+            Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
+    });
     });
 
     // Customer Routes
@@ -102,18 +124,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard');
     });
 
-    // // Profile Routes
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+
+// Public categories endpoint returning active categories for frontend
+Route::get('/categories', function () {
+    $categories = \App\Models\Category::where('is_active', true)
+        ->orderBy('categoryname')
+        ->get();
+
+    return response()->json($categories);
 });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 
-
-
-// Availability check endpoints for AJAX (used by registration form)
 Route::get('/check-username', function (Request $request) {
     $username = (string) $request->query('username', '');
     if ($username === '') {
