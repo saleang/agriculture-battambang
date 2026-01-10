@@ -67,6 +67,7 @@ const sellerNavItems: NavItem[] = [
             { title: 'Categories', href: '/seller/category', icon: Box },
         ],
     },
+
     {
         title: 'Order Processing',
         href: '/seller/orders',
@@ -108,10 +109,6 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                                 <AppLogo />
-                        {/* <SidebarMenuButton size="lg" asChild>
-                            <Link href={'/dashboard'} prefetch>
-                            </Link>
-                        </SidebarMenuButton> */}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
