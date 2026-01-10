@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -112,7 +113,7 @@ class SellerProfileController extends Controller
         return back()->with('success', 'Profile updated successfully!');
     }
 
-   
+
     /**
      * Get districts by province ID (for AJAX calls).
      */
@@ -127,7 +128,7 @@ class SellerProfileController extends Controller
                 ->select('district_id', 'name_en', 'name_km', 'province_id')
                 ->distinct()
                 ->orderBy('name_en')
-                ->get();  
+                ->get();
             return response()->json($districts);
         } catch (\Exception $e) {
             Log::error('Error loading districts', [
@@ -175,7 +176,7 @@ class SellerProfileController extends Controller
             $villages = Commune::findOrFail($communeId)
                 ->villages()
                 //     ->orderBy('name_en')
-                // ->get(['village_id', 'name_en', 'name_km', 'commune_id']);                              
+                // ->get(['village_id', 'name_en', 'name_km', 'commune_id']);
                 ->select('village_id', 'name_en', 'name_km', 'commune_id')
                 ->distinct()
                 ->orderBy('name_en')
@@ -267,7 +268,7 @@ class SellerProfileController extends Controller
             //     unset($validated['certification']);
             // }
 
-            $seller->fill($validated);  
+            $seller->fill($validated);
             $seller->save();
 
             Log::info('Farm info updated successfully', ['user_id' => $user->user_id]);
@@ -303,7 +304,7 @@ class SellerProfileController extends Controller
             ]);
         }
 
-        return Inertia::render('seller/payment', [
+        return Inertia::render('seller/payment_info', [
             'seller' => $seller,
         ]);
     }
@@ -319,30 +320,55 @@ class SellerProfileController extends Controller
             abort(403, 'You are not authorized to access this page.');
         }
 
-        $validated = $request->validate([
-            'bank_account_name' => ['nullable', 'string', 'max:255'],
-            'bank_account_number' => ['nullable', 'string', 'max:255'],
-            'payment_qr_code' => ['nullable'], // can be an URL string or uploaded image file
+        Log::info('Payment update request', [
+            'user_id' => $user->user_id,
+            'data' => $request->except(['payment_qr_code']),
+            'method' => $request->method(),
+            'has_file' => $request->hasFile('payment_qr_code'),
         ]);
 
-        $seller = $user->seller;
-        if (!$seller) {
-            $seller = $user->seller()->create(['user_id' => $user->user_id]);
+        try {
+            $validated = $request->validate([
+                'bank_account_name' => ['nullable', 'string', 'max:255'],
+                'bank_account_number' => ['nullable', 'string', 'max:255'],
+                'payment_qr_code' => ['nullable', 'file', 'image', 'max:5120'],
+            ]);
+
+            $seller = $user->seller;
+            if (!$seller) {
+                $seller = $user->seller()->create(['user_id' => $user->user_id]);
+            }
+
+            // Handle QR code file upload
+            if ($request->hasFile('payment_qr_code')) {
+                // Delete old QR code if exists
+                if ($seller->payment_qr_code && Storage::disk('public')->exists($seller->payment_qr_code)) {
+                    Storage::disk('public')->delete($seller->payment_qr_code);
+                }
+                $path = $request->file('payment_qr_code')->store('payment_qrcodes', 'public');
+                $validated['payment_qr_code'] = $path;
+            }
+
+            // Remove null QR code to prevent overwriting existing file
+            if (array_key_exists('payment_qr_code', $validated) && is_null($validated['payment_qr_code'])) {
+                unset($validated['payment_qr_code']);
+            }
+
+            $seller->fill($validated);
+            $seller->save();
+
+            Log::info('Payment settings updated successfully', ['user_id' => $user->user_id]);
+
+            return back()->with('success', 'Payment settings updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating payment settings', [
+                'user_id' => $user->user_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withErrors(['error' => 'Failed to update payment settings. Please try again.']);
         }
-
-        // if payment QR code file uploaded, store it
-        if ($request->hasFile('payment_qr_code')) {
-            $path = $request->file('payment_qr_code')->store('payment_qrcodes', 'public');
-            $validated['payment_qr_code'] = $path;
-        } elseif ($request->input('payment_qr_code')) {
-            // If URL provided, keep as is
-            $validated['payment_qr_code'] = $request->input('payment_qr_code');
-        }
-
-        $seller->fill($validated);
-        $seller->save();
-
-        return to_route('seller.payment.edit')->with('success', 'Payment settings updated.');
     }
 }
 

@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Customer\CustomerProfileController;
+use App\Http\Controllers\Customer\CustomerPasswordController;
+
 use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
 use App\Http\Controllers\Product\ProductController;
@@ -122,6 +125,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', function () {
             return Inertia::render('customer/dashboard');
         })->name('dashboard');
+
+        // Profile routes - IMPORTANT: Use POST for file uploads with _method spoofing
+        Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('profile.edit');
+        Route::match(['post', 'patch'], '/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
+
+        // Password routes
+        Route::post('/password', [CustomerPasswordController::class, 'update'])->name('password.update');
     });
 
 });
