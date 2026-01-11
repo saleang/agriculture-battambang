@@ -10,17 +10,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-// import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Box, ChartColumnIncreasing, DollarSign, Folder, House, LayoutGrid,Package, Package2, Star, Truck, User } from 'lucide-react';
 import AppLogo from './app-logo';
-
-// const {auth} = usePage().props;
-// const userRole = auth?.user?.
-
-//I want to do adminNavItems and sellerNavItems
-//adminNavItems
 
 const mainNavItems: NavItem[] = [
     {
@@ -68,9 +61,13 @@ const sellerNavItems: NavItem[] = [
     },
     {
         title: 'Product Management',
-        href: '/seller/products',
         icon: Box,
+        children: [
+            { title: 'Products', href: '/seller/product', icon: Box },
+            { title: 'Categories', href: '/seller/category', icon: Box },
+        ],
     },
+
     {
         title: 'Order Processing',
         href: '/seller/orders',
@@ -92,50 +89,7 @@ const sellerNavItems: NavItem[] = [
         icon: ChartColumnIncreasing
     },
 
-
-
 ];
-
-// const adminNavItems: NavItem[] = [
-//     {
-//         title: 'Dashboard',
-//         href: '/dashboard',
-//         icon: LayoutGrid,
-//     },
-//     {
-//         title: 'Manage Users',
-//         href: '/admin/users',
-//         icon: LayoutGrid,
-//     },
-// ];
-
-// const sellerNavItems: NavItem[] = [
-//     {
-//         title: 'Dashboard',
-//         href: '/dashboard',
-//         icon: LayoutGrid,
-//     },
-// ];
-
-// let roleBasedNavItems= [...mainNavItems];
-// if (userRole === 'admin') {
-//     roleBasedNavItems = [...roleBasedNavItems, ...adminNavItems];
-// } else if (userRole === 'seller') {
-//     roleBasedNavItems = [...roleBasedNavItems, ...sellerNavItems];
-// }
-
-// const footerNavItems: NavItem[] = [
-//     {
-//         title: 'Repository',
-//         href: 'https://github.com/laravel/react-starter-kit',
-//         icon: Folder,
-//     },
-//     {
-//         title: 'Documentation',
-//         href: 'https://laravel.com/docs/starter-kits#react',
-//         icon: BookOpen,
-//     },
-// ];
 
 export function AppSidebar() {
     const { props } = usePage();
@@ -155,10 +109,6 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                                 <AppLogo />
-                        {/* <SidebarMenuButton size="lg" asChild>
-                            <Link href={'/dashboard'} prefetch>
-                            </Link>
-                        </SidebarMenuButton> */}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>

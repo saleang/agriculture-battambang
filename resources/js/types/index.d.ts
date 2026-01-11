@@ -1,4 +1,5 @@
 import { InertiaLinkProps } from '@inertiajs/react';
+import { ForwardRefExoticComponent, RefAttributes } from 'react'
 import { LucideIcon } from 'lucide-react';
 
 export interface Auth {
@@ -16,10 +17,12 @@ export interface NavGroup {
 }
 
 export interface NavItem {
-    title: string;
-    href: NonNullable<InertiaLinkProps['href']>;
-    icon?: LucideIcon | null;
-    isActive?: boolean;
+    title: string
+    href?: string
+    icon: ForwardRefExoticComponent<
+        Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>
+    >
+    children?: NavItem[]
 }
 
 export interface SharedData {
@@ -49,3 +52,4 @@ export type PageProps<T = {}> = T & {
         user: User | null;
     };
 }
+
