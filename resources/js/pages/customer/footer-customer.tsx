@@ -6,7 +6,7 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
-              <div className="text-2xl font-bold mb-4"><span className="text-orange-500">HOME</span><span className="text-green-500">DOKAN</span></div>
+              <div className="text-2xl font-bold mb-4"><span className="text-orange-500">កសិផល</span><span className="text-green-500">ខេត្តបាត់ដំបង</span></div>
               <p className="text-gray-400 mb-6 leading-relaxed">Connecting local farmers with the community through an easy, modern marketplace experience.</p>
               <div className="flex items-center gap-3">
                 <img src="https://flagcdn.com/w40/kh.png" alt="Cambodia" className="w-8 h-5 rounded" />

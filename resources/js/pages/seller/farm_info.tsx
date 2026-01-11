@@ -1,4 +1,3 @@
-// farm_info.tsx (refactored to show info with edit modal, fixed certification accept/validation mismatch by assuming backend fix, extracted form to separate component)
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -8,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SellerLayout from './layout';
-import FarmEditForm from './components/FarmEditForm'; // New component for modal form
+import FarmEditForm from './components/FarmEditForm';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 
-interface PageProps  extends InertiaPageProps{
-    seller: any; // Adjust type as needed
-    provinces: any[]; // Adjust type as needed
+interface PageProps extends InertiaPageProps {
+    seller: any;
+    provinces: any[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Farm Information',
+        title: 'ព័ត៌មានកសិដ្ឋាន',
         href: '/seller/farm_info',
     },
 ];
@@ -29,60 +28,38 @@ export default function FarmInfo() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Farm Information" />
+            <Head title="ព័ត៌មានកសិដ្ឋាន" />
 
             <SellerLayout>
                 <div className="space-y-6">
                     <HeadingSmall
-                        title="Farm Information"
-                        description="View and manage your farm details"
+                        title="ព័ត៌មានកសិដ្ឋាន"
+                        description="មើល និងគ្រប់គ្រងព័ត៌មានកសិដ្ឋានរបស់អ្នក"
                     />
 
                     <div className="bg-white rounded-lg shadow p-6 space-y-6">
                         {/* Farm Name */}
                         <div>
-                            <Label className="text-sm font-medium text-gray-700">Farm Name</Label>
+                            <Label className="text-sm font-medium text-gray-700">ឈ្មោះកសិដ្ឋាន</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.farm_name || '-'}</div>
                         </div>
 
                         {/* Location */}
                         <div className="pt-6 border-t">
-                            <Label className="text-sm font-medium text-gray-700">Location</Label>
+                            <Label className="text-sm font-medium text-gray-700">ទីតាំង</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.full_location || '-'}</div>
                         </div>
 
-                        {/* Certification */}
-                        {/* {seller?.certification_url && (
-                            <div className="pt-6 border-t">
-                                <Label className="text-sm font-medium text-gray-700">Certification Document</Label>
-                                <div className="mt-2">
-                                    <a
-                                        href={seller.certification_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-block"
-                                    >
-                                        <img
-                                            src={seller.certification_url}
-                                            alt="Certification"
-                                            className="max-h-40 rounded border-2 border-gray-200 hover:border-green-500 transition"
-                                        />
-                                    </a>
-                                    <p className="text-xs text-gray-600 mt-1">Click to view full size</p>
-                                </div>
-                            </div>
-                        )} */}
-
                         {/* Description */}
                         <div className="pt-6 border-t">
-                            <Label className="text-sm font-medium text-gray-700">Description</Label>
+                            <Label className="text-sm font-medium text-gray-700">ការពិពណ៌នា</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.description || '-'}</div>
                         </div>
 
                         {/* Edit Button */}
                         <div className="flex items-center gap-4 pt-6 border-t">
                             <Button onClick={() => setOpen(true)}>
-                                Edit Farm Info
+                                កែសម្រួលព័ត៌មានកសិដ្ឋាន
                             </Button>
                         </div>
                     </div>
@@ -96,7 +73,7 @@ export default function FarmInfo() {
                             />
                             <div className="relative z-10 w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-y-auto max-h-[80vh]">
                                 <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-                                    <h3 className="text-lg font-semibold">Edit Farm Information</h3>
+                                    <h3 className="text-lg font-semibold">កែសម្រួលព័ត៌មានកសិដ្ឋាន</h3>
                                     <Button
                                         variant="ghost"
                                         onClick={() => setOpen(false)}

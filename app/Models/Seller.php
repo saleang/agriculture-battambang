@@ -79,10 +79,10 @@ class Seller extends Model
     public function getFullLocationAttribute(): string
     {
         $parts = array_filter([
-            $this->village?->name_en,
-            $this->commune?->name_en,
-            $this->district?->name_en,
-            $this->province?->name_en,
+            $this->village?->name_km,
+            $this->commune?->name_km,
+            $this->district?->name_km,
+            $this->province?->name_km,
         ]);
 
         // return implode(', ', $parts);

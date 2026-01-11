@@ -141,7 +141,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                     </button>
                 </div>
                 <div className="flex-1">
-                    <Label>Profile Photo</Label>
+                    <Label>រូបភាពប្រូហ្វាល់</Label>
                     <p className="text-xs text-gray-600">JPG, PNG max 2MB</p>
                     {photoPreview && photoPreview !== auth?.user?.photo_url && (
                         <Button
@@ -151,7 +151,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                             onClick={removePhoto}
                             className="text-red-600 mt-1"
                         >
-                            Remove
+                            លុបរូបភាព
                         </Button>
                     )}
                 </div>
@@ -167,7 +167,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
 
             <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                    <Label htmlFor="username">Username *</Label>
+                    <Label htmlFor="username">គោត្តនាម​ និងនាម​ *</Label>
                     <Input
                         id="username"
                         value={data.username}
@@ -181,7 +181,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 </div>
 
                 <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">អ៊ីមែល *</Label>
                     <Input
                         id="email"
                         type="email"
@@ -196,7 +196,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 </div>
 
                 <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">លេខទូរស័ព្ទ</Label>
                     <Input
                         id="phone"
                         value={data.phone}
@@ -209,17 +209,17 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 </div>
 
                 <div>
-                    <Label htmlFor="gender">Gender</Label>
+                    <Label htmlFor="gender">ភេទ</Label>
                     <select
                         id="gender"
                         value={data.gender}
                         onChange={(e) => setData('gender', e.target.value)}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option value="">ជ្រើសរើសភេទ</option>
+                        <option value="male">ប្រុស</option>
+                        <option value="female">ស្រី</option>
+                        <option value="other">មិនបញ្ជាក់</option>
                     </select>
                     {errors.gender && (
                         <p className="text-sm text-red-600 mt-1">{errors.gender}</p>
@@ -229,9 +229,9 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
 
             {/* Certification Upload - IMPROVED */}
             <div className="pt-4 border-t">
-                <Label>Certification / ID Card</Label>
+                <Label>ឯកសារ (អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ)</Label>
                 <p className="text-xs text-gray-600 mb-3">
-                    Upload image of your ID or certificate (JPG, PNG, PDF - max 5MB)
+                    សូមបញ្ចូលរូបភាពនៃឯកសារ (អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ)(JPG, PNG, PDF - max 5MB)
                 </p>
 
                 {/* Show existing certification */}
@@ -251,11 +251,11 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                                 <div className="flex items-center gap-2 mb-1">
                                     <CheckCircle className="h-4 w-4 text-green-600" />
                                     <span className="text-sm font-medium text-green-900">
-                                        Current Certification
+                                        ឯកសារបច្ចុប្បន្នរបស់អ្នក
                                     </span>
                                 </div>
                                 <p className="text-xs text-green-700">
-                                    Your certification is already uploaded. Upload a new file to replace it.
+                                    ឯកសារអ្នកបានបញ្ចូលរួចហើយ។ បញ្ចូលឯកសារថ្មីដើម្បីជំនួសវា។
                                 </p>
                                 {certPreview && (
                                     <a
@@ -264,7 +264,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                                         rel="noopener noreferrer"
                                         className="text-xs text-green-600 hover:text-green-700 underline mt-1 inline-block"
                                     >
-                                        View full size →
+                                        មើលឯកសារ →
                                     </a>
                                 )}
                             </div>
@@ -294,11 +294,11 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                                 <div className="flex items-center gap-2 mb-1">
                                     <Upload className="h-4 w-4 text-blue-600" />
                                     <span className="text-sm font-medium text-blue-900">
-                                        New Certification Selected
+                                        ឯកសារថ្មីដែលបានជ្រើសរើស
                                     </span>
                                 </div>
                                 <p className="text-xs text-blue-700">
-                                    This file will replace your current certification when you save.
+                                    ឯកសារថ្មីនេះនឹងជំនួសឯកសារបច្ចុប្បន្នរបស់អ្នក។
                                 </p>
                             </div>
                         </div>
@@ -330,7 +330,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 {!hasExistingCert && !newCertSelected && (
                     <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                         <File className="h-3 w-3" />
-                        No certification uploaded yet
+                        ឯកសារ(អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ) មិនបានបញ្ចូលទេ
                     </p>
                 )}
             </div>
@@ -343,14 +343,14 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                     type="button"
                     disabled={processing}
                 >
-                    Cancel
+                    បោះបង់
                 </Button>
                 <Button
                     type="submit"
                     disabled={processing}
                     className="min-w-[120px]"
                 >
-                    {processing ? 'Saving...' : 'Save Changes'}
+                    {processing ? 'កំពុងកែប្រែ...' : 'រក្សាទុក'}
                 </Button>
             </div>
 
@@ -363,7 +363,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 leaveTo="opacity-0"
             >
                 <p className="text-sm text-green-600 font-medium bg-green-50 p-3 rounded">
-                    ✓ Profile updated successfully!
+                    ✓ ការធ្វើបច្ចុប្បន្នភាពបានជោគជ័យ!
                 </p>
             </Transition>
         </form>

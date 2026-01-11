@@ -6,126 +6,164 @@ use App\Http\Controllers\Controller;
 use App\Models\Seller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
-    
     public function create(): Response
     {
         return Inertia::render('auth/register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    // public function store(Request $request): RedirectResponse
+    // public function store(Request $request)
     // {
-    //     $request->validate([
-    //         'username' => 'required|string|max:50|unique:users,username',
-    //         'email' => 'required|string|lowercase|email|max:100|unique:users,email',
-    //         'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    //         'role' => 'required|in:seller,customer',
-    //         'phone' => 'required|string|max:20',
-    //         'farm_name' => 'required_if:role,seller|nullable|string|max:100',
-    //         'location_district' => 'required_if:role,seller|nullable|string|max:100',
+    //     Log::info('Registration attempt', ['data' => $request->except('password', 'password_confirmation')]);
+
+    //     $validated = $request->validate([
+    //         'username' => 'required|string|max:255',
+    //         'email' => 'required|email|unique:users,email',
+    //         'phone' => 'required|string|min:9|max:10|regex:/^[0-9]+$/|unique:users,phone',
+    //         'password' => 'required|min:8|confirmed',
+    //         'role' => 'required|in:customer,seller',
+    //         'farm_name' => 'required_if:role,seller|string|max:255',
+    //         'province_id' => 'required_if:role,seller|exists:provinces,province_id',
+    //         'district_id' => 'required_if:role,seller|exists:districts,district_id',
+    //         'commune_id' => 'nullable|exists:communes,commune_id',
+    //         'village_id' => 'nullable|exists:villages,village_id',
     //         'description' => 'nullable|string|max:1000',
     //     ]);
 
+    //     // Create user
     //     $user = User::create([
-    //         'username' => $request->username,
-    //         'email' => $request->email,
-    //         'password' => Hash::make($request->password),
-    //         'role' => $request->role,
-    //         'phone' => $request->phone,
+    //         'username' => $validated['username'],
+    //         'email' => $validated['email'],
+    //         'phone' => $validated['phone'],
+    //         'role' => $validated['role'],
     //         'status' => 'active',
+    //         'password' => Hash::make($validated['password']),
     //     ]);
 
-    //     // Create seller profile if role is seller
-    //     if ($request->role === 'seller') {
+    //     Log::info('User created', ['user_id' => $user->user_id, 'role' => $user->role]);
+
+    //     // If role is seller, create Seller details
+    //     if ($validated['role'] === 'seller') {
     //         Seller::create([
     //             'user_id' => $user->user_id,
-    //             'farm_name' => $request->farm_name,
-    //             'location_district' => $request->location_district,
-    //             'description' => $request->description,
+    //             'farm_name' => $validated['farm_name'],
+    //             'province_id' => $validated['province_id'],
+    //             'district_id' => $validated['district_id'],
+    //             'commune_id' => $validated['commune_id'] ?? null,
+    //             'village_id' => $validated['village_id'] ?? null,
+    //             'description' => $validated['description'] ?? null,
     //         ]);
+
+    //         Log::info('Seller profile created', ['user_id' => $user->user_id]);
     //     }
 
     //     event(new Registered($user));
-
     //     Auth::login($user);
 
-    //     return redirect('/dashboard');
-    // }
+    //     Log::info('User logged in', ['user_id' => $user->user_id, 'authenticated' => Auth::check()]);
 
+    //     // Determine redirect URL
+    //     $redirectUrl = $user->role === 'seller'
+    //         ? route('seller.dashboard')
+    //         : route('customer.dashboard');
+
+    //     Log::info('Redirecting to', ['url' => $redirectUrl]);
+
+    //     // Return proper redirect for Inertia
+    //     return to_route($user->role === 'seller' ? 'seller.dashboard' : 'customer.dashboard');
+    // }
     public function store(Request $request)
     {
-        $request->validate([
+        Log::info('Registration attempt', ['data' => $request->except('password', 'password_confirmation')]);
+
+        // លុប empty strings ចេញពី request មុនពេល validate
+        $cleanedData = collect($request->all())->map(function ($value) {
+            return $value === '' ? null : $value;
+        })->toArray();
+
+        $request->merge($cleanedData);
+
+        $validated = $request->validate([
             'username' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:3',
+            'phone' => 'required|string|min:9|max:10|regex:/^[0-9]+$/|unique:users,phone',
+            'password' => 'required|min:8|confirmed',
             'role' => 'required|in:customer,seller',
-            'phone' => 'nullable|string|max:20',
+            'farm_name' => 'required_if:role,seller|nullable|string|max:255',
+            'province_id' => 'required_if:role,seller|nullable|exists:provinces,province_id',
+            'district_id' => 'required_if:role,seller|nullable|exists:districts,district_id',
+            'commune_id' => 'nullable|exists:communes,commune_id',
+            'village_id' => 'nullable|exists:villages,village_id',
+            'description' => 'nullable|string|max:1000',
         ]);
 
         // Create user
         $user = User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role' => $request->role,
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'role' => $validated['role'],
             'status' => 'active',
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($validated['password']),
         ]);
 
-        // If role is seller, create Seller details also
-        if ($request->role === 'seller') {
+        Log::info('User created', ['user_id' => $user->user_id, 'role' => $user->role]);
+
+        // If role is seller, create Seller details
+        if ($validated['role'] === 'seller') {
             Seller::create([
-                'user_id' => $user->user_id,      // FIX: use id, not user_id
-                'farm_name' => $request->farm_name ?? 'Unknown Farm',
-                'location_district' => $request->location_district ?? null,
-                'description' => $request->description ?? null,
+                'user_id' => $user->user_id,
+                'farm_name' => $validated['farm_name'] ?? null,
+                'province_id' => $validated['province_id'] ?? null,
+                'district_id' => $validated['district_id'] ?? null,
+                'commune_id' => $validated['commune_id'] ?? null,
+                'village_id' => $validated['village_id'] ?? null,
+                'description' => $validated['description'] ?? null,
             ]);
+
+            Log::info('Seller profile created', ['user_id' => $user->user_id]);
         }
 
-        // return response()->json([
-        //     'message' => 'Registered successfully.',
-        //     'user' => $user,
-        // ]);
         event(new Registered($user));
-
         Auth::login($user);
-        // return redirect()->route('home');
-        // return redirect()->back()->with('success', 'Registered successfully.');
-        if($user->role === 'seller')
-            return redirect('/seller/dashboard');
-        else
-            return redirect('/customer/dashboard');
-        // return redirect()->route('login');
-        // event(new Registered($user));
 
-        // Auth::login($user);
-        // // regenerate session to persist login for XHR requests and prevent fixation
-        // $request->session()->regenerate();
+        Log::info('User logged in', ['user_id' => $user->user_id, 'authenticated' => Auth::check()]);
 
-        // Log::info('RegisterController created user', ['user_id' => $user->user_id, 'auth_check' => Auth::check()]);
+        // Redirect based on role
+        if ($user->role === 'seller') {
+            return redirect()->route('seller.dashboard');
+        }
 
-        // // Redirect with 303 to instruct Inertia to follow as GET after POST
-        // return redirect()->route('customer.dashboard')->setStatusCode(303);
+        return redirect()->route('customer.dashboard');
+    }
 
+    public function checkPhone(Request $request)
+    {
+        $phone = $request->query('phone');
+        if (!$phone) {
+            return response()->json(['available' => null]);
+        }
+
+        $exists = User::where('phone', $phone)->exists();
+        return response()->json(['available' => !$exists]);
+    }
+
+    public function checkEmail(Request $request)
+    {
+        $email = $request->query('email');
+        if (!$email) {
+            return response()->json(['available' => null]);
+        }
+
+        $exists = User::where('email', $email)->exists();
+        return response()->json(['available' => !$exists]);
     }
 }
-
-

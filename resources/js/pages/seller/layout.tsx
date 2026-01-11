@@ -9,29 +9,28 @@ import { User, Sprout, CreditCard, Lock } from "lucide-react";
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'My Profile',
+        title: 'ប្រវត្តិរូបរបស់ខ្ញុំ',
         href: '/seller/profile',
         icon: User,
     },
     {
-        title: 'Farm Information',
+        title: 'ព័ត៌មានកសិដ្ឋាន',
         href: '/seller/farm_info',
         icon: Sprout,
     },
     {
-        title: 'Payment Settings',
+        title: 'ការកំណត់ការបង់ប្រាក់',
         href: '/seller/payment_info',
         icon: CreditCard,
     },
     {
-        title: 'Password',
+        title: 'ពាក្យសម្ងាត់',
         href: '/seller/password',
         icon: Lock,
     },
 ];
 
 export default function SellerLayout({ children }: PropsWithChildren) {
-    // When server-side rendering, we only render the layout on the client
     if (typeof window === 'undefined') {
         return null;
     }
@@ -41,8 +40,8 @@ export default function SellerLayout({ children }: PropsWithChildren) {
     return (
         <div className="px-4 py-6 bg-green-300">
             <Heading
-                title="Seller Settings"
-                description="Manage your seller profile and account settings"
+                title="ការកំណត់អ្នកលក់"
+                description="គ្រប់គ្រងប្រវត្តិរូប និងការកំណត់គណនីរបស់អ្នក"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">

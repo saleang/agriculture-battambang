@@ -35,8 +35,6 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username',
-        //maybe extra more fields
-        // gender(Male,Female)
         // address
         'email',
         'gender',
@@ -44,6 +42,7 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'address', //for customer
         'status',
         'last_login',
     ];

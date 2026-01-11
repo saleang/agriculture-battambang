@@ -31,7 +31,6 @@ class SellerProfileController extends Controller
         $seller = $user->seller;
 
         // If seller profile does not exist yet, create an empty one
-        // so the edit page can be used to populate it.
         if (!$seller) {
             $seller = $user->seller()->create([
                 'user_id' => $user->user_id,
@@ -44,7 +43,10 @@ class SellerProfileController extends Controller
         }
 
         // Load all provinces for the dropdown
-        $provinces = Province::orderBy('name_en')->get();
+        $provinces = Province::select('province_id', 'name_en', 'name_km')
+            ->distinct()
+            ->orderBy('name_en')
+            ->get();
 
         return Inertia::render('seller/profile', [
             'seller' => $seller,
@@ -63,21 +65,29 @@ class SellerProfileController extends Controller
             abort(403, 'You are not authorized to access this page.');
         }
 
-        // Debug logging
         Log::info('Seller profile update request', [
             'user_id' => $user->user_id,
-            'data' => $request->validated(),
+            'data' => $request->except(['photo', 'certification']),
             'method' => $request->method(),
+            'has_photo' => $request->hasFile('photo'),
+            'has_certification' => $request->hasFile('certification'),
         ]);
 
         $validated = $request->validated();
 
         // Update user fields if present
         $userFields = array_intersect_key($validated, array_flip(['username', 'email', 'phone', 'gender']));
+
+        // Handle photo upload
         if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
+            }
             $path = $request->file('photo')->store('users', 'public');
             $userFields['photo'] = $path;
         }
+
         if (!empty($userFields)) {
             $user->update($userFields);
         }
@@ -87,8 +97,13 @@ class SellerProfileController extends Controller
         if (!$seller) {
             $seller = $user->seller()->create(['user_id' => $user->user_id]);
         }
+
         // Handle certification file if uploaded
         if ($request->hasFile('certification')) {
+            // Delete old certification if exists
+            if ($seller->certification && Storage::disk('public')->exists($seller->certification)) {
+                Storage::disk('public')->delete($seller->certification);
+            }
             $certPath = $request->file('certification')->store('certifications', 'public');
             $validated['certification'] = $certPath;
         }
@@ -99,7 +114,6 @@ class SellerProfileController extends Controller
         }
 
         // Prevent overwriting existing certification with a null value
-        // (the front-end includes `certification: null` when no file is chosen).
         if (array_key_exists('certification', $validated) && is_null($validated['certification'])) {
             unset($validated['certification']);
         }
@@ -109,10 +123,8 @@ class SellerProfileController extends Controller
 
         Log::info('Seller profile updated successfully', ['user_id' => $user->user_id]);
 
-        // return to_route('seller.profile.edit')->with('success', 'Profile updated successfully!');
         return back()->with('success', 'Profile updated successfully!');
     }
-
 
     /**
      * Get districts by province ID (for AJAX calls).
@@ -120,15 +132,12 @@ class SellerProfileController extends Controller
     public function getDistricts($provinceId): JsonResponse
     {
         try {
-            $province = Province::findOrFail($provinceId);
-            // $districts = $province->districts()
-            //     ->orderBy('name_en')
-            //     ->get(['district_id', 'name_en', 'name_km', 'province_id']);
-            $districts = $province->districts()
+            $districts = District::where('province_id', $provinceId)
                 ->select('district_id', 'name_en', 'name_km', 'province_id')
                 ->distinct()
                 ->orderBy('name_en')
                 ->get();
+
             return response()->json($districts);
         } catch (\Exception $e) {
             Log::error('Error loading districts', [
@@ -148,15 +157,12 @@ class SellerProfileController extends Controller
     public function getCommunes(int $districtId): JsonResponse
     {
         try {
-            $communes = District::findOrFail($districtId)
-                // ->communes()
-                // ->orderBy('name_en')
-                // ->get(['commune_id', 'name_en', 'name_km', 'district_id']);
-                ->communes()
+            $communes = Commune::where('district_id', $districtId)
                 ->select('commune_id', 'name_en', 'name_km', 'district_id')
                 ->distinct()
                 ->orderBy('name_en')
                 ->get();
+
             return response()->json($communes);
         } catch (\Exception $e) {
             Log::error('Error loading communes', [
@@ -173,14 +179,12 @@ class SellerProfileController extends Controller
     public function getVillages(int $communeId): JsonResponse
     {
         try {
-            $villages = Commune::findOrFail($communeId)
-                ->villages()
-                //     ->orderBy('name_en')
-                // ->get(['village_id', 'name_en', 'name_km', 'commune_id']);
+            $villages = \App\Models\Village::where('commune_id', $communeId)
                 ->select('village_id', 'name_en', 'name_km', 'commune_id')
                 ->distinct()
                 ->orderBy('name_en')
                 ->get();
+
             return response()->json($villages);
         } catch (\Exception $e) {
             Log::error('Error loading villages', [
@@ -209,12 +213,12 @@ class SellerProfileController extends Controller
         }
 
         $seller->load(['province', 'district', 'commune', 'village']);
-        // $provinces = Province::orderBy('name_en')->get();
-        // FIXED: Get distinct provinces to avoid duplicates
+
         $provinces = Province::select('province_id', 'name_en', 'name_km')
             ->distinct()
             ->orderBy('name_en')
             ->get();
+
         return Inertia::render('seller/farm_info', [
             'seller' => $seller,
             'provinces' => $provinces,
@@ -245,7 +249,6 @@ class SellerProfileController extends Controller
                 'district_id' => ['nullable', 'integer', 'exists:districts,district_id'],
                 'commune_id' => ['nullable', 'integer', 'exists:communes,commune_id'],
                 'village_id' => ['nullable', 'integer', 'exists:villages,village_id'],
-                // 'certification' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:5120'],
                 'description' => ['nullable', 'string'],
             ]);
 
@@ -253,20 +256,6 @@ class SellerProfileController extends Controller
             if (!$seller) {
                 $seller = $user->seller()->create(['user_id' => $user->user_id]);
             }
-
-            // // Handle certification upload
-            // if ($request->hasFile('certification')) {
-            //     if ($seller->certification) {
-            //         Storage::disk('public')->delete($seller->certification);
-            //     }
-            //     $path = $request->file('certification')->store('certifications', 'public');
-            //     $validated['certification'] = $path;
-            // }
-
-            // Remove null certification to prevent overwriting existing file
-            // if (array_key_exists('certification', $validated) && is_null($validated['certification'])) {
-            //     unset($validated['certification']);
-            // }
 
             $seller->fill($validated);
             $seller->save();
@@ -371,4 +360,3 @@ class SellerProfileController extends Controller
         }
     }
 }
-

@@ -1,4 +1,3 @@
-// payment_info.tsx (new page: implemented full payment page with show info and edit modal, using the provided Payment component renamed to PaymentEditForm)
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -8,15 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SellerLayout from './layout';
-import PaymentEditForm from './components/PaymentEditForm'; // Renamed and adjusted the provided Payment component
+import PaymentEditForm from './components/PaymentEditForm';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
-interface PageProps extends InertiaPageProps{
-    seller: any; // Adjust type as needed
+
+interface PageProps extends InertiaPageProps {
+    seller: any;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Payment Settings',
+        title: 'ការកំណត់ការបង់ប្រាក់',
         href: '/seller/payment_info',
     },
 ];
@@ -25,38 +25,38 @@ export default function PaymentInfo() {
     const { seller } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
 
-    const qrCodeUrl = seller?.payment_qr_code?.startsWith('http') 
-        ? seller.payment_qr_code 
+    const qrCodeUrl = seller?.payment_qr_code?.startsWith('http')
+        ? seller.payment_qr_code
         : (seller?.payment_qr_code ? `/storage/${seller.payment_qr_code}` : null);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Payment Settings" />
+            <Head title="ការកំណត់ការបង់ប្រាក់" />
 
             <SellerLayout>
                 <div className="space-y-6">
                     <HeadingSmall
-                        title="Payment Settings"
-                        description="View and manage your payment details"
+                        title="ការកំណត់ការបង់ប្រាក់"
+                        description="មើល និងគ្រប់គ្រងព័ត៌មានការបង់ប្រាក់របស់អ្នក"
                     />
 
                     <div className="bg-white rounded-lg shadow p-6 space-y-6">
                         {/* Bank Account Name */}
                         <div>
-                            <Label className="text-sm font-medium text-gray-700">Bank Account Name</Label>
+                            <Label className="text-sm font-medium text-gray-700">ឈ្មោះគណនីធនាគារ</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.bank_account_name || '-'}</div>
                         </div>
 
                         {/* Bank Account Number */}
                         <div className="pt-6 border-t">
-                            <Label className="text-sm font-medium text-gray-700">Bank Account Number</Label>
+                            <Label className="text-sm font-medium text-gray-700">លេខគណនីធនាគារ</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.bank_account_number || '-'}</div>
                         </div>
 
                         {/* Payment QR Code */}
                         {qrCodeUrl && (
                             <div className="pt-6 border-t">
-                                <Label className="text-sm font-medium text-gray-700">Payment QR Code</Label>
+                                <Label className="text-sm font-medium text-gray-700">QR កូដបង់ប្រាក់</Label>
                                 <div className="mt-2">
                                     <a
                                         href={qrCodeUrl}
@@ -66,11 +66,11 @@ export default function PaymentInfo() {
                                     >
                                         <img
                                             src={qrCodeUrl}
-                                            alt="Payment QR Code"
+                                            alt="QR កូដបង់ប្រាក់"
                                             className="max-h-40 rounded border-2 border-gray-200 hover:border-green-500 transition"
                                         />
                                     </a>
-                                    <p className="text-xs text-gray-600 mt-1">Click to view full size</p>
+                                    <p className="text-xs text-gray-600 mt-1">ចុចដើម្បីមើលទំហំពេញ</p>
                                 </div>
                             </div>
                         )}
@@ -78,7 +78,7 @@ export default function PaymentInfo() {
                         {/* Edit Button */}
                         <div className="flex items-center gap-4 pt-6 border-t">
                             <Button onClick={() => setOpen(true)}>
-                                Edit Payment Settings
+                                កែសម្រួលការកំណត់ការបង់ប្រាក់
                             </Button>
                         </div>
                     </div>
@@ -92,7 +92,7 @@ export default function PaymentInfo() {
                             />
                             <div className="relative z-10 w-full max-w-2xl bg-white rounded-lg shadow-xl">
                                 <div className="flex justify-between items-center p-6 border-b">
-                                    <h3 className="text-lg font-semibold">Edit Payment Settings</h3>
+                                    <h3 className="text-lg font-semibold">កែសម្រួលការកំណត់ការបង់ប្រាក់</h3>
                                     <Button
                                         variant="ghost"
                                         onClick={() => setOpen(false)}
