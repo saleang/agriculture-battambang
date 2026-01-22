@@ -9,11 +9,11 @@ return new class extends Migration {
     {
         Schema::create('product_images', function (Blueprint $table) {
             $table->increments('image_id');
-            $table->unsignedInteger('product_id');
+            $table->unsignedBigInteger('product_id'); // 
             $table->string('image_url', 255);
             $table->boolean('is_primary')->default(false);
             $table->integer('display_order')->default(0);
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
 
             $table->foreign('product_id')
                   ->references('product_id')

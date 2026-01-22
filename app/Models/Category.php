@@ -14,10 +14,11 @@ class Category extends Model
     public $timestamps = true;
 
     protected $fillable = [
+        'seller_id',
+        'seller_category_id', // ✅ REQUIRED
         'categoryname',
         'description',
         'is_active',
-        'parent_category_id'
     ];
 
     protected $casts = [
@@ -25,15 +26,7 @@ class Category extends Model
     ];
 
     /**
-     * Get the parent category
-     */
-    public function parent()
-    {
-        return $this->belongsTo(Category::class, 'parent_category_id', 'category_id');
-    }
-
-    /**
-     * Get the child categories
+     * Child categories (optional)
      */
     public function children()
     {
@@ -46,13 +39,5 @@ class Category extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
-    }
-
-    /**
-     * Scope top-level categories (no parent)
-     */
-    public function scopeTopLevel($query)
-    {
-        return $query->whereNull('parent_category_id');
     }
 }

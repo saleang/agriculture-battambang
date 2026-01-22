@@ -99,16 +99,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
 
     
-            // Product Routes
+        // Product Routes
         Route::prefix('product')->name('product.')->group(function () {
-            Route::get('/', [ProductController::class, 'index'])->name('index');        // GET /product
-            Route::get('/create', [ProductController::class, 'create'])->name('create'); // GET /product/create
-            Route::post('/', [ProductController::class, 'store'])->name('store');       // POST /product
+            Route::get('/', [ProductController::class, 'index'])->name('index');        
+            Route::get('/create', [ProductController::class, 'create'])->name('create'); 
+            Route::post('/', [ProductController::class, 'store'])->name('store');     
             Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [ProductController::class, 'update'])->name('update');
             Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-active', [ProductController::class, 'toggleActive'])->name('toggle-active');
+
+            
         });
-    // Category Routes
+        // Category Routes
         Route::prefix('category')->name('category.')->group(function () {
             Route::get('/', [CategoryController::class, 'index'])->name('index');
             Route::get('/create', [CategoryController::class, 'create'])->name('create');

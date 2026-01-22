@@ -5,12 +5,10 @@ import AppLayout from '@/layouts/app-layout';
 
 interface Category {
     category_id: number;
+    seller_category_id: number;
     categoryname: string;
     description?: string;
     is_active: boolean;
-    parent_category_id?: number | null;
-    parent?: Category;
-    children?: Category[];
 }
 
 const CategoryPage: React.FC = () => {
@@ -18,7 +16,6 @@ const CategoryPage: React.FC = () => {
     const [formData, setFormData] = useState({
         categoryname: '',
         description: '',
-        parent_category_id: null as number | null,
         is_active: true
     });
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -47,12 +44,7 @@ const CategoryPage: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         
-        if (name === 'parent_category_id') {
-            setFormData({
-                ...formData,
-                [name]: value === '' ? null : Number(value)
-            });
-        } else if (name === 'is_active') {
+    if (name === 'is_active') {
             setFormData({
                 ...formData,
                 [name]: (e.target as HTMLInputElement).checked
@@ -74,7 +66,6 @@ const CategoryPage: React.FC = () => {
             const apiData = {
                 categoryname: formData.categoryname,
                 description: formData.description,
-                parent_category_id: formData.parent_category_id,
                 is_active: formData.is_active
             };
 
@@ -108,7 +99,6 @@ const CategoryPage: React.FC = () => {
         setFormData({
             categoryname: '',
             description: '',
-            parent_category_id: null,
             is_active: true
         });
         setEditingId(null);
@@ -119,7 +109,6 @@ const CategoryPage: React.FC = () => {
         setFormData({
             categoryname: category.categoryname,
             description: category.description || '',
-            parent_category_id: category.parent_category_id || null,
             is_active: category.is_active
         });
         setEditingId(category.category_id);
@@ -157,13 +146,6 @@ const CategoryPage: React.FC = () => {
         }
     };
 
-    // Get parent category name
-    const getParentName = (parentId: number | null | undefined) => {
-        if (!parentId) return '-';
-        const parent = categories.find(c => c.category_id === parentId);
-        return parent ? parent.categoryname : '-';
-    };
-
     // Toggle active status
     const toggleActive = async (id: number, currentStatus: boolean) => {
         try {
@@ -177,29 +159,6 @@ const CategoryPage: React.FC = () => {
             Swal.fire('Error!', 'Failed to update status.', 'error');
         }
     };
-
-    // Get categories for parent dropdown (exclude current category when editing)
-    const getAvailableParents = () => {
-        return categories.filter(category => 
-            category.category_id !== editingId && 
-            (!editingId || !isDescendant(category.category_id, editingId))
-        );
-    };
-
-    // Check if category is descendant (prevent circular reference)
-    const isDescendant = (potentialParentId: number, childId: number): boolean => {
-        const child = categories.find(c => c.category_id === childId);
-        if (!child) return false;
-        
-        let current = child;
-        while (current.parent_category_id) {
-            if (current.parent_category_id === potentialParentId) return true;
-            current = categories.find(c => c.category_id === current.parent_category_id)!;
-            if (!current) break;
-        }
-        return false;
-    };
-
     return (
         <AppLayout>
         <div className="container mx-auto p-4">
@@ -244,26 +203,6 @@ const CategoryPage: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-gray-600">
-                                Parent Category
-                            </label>
-                            <select
-                                name="parent_category_id"
-                                value={formData.parent_category_id ?? ''}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-                                disabled={submitting}
-                            >
-                                <option value="">No Parent (Top Level)</option>
-                                {getAvailableParents().map((category) => (
-                                    <option key={category.category_id} value={category.category_id}>
-                                        {category.categoryname}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         <div className="flex items-center">
                             <input
                                 type="checkbox"
@@ -340,7 +279,6 @@ const CategoryPage: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th className="px 6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -349,7 +287,7 @@ const CategoryPage: React.FC = () => {
                                 {categories.map((category) => (
                                     <tr key={category.category_id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            #{category.category_id}
+                                            #{category.seller_category_id}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">
@@ -360,9 +298,6 @@ const CategoryPage: React.FC = () => {
                                                     {category.description}
                                                 </div>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {getParentName(category.parent_category_id)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <button

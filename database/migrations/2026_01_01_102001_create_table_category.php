@@ -8,17 +8,31 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('category', function (Blueprint $table) {
-            $table->increments('category_id');
-            $table->string('categoryname', 100)->unique();
+            // 🔑 Global primary key
+            $table->bigIncrements('category_id');
+
+            // Seller relation
+            $table->unsignedBigInteger('seller_id');
+
+            // Seller-specific category number
+            $table->unsignedInteger('seller_category_id');
+
+            $table->string('categoryname', 100);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->unsignedInteger('parent_category_id')->nullable();
             $table->timestamps();
 
-            $table->foreign('parent_category_id')
-                  ->references('category_id')
-                  ->on('category')
-                  ->onDelete('set null');
+            // Same category name allowed for different sellers
+            $table->unique(['seller_id', 'categoryname']);
+
+            // Each seller has their own numbering: 1,2,3...
+            $table->unique(['seller_id', 'seller_category_id']);
+
+            // Foreign key
+            $table->foreign('seller_id')
+                ->references('seller_id')
+                ->on('sellers')
+                ->onDelete('cascade');
         });
     }
 
