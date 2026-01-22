@@ -1,9 +1,8 @@
-// components/FarmEditForm.tsx - FIXED VERSION
+// components/FarmEditForm.tsx - ភាសាខ្មែរពេញលេញ
 import React, { useEffect, useRef, useState } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { FileUp, X, CheckCircle, Upload, File } from 'lucide-react';
 import axios from 'axios';
@@ -18,27 +17,23 @@ interface FarmEditFormProps {
 
 interface District {
     district_id: number;
-    name_en: string;
+    name_km: string;
 }
 
 interface Commune {
     commune_id: number;
-    name_en: string;
+    name_km: string;
 }
 
 interface Village {
     village_id: number;
-    name_en: string;
+    name_km: string;
 }
 
 export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFormProps) {
     const [districts, setDistricts] = useState<District[]>([]);
     const [communes, setCommunes] = useState<Commune[]>([]);
     const [villages, setVillages] = useState<Village[]>([]);
-    const [certPreview, setCertPreview] = useState<string | null>(seller?.certification_url || null);
-    const [hasExistingCert, setHasExistingCert] = useState<boolean>(!!seller?.certification_url);
-    const [newCertSelected, setNewCertSelected] = useState<boolean>(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         farm_name: seller?.farm_name || '',
@@ -46,7 +41,6 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
         district_id: seller?.district_id?.toString() || '',
         commune_id: seller?.commune_id?.toString() || '',
         village_id: seller?.village_id?.toString() || '',
-        certification: null as File | null,
         description: seller?.description || '',
         _method: 'PATCH',
     });
@@ -69,7 +63,7 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             setDistricts(res.data);
         } catch (error) {
             console.error('Error loading districts:', error);
-            toast.error('Failed to load districts');
+            toast.error('មិនអាចទាញយកស្រុក/ខណ្ឌបានទេ');
         }
     };
 
@@ -79,7 +73,7 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             setCommunes(res.data);
         } catch (error) {
             console.error('Error loading communes:', error);
-            toast.error('Failed to load communes');
+            toast.error('មិនអាចទាញយកឃុំ/សង្កាត់បានទេ');
         }
     };
 
@@ -89,7 +83,7 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             setVillages(res.data);
         } catch (error) {
             console.error('Error loading villages:', error);
-            toast.error('Failed to load villages');
+            toast.error('មិនអាចទាញយកភូមិបានទេ');
         }
     };
 
@@ -135,37 +129,6 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
         }
     };
 
-    const handleCertificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Validate file size (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error('Certification file must be less than 5MB');
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
-                return;
-            }
-
-            setData('certification', file);
-            setNewCertSelected(true);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setCertPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const removeCertification = () => {
-        setData('certification', null);
-        setCertPreview(seller?.certification_url || null);
-        setNewCertSelected(false);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -173,10 +136,9 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Farm information updated successfully');
+                toast.success('បានធ្វើបច្ចុប្បន្នភាពព័ត៌មានកសិដ្ឋានដោយជោគជ័យ');
                 router.reload({
                     only: ['seller'],
-                    // preserveState: true,
                     onSuccess: () => {
                         onClose();
                     },
@@ -184,7 +146,7 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
-                toast.error('Failed to update farm information');
+                toast.error('មិនអាចធ្វើបច្ចុប្បន្នភាពព័ត៌មានកសិដ្ឋានបានទេ');
                 const firstError = Object.values(errors)[0];
                 if (firstError) {
                     toast.error(firstError as string);
@@ -198,131 +160,37 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
             {/* Farm Name */}
             <div className="space-y-2">
                 <Label htmlFor="farm_name">
-                    Farm Name <span className="text-red-500">*</span>
+                    ឈ្មោះកសិដ្ឋាន <span className="text-red-500">*</span>
                 </Label>
                 <Input
                     id="farm_name"
                     value={data.farm_name}
                     onChange={(e) => setData('farm_name', e.target.value)}
                     required
-                    placeholder="Enter your farm name"
+                    placeholder="បញ្ចូលឈ្មោះកសិដ្ឋានរបស់អ្នក"
                 />
                 {errors.farm_name && (
                     <p className="text-sm text-red-600">{errors.farm_name}</p>
                 )}
             </div>
 
-            {/* Certification Image Upload - IMPROVED */}
-            {/* <div className="space-y-2">
-                <Label>Certification Document (Optional)</Label>
-                <p className="text-xs text-gray-600 mb-2">
-                    Upload your ID card or certificate (JPG, PNG, PDF - max 5MB)
-                </p>
-
-                {/* Show existing certification */}
-                {/* {hasExistingCert && !newCertSelected && ( */}
-                    {/* // <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    //     <div className="flex items-start gap-3">
-                    //         <div className="flex-shrink-0">
-                    //             {certPreview && (
-                    //                 <img 
-                    //                     src={certPreview} 
-                    //                     alt="Current Certification" 
-                    //                     className="h-20 w-20 object-cover rounded border-2 border-green-300" 
-                    //                 />
-                    //             )}
-                    //         </div>
-                    //         <div className="flex-1 min-w-0">
-                    //             <div className="flex items-center gap-2 mb-1">
-                    //                 <CheckCircle className="h-4 w-4 text-green-600" />
-                    //                 <span className="text-sm font-medium text-green-900">
-                    //                     Current Certification
-                    //                 </span>
-                    //             </div>
-                    //             <p className="text-xs text-green-700">
-                    //                 Upload a new file to replace it.
-                    //             </p>
-                    //         </div>
-                    //     </div>
-                    // </div> 
-                )}
-
-                {/* Show new certification preview */}
-                {/* {newCertSelected && certPreview && (
-                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 relative">
-                                <img 
-                                    src={certPreview} 
-                                    alt="New Certification" 
-                                    className="h-20 w-20 object-cover rounded border-2 border-blue-300" 
-                                />
-                                <button
-                                    type="button"
-                                    onClick={removeCertification}
-                                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition shadow-lg"
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Upload className="h-4 w-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-900">
-                                        New Certification Selected
-                                    </span>
-                                </div>
-                                <p className="text-xs text-blue-700">
-                                    This will replace the current file.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
-
-                {/* File input */}
-                {/* <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/jpg,image/gif,application/pdf"
-                    onChange={handleCertificationChange}
-                    className="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-green-50 file:text-green-700
-                        hover:file:bg-green-100 cursor-pointer
-                        border border-gray-300 rounded-md"
-                /> */}
-                
-                {/* {errors.certification && (
-                    <p className="text-sm text-red-600 mt-2">{errors.certification}</p>
-                )}
-
-                {!hasExistingCert && !newCertSelected && (
-                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                        <File className="h-3 w-3" />
-                        No certification uploaded yet
-                    </p>
-                )} */}
-            {/* </div> */}
-
             {/* Location */}
             <div className="bg-gray-50 p-6 rounded-lg space-y-4">
-                <h4 className="font-medium text-gray-900">Location Details</h4>
+                <h4 className="font-medium text-gray-900">ព័ត៌មានទីតាំង</h4>
                 <div className="grid gap-4 md:grid-cols-2">
+                    {/* Province */}
                     <div className="space-y-2">
-                        <Label htmlFor="province_id">Province</Label>
+                        <Label htmlFor="province_id">ខេត្ត</Label>
                         <select
                             id="province_id"
                             value={data.province_id}
                             onChange={(e) => handleProvinceChange(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         >
-                            <option value="">Select Province</option>
+                            <option value="">ជ្រើសរើសខេត្ត</option>
                             {provinces.map((p) => (
                                 <option key={p.province_id} value={p.province_id}>
-                                    {p.name_en}
+                                    {p.name_km}
                                 </option>
                             ))}
                         </select>
@@ -331,8 +199,9 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                         )}
                     </div>
 
+                    {/* District */}
                     <div className="space-y-2">
-                        <Label htmlFor="district_id">District</Label>
+                        <Label htmlFor="district_id">ស្រុក/ខណ្ឌ</Label>
                         <select
                             id="district_id"
                             value={data.district_id}
@@ -340,10 +209,10 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                             disabled={!data.province_id}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="">Select District</option>
+                            <option value="">ជ្រើសរើសស្រុក/ខណ្ឌ</option>
                             {districts.map((d) => (
                                 <option key={d.district_id} value={d.district_id}>
-                                    {d.name_en}
+                                    {d.name_km}
                                 </option>
                             ))}
                         </select>
@@ -352,8 +221,9 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                         )}
                     </div>
 
+                    {/* Commune */}
                     <div className="space-y-2">
-                        <Label htmlFor="commune_id">Commune</Label>
+                        <Label htmlFor="commune_id">ឃុំ/សង្កាត់</Label>
                         <select
                             id="commune_id"
                             value={data.commune_id}
@@ -361,10 +231,10 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                             disabled={!data.district_id}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="">Select Commune</option>
+                            <option value="">ជ្រើសរើសឃុំ/សង្កាត់</option>
                             {communes.map((c) => (
                                 <option key={c.commune_id} value={c.commune_id}>
-                                    {c.name_en}
+                                    {c.name_km}
                                 </option>
                             ))}
                         </select>
@@ -373,8 +243,9 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                         )}
                     </div>
 
+                    {/* Village */}
                     <div className="space-y-2">
-                        <Label htmlFor="village_id">Village</Label>
+                        <Label htmlFor="village_id">ភូមិ</Label>
                         <select
                             id="village_id"
                             value={data.village_id}
@@ -382,10 +253,10 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                             disabled={!data.commune_id}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="">Select Village (Optional)</option>
+                            <option value="">ជ្រើសរើសភូមិ (ស្រេចចិត្ត)</option>
                             {villages.map((v) => (
                                 <option key={v.village_id} value={v.village_id}>
-                                    {v.name_en}
+                                    {v.name_km}
                                 </option>
                             ))}
                         </select>
@@ -398,21 +269,21 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
 
             {/* Description */}
             <div className="space-y-2">
-                <Label htmlFor="description">Farm Description</Label>
+                <Label htmlFor="description">ការពិពណ៌នាកសិដ្ឋាន</Label>
                 <textarea
                     id="description"
                     value={data.description}
                     onChange={(e) => setData('description', e.target.value)}
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 resize-none"
-                    placeholder="Describe your farm and farming practices"
+                    placeholder="ពិពណ៌នាអំពីកសិដ្ឋាន និងការដាំដុះរបស់អ្នក"
                 />
                 {errors.description && (
                     <p className="text-sm text-red-600">{errors.description}</p>
                 )}
             </div>
 
-            {/* Submit Button */}
+            {/* Action Buttons */}
             <div className="flex items-center gap-4 pt-4 border-t">
                 <Button 
                     variant="ghost" 
@@ -420,14 +291,14 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                     type="button"
                     disabled={processing}
                 >
-                    Cancel
+                    បោះបង់
                 </Button>
                 <Button 
                     type="submit" 
                     disabled={processing}
                     className="min-w-[120px]"
                 >
-                    {processing ? 'Saving...' : 'Save Changes'}
+                    {processing ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកការផ្លាស់ប្តូរ'}
                 </Button>
             </div>
 
@@ -440,7 +311,7 @@ export default function FarmEditForm({ seller, provinces, onClose }: FarmEditFor
                 leaveTo="opacity-0"
             >
                 <p className="text-sm text-green-600 font-medium bg-green-50 p-3 rounded">
-                    ✓ Farm information updated successfully!
+                    ✓ បានធ្វើបច្ចុប្បន្នភាពព័ត៌មានកសិដ្ឋានដោយជោគជ័យ!
                 </p>
             </Transition>
         </form>

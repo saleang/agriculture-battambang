@@ -57,24 +57,27 @@ export default function SellerProfile() {
                         {/* Information Grid */}
                         <div className="grid gap-6 md:grid-cols-2">
                             <div>
-                                <Label className="text-sm font-medium text-gray-700">Username</Label>
+                                <Label className="text-sm font-medium text-gray-700">គោត្តនាម និងនាម</Label>
                                 <div className="mt-1 text-base text-gray-900">{auth?.user?.username || '-'}</div>
                             </div>
 
                             <div>
-                                <Label className="text-sm font-medium text-gray-700">Email</Label>
+                                <Label className="text-sm font-medium text-gray-700">អ៊ីមែល</Label>
                                 <div className="mt-1 text-base text-gray-900">{auth?.user?.email || '-'}</div>
                             </div>
 
                             <div>
-                                <Label className="text-sm font-medium text-gray-700">Phone</Label>
+                                <Label className="text-sm font-medium text-gray-700">លេខទូរស័ព្ទ</Label>
                                 <div className="mt-1 text-base text-gray-900">{auth?.user?.phone || '-'}</div>
                             </div>
 
                             <div>
-                                <Label className="text-sm font-medium text-gray-700">Gender</Label>
-                                <div className="mt-1 text-base text-gray-900 capitalize">
-                                    {auth?.user?.gender || '-'}
+                                <Label className="text-sm font-medium text-gray-700">ភេទ</Label>
+                                <div className="mt-1 text-base text-gray-900">
+                                    {auth?.user?.gender === 'male' ? 'ប្រុស' : 
+                                    auth?.user?.gender === 'female' ? 'ស្រី' : 
+                                    auth?.user?.gender === 'other' ? 'ផ្សេងទៀត' : 
+                                    '-'}
                                 </div>
                             </div>
                         </div>
@@ -83,7 +86,7 @@ export default function SellerProfile() {
                         {seller?.certification_url && (
                             <div className="pt-6 border-t">
                                 <Label className="text-sm font-medium text-gray-700">
-                                    Certification / ID Card
+                                     ឯកសារ (អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ)
                                 </Label>
                                 <div className="mt-2">
                                     <a
@@ -99,7 +102,7 @@ export default function SellerProfile() {
                                         />
                                     </a>
                                     <p className="text-xs text-gray-600 mt-1">
-                                        Click to view full size
+                                        ចុចលើរូបភាពដើម្បីមើលទំហំពេញ
                                     </p>
                                 </div>
                             </div>
@@ -108,7 +111,7 @@ export default function SellerProfile() {
                         {/* Edit Button */}
                         <div className="flex items-center gap-4 pt-6 border-t">
                             <Button onClick={() => setOpen(true)}>
-                                Edit Profile
+                                កែប្រែព័ត៌មានប្រូហ្វាយល៍
                             </Button>
                         </div>
                     </div>
@@ -122,7 +125,7 @@ export default function SellerProfile() {
                             />
                             <div className="relative z-10 w-full max-w-2xl bg-white rounded-lg shadow-xl">
                                 <div className="flex justify-between items-center p-6 border-b">
-                                    <h3 className="text-lg font-semibold">Edit Profile</h3>
+                                    <h3 className="text-lg font-semibold">កែប្រែព័ត៌មានប្រូហ្វាយល៍</h3>
                                     <Button
                                         variant="ghost"
                                         onClick={() => setOpen(false)}

@@ -1,4 +1,4 @@
-// components/PaymentEditForm.tsx - FIXED VERSION
+// components/PaymentEditForm.tsx - ភាសាខ្មែរពេញលេញ
 import React, { useRef, useState } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
         if (file) {
             // Validate file size (5MB)
             if (file.size > 5 * 1024 * 1024) {
-                toast.error('QR code image must be less than 5MB');
+                toast.error('រូបភាព QR កូដត្រូវតែតូចជាង 5MB');
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
@@ -49,7 +49,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
 
             // Validate file type
             if (!file.type.startsWith('image/')) {
-                toast.error('Please upload an image file');
+                toast.error('សូមបញ្ចូលឯកសាររូបភាព');
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
@@ -86,10 +86,9 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Payment settings updated successfully');
+                toast.success('បានធ្វើបច្ចុប្បន្នភាពការកំណត់ការបង់ប្រាក់ដោយជោគជ័យ');
                 router.reload({
                     only: ['seller'],
-                    // preserveScroll: true,
                     onSuccess: () => {
                         onClose();
                     },
@@ -97,7 +96,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
-                toast.error('Failed to update payment settings');
+                toast.error('មិនអាចធ្វើបច្ចុប្បន្នភាពការកំណត់ការបង់ប្រាក់បានទេ');
                 const firstError = Object.values(errors)[0];
                 if (firstError) {
                     toast.error(firstError as string);
@@ -109,35 +108,37 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
             <div className="border-l-4 border-blue-600 pl-4 mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Payment Details</h3>
-                <p className="text-sm text-gray-600 mt-1">Configure your payment information</p>
+                <h3 className="text-xl font-semibold text-gray-900">ព័ត៌មានការបង់ប្រាក់</h3>
+                <p className="text-sm text-gray-600 mt-1">កំណត់រចនាសម្ព័ន្ធព័ត៌មានការបង់ប្រាក់របស់អ្នក</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+                {/* Bank Account Name */}
                 <div className="space-y-2">
-                    <Label htmlFor="bank_account_name">Bank Account Name</Label>
+                    <Label htmlFor="bank_account_name">ឈ្មោះគណនីធនាគារ</Label>
                     <Input
                         id="bank_account_name"
                         name="bank_account_name"
                         type="text"
                         value={data.bank_account_name}
                         onChange={handleChange}
-                        placeholder="Enter account name"
+                        placeholder="បញ្ចូលឈ្មោះគណនី"
                     />
                     {errors.bank_account_name && (
                         <p className="text-sm text-red-600">{errors.bank_account_name}</p>
                     )}
                 </div>
 
+                {/* Bank Account Number */}
                 <div className="space-y-2">
-                    <Label htmlFor="bank_account_number">Bank Account Number</Label>
+                    <Label htmlFor="bank_account_number">លេខគណនីធនាគារ</Label>
                     <Input
                         id="bank_account_number"
                         name="bank_account_number"
                         type="text"
                         value={data.bank_account_number}
                         onChange={handleChange}
-                        placeholder="Enter account number"
+                        placeholder="បញ្ចូលលេខគណនី"
                     />
                     {errors.bank_account_number && (
                         <p className="text-sm text-red-600">{errors.bank_account_number}</p>
@@ -147,9 +148,9 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
 
             {/* Payment QR Code Upload */}
             <div className="space-y-2 pt-4 border-t">
-                <Label>Payment QR Code</Label>
+                <Label>QR កូដបង់ប្រាក់</Label>
                 <p className="text-xs text-gray-600 mb-2">
-                    Upload your payment QR code image (JPG, PNG - max 5MB)
+                    បញ្ចូលរូបភាព QR កូដបង់ប្រាក់របស់អ្នក (JPG, PNG - អតិបរមា 5MB)
                 </p>
 
                 {/* Show existing QR code */}
@@ -160,7 +161,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                                 {qrPreview && (
                                     <img
                                         src={qrPreview}
-                                        alt="Current QR Code"
+                                        alt="QR កូដបច្ចុប្បន្ន"
                                         className="h-24 w-24 object-contain rounded border-2 border-green-300"
                                     />
                                 )}
@@ -169,12 +170,22 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                                 <div className="flex items-center gap-2 mb-1">
                                     <CheckCircle className="h-4 w-4 text-green-600" />
                                     <span className="text-sm font-medium text-green-900">
-                                        Current QR Code
+                                        QR កូដបច្ចុប្បន្ន
                                     </span>
                                 </div>
                                 <p className="text-xs text-green-700">
-                                    Upload a new image to replace it.
+                                    បញ្ចូលរូបថ្មីដើម្បីជំនួស
                                 </p>
+                                {qrPreview && (
+                                    <a
+                                        href={qrPreview}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-green-600 hover:text-green-700 underline mt-1 inline-block"
+                                    >
+                                        មើលទំហំពេញ →
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -187,7 +198,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                             <div className="flex-shrink-0 relative">
                                 <img
                                     src={qrPreview}
-                                    alt="New QR Code"
+                                    alt="QR កូដថ្មី"
                                     className="h-24 w-24 object-contain rounded border-2 border-blue-300"
                                 />
                                 <button
@@ -202,11 +213,11 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                                 <div className="flex items-center gap-2 mb-1">
                                     <Upload className="h-4 w-4 text-blue-600" />
                                     <span className="text-sm font-medium text-blue-900">
-                                        New QR Code Selected
+                                        បានជ្រើសរើស QR កូដថ្មី
                                     </span>
                                 </div>
                                 <p className="text-xs text-blue-700">
-                                    This will replace the current QR code.
+                                    នឹងជំនួស QR កូដបច្ចុប្បន្នពេលរក្សាទុក
                                 </p>
                             </div>
                         </div>
@@ -236,7 +247,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                 {!hasExistingQr && !newQrSelected && (
                     <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                         <FileIcon className="h-3 w-3" />
-                        No QR code uploaded yet
+                        មិនទាន់មាន QR កូដទេ
                     </p>
                 )}
             </div>
@@ -249,14 +260,14 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                     type="button"
                     disabled={processing}
                 >
-                    Cancel
+                    បោះបង់
                 </Button>
                 <Button
                     type="submit"
                     disabled={processing}
                     className="min-w-[120px]"
                 >
-                    {processing ? 'Saving...' : 'Save Changes'}
+                    {processing ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកការផ្លាស់ប្តូរ'}
                 </Button>
             </div>
 
@@ -269,7 +280,7 @@ export default function PaymentEditForm({ onClose }: PaymentEditFormProps) {
                 leaveTo="opacity-0"
             >
                 <p className="text-sm text-green-600 font-medium bg-green-50 p-3 rounded">
-                    ✓ Payment settings updated successfully!
+                    ✓ បានធ្វើបច្ចុប្បន្នភាពការកំណត់ការបង់ប្រាក់ដោយជោគជ័យ!
                 </p>
             </Transition>
         </form>

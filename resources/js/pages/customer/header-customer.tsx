@@ -76,7 +76,7 @@ export function Header({
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-[#f7f7f7] border-b">
 
-      
+
 
       {/* 🔹 Main header */}
       <div className="bg-white">
@@ -150,7 +150,7 @@ export function Header({
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition"
                     >
                       <User className="w-4 h-4 text-gray-600" />
-                      <span>My Profile</span>
+                      <span>ប្រូហ្វាលរបស់ខ្ញុំ</span>
                     </a>
                     <a
                       href={hrefMap.orders}
@@ -158,7 +158,7 @@ export function Header({
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition"
                     >
                       <Package className="w-4 h-4 text-gray-600" />
-                      <span>My Orders</span>
+                      <span>ការបញ្ជាទិញរបស់ខ្ញុំ</span>
                     </a>
                     <hr className="my-1" />
                     <Link
@@ -169,7 +169,7 @@ export function Header({
                     data-test="logout-button"
                 >
                     <LogOut className="w-4 h-4" />
-                    Log out
+                    ចាកចេញ
                 </Link>
                   </div>
                 )}
