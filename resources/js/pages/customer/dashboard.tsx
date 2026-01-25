@@ -1,58 +1,97 @@
+// dashboard.tsx (កែសម្រួលសម្រាប់កសិផលបាត់ដំបង)
 import { Footer } from '@/pages/customer/footer-customer';
 import Header from '@/pages/customer/header-customer';
-// import AppLayout from '@/layouts/app-layout';
-// import { Head } from '@inertiajs/react';
 import { Link, Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
-// import { useState } from 'react';
 import React, { useState } from 'react';
-import { ShoppingCart, Heart, User, Search, ChevronLeft, ChevronRight, Star, Phone, Mail, Facebook, Instagram, MapPin } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, ChevronLeft, ChevronRight, Star, Phone, Mail, Facebook, Instagram, MapPin, Truck, Shield, Leaf, Users, Award } from 'lucide-react';
 
 export default function CustomerDashboard({ auth }: PageProps) {
-    const [searchQuery, setSearchQueryHeader] = useState('');
+  const [searchQuery, setSearchQueryHeader] = useState('');
   const user = auth?.user ?? null;
   const userName = user ? (user.username ?? user.name ?? null) : null;
+  const userPhoto: string | null = user && typeof user === 'object' && 'photo_url' in user ? (user.photo_url as string | null) : null;
 
-  const categories = [
-    { name: 'Vegetables', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop' },
-    { name: 'Coffee & Drinks', image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop' },
-    { name: 'Meat', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&h=300&fit=crop' },
-    { name: 'Milk & Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop' },
-    { name: 'Fresh Fruits', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop' },
-    { name: 'Cleaning Essential', image: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=300&fit=crop' },
+  // ប្រភេទកសិផលក្នុងខេត្តបាត់ដំបង
+  const battambangCategories = [
+    { name: 'ស្ពាន់ស', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop', desc: 'បន្លែស្រស់ពីស្រែ' },
+    { name: 'ផ្លែឈើ', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop', desc: 'ផ្លែឈើស្រស់បំផុត' },
+    { name: 'ស្រូវនិងអង្ករ', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop', desc: 'ស្រូវសាយដំបងល្បីល្បាញ' },
+    { name: 'ដំណាំឧស្សាហកម្ម', image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop', desc: 'កាកាវ ត្នោត ដូង' },
+    { name: 'សាច់សត្វ', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&h=300&fit=crop', desc: 'សាច់ស្រស់ពីកសិករ' },
+    { name: 'ទឹកដោះគោ', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop', desc: 'ទឹកដោះគោស្អាត' },
   ];
 
-  const bannerProducts = [
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-green-50 to-green-100', image: 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=600&h=400&fit=crop' },
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-orange-50 to-orange-100', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop' },
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-blue-50 to-blue-100', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop' },
+  // កសិករល្បីៗក្នុងខេត្ត
+  const featuredFarmers = [
+    { name: 'កសិករម៉ឹង', location: 'ស្រុកឯកភ្នំ', rating: 4.8, products: 'ស្ពាន់ស ត្រសក់' },
+    { name: 'កសិករសុខា', location: 'ស្រុកបវេល', rating: 4.9, products: 'ស្រូវសាយ អង្ករ' },
+    { name: 'កសិករវ៉ាន់', location: 'ស្រុកមោង', rating: 4.7, products: 'ផ្លែត្របែក ល្ហុង' },
   ];
 
-  const featuredProducts = [
-    { name: 'Organic Tomato', price: '$3', oldPrice: '$5', rating: 4.5, image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=400&h=400&fit=crop', discount: '-40%' },
-    { name: 'Vegan Egg Replacer', price: '$5.99', oldPrice: '$8', rating: 4.0, image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop' },
-    { name: 'Strawberry Vanilla', price: '$6.48', oldPrice: '$9', rating: 4.5, image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop', discount: '-28%' },
+  // ផលិតផលពិសេស
+  const battambangProducts = [
+    { 
+      name: 'ស្រូវសាយដំបង', 
+      price: '៛8,500/kg', 
+      farmer: 'កសិករសុខា', 
+      location: 'បវេល',
+      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop',
+      rating: 4.9,
+      organic: true
+    },
+    { 
+      name: 'ស្ពាន់សស្រស់', 
+      price: '៛3,000/kg', 
+      oldPrice: '៛4,000', 
+      farmer: 'កសិករម៉ឹង', 
+      location: 'ឯកភ្នំ',
+      image: 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=400&h=400&fit=crop',
+      rating: 4.7,
+      discount: '-25%',
+      organic: true
+    },
+    { 
+      name: 'ផ្លែត្របែកខេត្ត', 
+      price: '៛4,500/kg', 
+      farmer: 'កសិករវ៉ាន់', 
+      location: 'មោង',
+      image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop',
+      rating: 4.8,
+      organic: true
+    },
+    { 
+      name: 'ទឹកដោះគោស្រស់', 
+      price: '៛6,000/លីត្រ', 
+      farmer: 'កសិកររតនា', 
+      location: 'បាត់ដំបង',
+      image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop',
+      rating: 4.6
+    },
   ];
 
-  const dealProducts = [
-    { name: 'Fresh Orange Juice', price: '$1.99', oldPrice: '$3', rating: 4.0, image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=400&fit=crop' },
-    { name: 'Green Peas', price: '$2.99', oldPrice: '$4', rating: 4.0, image: 'https://images.unsplash.com/photo-1587735243615-c03f25aaff15?w=400&h=400&fit=crop' },
-    { name: 'Tomato Sauce', price: '$1.99', oldPrice: '$3', rating: 4.0, image: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400&h=400&fit=crop' },
-    { name: 'Green Tea Bag', price: '$5.99', oldPrice: '$8', rating: 4.5, image: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400&h=400&fit=crop' },
+  // គុណសម្បត្តិ
+  const advantages = [
+    { icon: <Truck className="w-8 h-8" />, title: 'បញ្ជាទិញតាមអនឡាញ', desc: 'ផ្គត់ផ្គង់ដល់ទ្វារផ្ទះ' },
+    { icon: <Shield className="w-8 h-8" />, title: 'ទំនិញធានាសុវត្ថិភាព', desc: 'គ្មានថ្នាំកូនសម្លាប់សត្វល្អិត' },
+    { icon: <Leaf className="w-8 h-8" />, title: 'ផលិតផលសរីរាង្គ', desc: 'ប្រមូលផលពីស្រែធម្មជាតិ' },
+    { icon: <Users className="w-8 h-8" />, title: 'គាំទ្រកសិករក្នុងស្រុក', desc: 'ទិញផ្ទាល់ពីកសិករ គ្មានអ្នកកាត់កណ្តាល' },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Top Bar */}
-      <div className="bg-gray-900 text-white py-2.5 px-4 text-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex gap-6">
-            <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" />+84 387 945 346</span>
-            <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />homedokan@gmail.com</span>
-          </div>
-          <div className="flex gap-4"><span>My Account</span><span>USD 💵</span></div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-white font-siemreap">
+      <Head title="ទំព័រដើម - កសិផលខេត្តបាត់ដំបង" />
+      
+      {/* Add custom fonts to Head */}
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Moul&family=Siemreap&display=swap" rel="stylesheet" />
+        <style>{`
+          .font-moul { font-family: 'Moul', serif; }
+          .font-siemreap { font-family: 'Siemreap', sans-serif; }
+        `}</style>
+      </Head>
 
       {/* Header */}
       <Header
@@ -62,37 +101,70 @@ export default function CustomerDashboard({ auth }: PageProps) {
         onSearchChange={setSearchQueryHeader}
         isAuthenticated={!!user}
         userName={userName}
+        userPhoto={userPhoto}
       />
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-br from-green-50 via-white to-green-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto mt-20 px-4 py-24">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-green-50 via-white to-emerald-50 overflow-hidden pt-28 md:pt-32">
+        <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-green-600 font-semibold mb-3 text-sm uppercase tracking-wide">UPTO 50% OFF</p>
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">Farm Fresh Organic<br /><span className="text-green-600">Vegetables.</span></h1>
-              <p className="text-gray-600 mb-8 text-lg leading-relaxed">Get our lorem ipsum suspendisse ultrices gravida.<br />Risus commodo viverra maecenas accumsan.</p>
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                <Award className="w-4 h-4" />
+                កសិផលស្រស់ពីស្រែបាត់ដំបង
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight font-moul">
+                ស្វាគមន៍ទៅកាន់<br />
+                <span className="text-green-600">ទីផ្សារកសិផល</span><br />
+                ខេត្តបាត់ដំបង
+              </h1>
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+                ទិញកសិផលស្រស់ៗពីកសិករដោយផ្ទាល់។ គាំទ្រកសិករក្នុងស្រុក 
+                និងទទួលបានផលិតផលគុណភាពខ្ពស់ដោយតម្លៃសមរម្យ។
+              </p>
 
-              <button className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Shop Online →</button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center font-siemreap">
+                  ទិញកសិផលឥឡូវនេះ →
+                </button>
+                <button className="border-2 border-green-600 text-green-600 hover:bg-green-50 px-8 py-4 rounded-full font-semibold text-lg transition-all font-siemreap">
+                  ស្គាល់កសិកររបស់យើង
+                </button>
+              </div>
             </div>
             <div className="relative">
               <div className="absolute top-0 right-0 w-full h-full bg-green-400 rounded-full blur-3xl opacity-20"></div>
-              <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=800&fit=crop" alt="Fresh Vegetables" className="relative rounded-3xl shadow-2xl w-full" />
+              <img 
+                src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=800&fit=crop" 
+                alt="កសិផលបាត់ដំបង" 
+                className="relative rounded-3xl shadow-2xl w-full border-8 border-white"
+              />
+              <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">500+</div>
+                    <div className="text-sm text-gray-600">កសិករដៃគូ</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Banner Cards */}
+      {/* Advantages */}
       <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-6">
-          {bannerProducts.map((item, i) => (
-            <div key={i} className={`bg-gradient-to-br ${item.bg} rounded-2xl p-8 relative overflow-hidden hover:shadow-lg transition`}>
-              <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center text-xs font-bold shadow-lg">OFF<br />30%</div>
-              <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">{item.title}</p>
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">{item.subtitle}</h3>
-              <button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</button>
-              <img src={item.image} alt={item.subtitle} className="absolute bottom-0 right-0 w-40 h-40 object-cover opacity-60 rounded-tl-3xl" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {advantages.map((advantage, index) => (
+            <div key={index} className="bg-white border border-green-100 rounded-2xl p-6 hover:shadow-lg transition group">
+              <div className="text-green-600 mb-4 group-hover:scale-110 transition-transform">
+                {advantage.icon}
+              </div>
+              <h3 className="font-bold text-gray-900 mb-2">{advantage.title}</h3>
+              <p className="text-gray-600 text-sm">{advantage.desc}</p>
             </div>
           ))}
         </div>
@@ -100,116 +172,147 @@ export default function CustomerDashboard({ auth }: PageProps) {
 
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 py-16">
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">Categories</p>
-            <h2 className="text-4xl font-bold text-gray-900">Top Categories</h2>
-          </div>
-          <div className="flex gap-2">
-            <button className="p-2.5 border-2 rounded-full hover:bg-gray-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-            <button className="p-2.5 border-2 rounded-full bg-green-500 text-white border-green-500"><ChevronRight className="w-5 h-5" /></button>
-          </div>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-moul">ប្រភេទកសិផលពេញនិយម</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">រកមើលកសិផលគ្រប់ប្រភេទដែលផលិតនៅក្នុងខេត្តបាត់ដំបង</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {categories.map((cat, i) => (
-            <div key={i} className="bg-white border-2 rounded-2xl overflow-hidden hover:shadow-lg transition cursor-pointer group">
-              <div className="aspect-square overflow-hidden">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {battambangCategories.map((cat, index) => (
+            <div key={index} className="bg-white border border-green-100 rounded-2xl overflow-hidden hover:shadow-lg transition cursor-pointer group">
+              <div className="aspect-square overflow-hidden bg-green-50">
+                <img 
+                  src={cat.image} 
+                  alt={cat.name} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                />
               </div>
-              <div className="p-4 text-center"><p className="font-semibold text-gray-900">{cat.name}</p></div>
+              <div className="p-4 text-center">
+                <h3 className="font-bold text-gray-900 mb-1">{cat.name}</h3>
+                <p className="text-sm text-gray-600">{cat.desc}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 py-16 bg-gray-50">
-        <div className="flex justify-between items-center mb-10">
-          <h2 className="text-4xl font-bold text-gray-900">Featured Products</h2>
-          <div className="flex gap-6 text-sm font-medium">
-            <button className="text-green-600 border-b-2 border-green-600 pb-1">Featured</button>
-            <button className="text-gray-600 hover:text-green-600 transition">Best Sellers</button>
-            <button className="text-gray-600 hover:text-green-600 transition">Popular</button>
+      <section className="bg-gradient-to-b from-green-50 to-white py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-10">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-moul">ផលិតផលពិសេស</h2>
+              <p className="text-gray-600 mt-2">កសិផលប្រណីតពីកសិករបាត់ដំបង</p>
+            </div>
+            <button className="text-green-600 font-semibold hover:text-green-700 flex items-center gap-2">
+              មើលទាំងអស់ <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-        </div>
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
-            <h3 className="font-bold text-gray-900 mb-6 text-lg">Categories</h3>
-            <ul className="space-y-3 text-gray-600">
-              {['Coffee & Pastry', 'Bread & Bakery', 'Snacks', 'Dairy', 'Confectionery', 'Popular Items', 'Chocolate & Wafers', 'Beverage'].map((cat, i) => (
-                <li key={i} className="hover:text-green-600 cursor-pointer transition font-medium">{cat}</li>
-              ))}
-            </ul>
-            <button className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg">Shop Now →</button>
-          </div>
-          {featuredProducts.map((p, i) => (
-            <div key={i} className="bg-white border rounded-2xl p-6 hover:shadow-xl transition group">
-              <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-gray-50">
-                {p.discount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold z-10">{p.discount}</span>}
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition">
-                  <button className="bg-white p-2.5 rounded-full shadow-lg hover:bg-green-500 hover:text-white transition"><Heart className="w-4 h-4" /></button>
-                  <button className="bg-white p-2.5 rounded-full shadow-lg hover:bg-green-500 hover:text-white transition"><Search className="w-4 h-4" /></button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {battambangProducts.map((product, index) => (
+              <div key={index} className="bg-white border border-green-100 rounded-2xl overflow-hidden hover:shadow-xl transition group">
+                <div className="relative aspect-square overflow-hidden bg-green-50">
+                  <img 
+                    src={product.image} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                  />
+                  {product.discount && (
+                    <div className="absolute top-3 left-3 bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold">
+                      {product.discount}
+                    </div>
+                  )}
+                  {product.organic && (
+                    <div className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                      <Leaf className="w-3 h-3" /> សរីរាង្គ
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 text-white">
+                    <div className="text-sm opacity-90">កសិករ: {product.farmer}</div>
+                    <div className="text-xs opacity-75">{product.location}</div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-gray-900">{product.name}</h3>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm font-medium">{product.rating}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xl font-bold text-green-600">{product.price}</span>
+                      {product.oldPrice && (
+                        <span className="text-sm text-gray-400 line-through ml-2">{product.oldPrice}</span>
+                      )}
+                    </div>
+                    <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      ទិញ
+                    </button>
+                  </div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, j) => <Star key={j} className={`w-4 h-4 ${j < Math.floor(p.rating) ? 'fill-orange-400 text-orange-400' : 'text-gray-300'}`} />)}
-                <span className="text-sm text-gray-500 ml-1">({p.rating})</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div><span className="text-xl font-bold text-gray-900">{p.price}</span>{p.oldPrice && <span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice}</span>}</div>
-                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Shop Now</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Promo Banners */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
-            <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">UPTO 15% OFF</p>
-            <h3 className="text-4xl font-bold text-gray-900 mb-6">Fresh Vegetable</h3>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</button>
-            <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop" alt="Vegetables" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-40 rounded-tl-3xl" />
-          </div>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
-            <h3 className="text-4xl font-bold mb-6">All Tasted Organic &<br />Fresh Products</h3>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</button>
-            <img src="https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=400&h=400&fit=crop" alt="Products" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-30 rounded-tl-3xl" />
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Deal of Week */}
+      {/* Featured Farmers */}
       <section className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Deal Of The Week</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {dealProducts.map((p, i) => (
-            <div key={i} className="bg-white border rounded-2xl p-6 hover:shadow-xl transition text-center group">
-              <div className="aspect-square overflow-hidden rounded-xl bg-gray-50 mb-4">
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-moul">កសិករដៃគូរបស់យើង</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">ស្គាល់កសិករដែលផ្គត់ផ្គង់កសិផលស្រស់ៗដល់អ្នក</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {featuredFarmers.map((farmer, index) => (
+            <div key={index} className="bg-white border border-green-100 rounded-2xl p-6 hover:shadow-lg transition">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                  <User className="w-8 h-8 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">{farmer.name}</h3>
+                  <p className="text-gray-600 flex items-center gap-1">
+                    <MapPin className="w-4 h-4" /> {farmer.location}
+                  </p>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
-              <div className="flex items-center justify-center gap-1 mb-3">
-                {[...Array(5)].map((_, j) => <Star key={j} className={`w-4 h-4 ${j < Math.floor(p.rating) ? 'fill-orange-400 text-orange-400' : 'text-gray-300'}`} />)}
-                <span className="text-sm text-gray-500 ml-1">({p.rating})</span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < Math.floor(farmer.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                  ))}
+                </div>
+                <span className="text-sm font-medium">{farmer.rating}</span>
               </div>
-              <div className="mb-4"><span className="text-xl font-bold text-gray-900">{p.price}</span><span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice}</span></div>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <button className="p-2 rounded-full border-2 hover:bg-green-50 hover:border-green-500 transition"><Heart className="w-4 h-4" /></button>
-                <button className="p-2 rounded-full border-2 bg-green-500 text-white hover:bg-green-600 border-green-500 transition"><ShoppingCart className="w-4 h-4" /></button>
-                <button className="p-2 rounded-full border-2 hover:bg-green-50 hover:border-green-500 transition"><Search className="w-4 h-4" /></button>
+              <div className="text-sm text-gray-600 mb-4">
+                <span className="font-medium">ផលិតផល:</span> {farmer.products}
               </div>
-              <button className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Shop Now</button>
+              <button className="w-full border border-green-600 text-green-600 hover:bg-green-50 py-2.5 rounded-lg font-medium transition">
+                ទំនាក់ទំនងកសិករ
+              </button>
             </div>
           ))}
         </div>
-        <div className="flex justify-center gap-2 mt-8">
-          <button className="p-2.5 border-2 rounded-full hover:bg-gray-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-          <button className="p-2.5 border-2 rounded-full bg-green-500 text-white border-green-500 transition"><ChevronRight className="w-5 h-5" /></button>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-gradient-to-r from-green-700 to-emerald-600 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 font-moul">ចូលរួមជាមួយយើង</h2>
+          <p className="text-xl opacity-90 mb-8 max-w-3xl mx-auto">
+            ប្រសិនបើអ្នកជាកសិករនៅខេត្តបាត់ដំបង ហើយចង់លក់ផលិតផលរបស់អ្នកតាមអនឡាញ
+            សូមចុះឈ្មោះជាសមាជិកជាមួយយើងឥឡូវនេះ!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-white text-green-700 hover:bg-gray-100 px-8 py-4 rounded-full font-bold text-lg shadow-lg">
+              ចុះឈ្មោះជាកសិករ
+            </button>
+            <button className="bg-transparent border-2 border-white hover:bg-white/10 px-8 py-4 rounded-full font-bold text-lg">
+              ស្វែងយល់បន្ថែម
+            </button>
+          </div>
         </div>
       </section>
 
