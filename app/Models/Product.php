@@ -12,35 +12,48 @@ class Product extends Model
     protected $table = 'product';
     protected $primaryKey = 'product_id';
 
+    /**
+     * Mass assignable attributes
+     */
     protected $fillable = [
-        'productname',
-        'price',
-        'quantity_available',
-        'category_id',
-        'harvest_date',
-        'expiry_date',
-        'unit',
-        'description',
-        'stock',
-        'discount_percentage',
         'seller_id',
-        'seller_product_id', // ✅ REQUIRED
-        'views_count',
+        'seller_product_id',
+        'productname',
+        'description',
+        'price',
+        'unit',
+        'stock',
+        'category_id',
         'is_active',
+        'views_count',
     ];
 
+    /**
+     * Attribute casting
+     */
     protected $casts = [
-        'price' => 'decimal:2',
-        'discount_percentage' => 'decimal:2',
-        'is_active' => 'boolean',
-        'harvest_date' => 'date',
-        'expiry_date' => 'date',
+        'price'             => 'decimal:2',
+        'stock'             => 'string',
+        'is_active'         => 'boolean',
+        'views_count'       => 'integer',
+        'seller_id'         => 'integer',
         'seller_product_id' => 'integer',
+        'category_id'       => 'integer',
+        'created_at'        => 'datetime',
+        'updated_at'        => 'datetime',
     ];
 
+    /**
+     * Relationships
+     */
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id', 'category_id');
+    }
+
+    public function seller()
+    {
+        return $this->belongsTo(Seller::class, 'seller_id', 'seller_id');
     }
 
     public function images()
@@ -48,9 +61,29 @@ class Product extends Model
         return $this->hasMany(ProductImage::class, 'product_id', 'product_id');
     }
 
-    public function seller()
+    /**
+     * Scopes
+     */
+    public function scopeActive($query)
     {
-        return $this->belongsTo(Seller::class, 'seller_id', 'seller_id');
+        return $query->where('is_active', true);
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('stock', 'available');
+    }
+
+    /**
+     * Helpers
+     */
+    public function isAvailable(): bool
+    {
+        return $this->stock === 'available';
+    }
+
+    public function getStockLabelAttribute(): string
+    {
+        return $this->isAvailable() ? 'Available' : 'Out of Stock';
     }
 }
-

@@ -14,15 +14,11 @@ return new class extends Migration {
             $table->string('productname', 100);
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
-            $table->integer('quantity_available')->default(0);
             $table->string('unit', 20)->default('piece');
-            $table->enum('stock', ['available','out_of_stock','discontinued'])->default('available');
-            $table->unsignedBigInteger('category_id'); // ✅ must match category table
-            $table->date('harvest_date')->nullable();
-            $table->date('expiry_date')->nullable();
+            $table->enum('stock', ['available','out_of_stock'])->default('available');
+            $table->unsignedBigInteger('category_id'); 
             $table->boolean('is_active')->default(true);
             $table->integer('views_count')->default(0);
-            $table->decimal('discount_percentage', 5, 2)->default(0.00);
             $table->timestamps();
 
             // Ensure unique seller-specific ID

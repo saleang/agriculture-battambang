@@ -17,9 +17,18 @@ class CategoryController extends Controller
     {
         $sellerId = Auth::user()->seller->seller_id;
 
-        $categories = Category::where('seller_id', $sellerId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Category::where('seller_id', $sellerId);
+
+        // 🔍 Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('categoryname', 'like', "%{$searchTerm}%")
+                ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $categories = $query->orderBy('created_at', 'desc')->get();
 
         if ($request->wantsJson()) {
             return response()->json(['data' => $categories], 200);

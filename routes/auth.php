@@ -6,7 +6,6 @@ use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // use App\Http\Controllers\RegisterController;
-
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
