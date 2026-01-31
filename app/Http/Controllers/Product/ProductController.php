@@ -194,4 +194,14 @@ class ProductController extends Controller
             return response()->json(['message' => 'Failed to delete product.', 'error' => $e->getMessage()], 500);
         }
     }
+    public function publicProducts()
+    {
+        $products = \App\Models\Product::with('images', 'category')
+            ->where('is_active', true) // only show active products
+            ->get();
+
+        return response()->json([
+            'data' => $products
+        ]);
+    }
 }

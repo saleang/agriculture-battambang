@@ -13,6 +13,7 @@ interface Category {
 
 const CategoryPage: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
+    const [localCategories, setLocalCategories] = useState<Category[]>([]);
     const [formData, setFormData] = useState({
         categoryname: '',
         description: '',
@@ -22,35 +23,31 @@ const CategoryPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [togglingId, setTogglingId] = useState<number | null>(null);
 
-    // Predefined top-level grocery categories (common in Cambodia/SE Asia online supermarkets)
     const predefinedCategories = [
-        'Fruits',
-        'Vegetables',
-        'Meat & Poultry',
-        'Seafood',
-        'Dairy & Eggs',
-        'Bakery',
-        'Beverages',
-        'Snacks & Confectionery',
-        'Frozen Foods',
-        'Canned & Packaged Goods',
-        'Rice, Noodles & Grains',
-        'Oils, Sauces & Spices',
-        'Household & Cleaning',
-        'Personal Care & Beauty',
-        'Baby & Kids',
-        'Pet Supplies',
+        'ប្រភេទផ្លែឈើ',
+        'ប្រភេទបន្លែ',
+        'ប្រភេទសាច់',
+        'ប្រភេទទឹកដោះគោ និងស៊ុត',
+        'ប្រភេទអាហារសម្រន់ និងផ្អែម',
+        'ប្រភេទអាហារកក',
+        'ប្រភេទអាហារកំប៉ុង និងខ្ចប់',
+        'ប្រភេទស្រូវ មី និងគ្រាប់ធញ្ញជាតិ',
+        'ប្រភេទប្រេង និងគ្រឿងទេស',
+        'ប្រភេទគ្រឿងផ្គត់ផ្គង់សត្វចិញ្ចឹម',
     ];
 
     const fetchCategories = async () => {
         setLoading(true);
         try {
             const response = await axios.get('/seller/category');
-            setCategories(response.data.data || response.data);
+            const data = response.data.data || response.data;
+            setCategories(data);
+            setLocalCategories(data);
         } catch (error) {
             console.error(error);
-            Swal.fire('Error!', 'Failed to fetch categories.', 'error');
+            Swal.fire('មានបញ្ហា!', 'មិនអាចទាញយកប្រភេទផលិតផលបានទេ។', 'error');
         } finally {
             setLoading(false);
         }
@@ -78,10 +75,31 @@ const CategoryPage: React.FC = () => {
         }
     };
 
+    const checkDuplicate = (name: string, excludeId?: number): boolean => {
+        const lowerName = name.trim().toLowerCase();
+        return categories.some(
+            (cat) =>
+                cat.categoryname.trim().toLowerCase() === lowerName &&
+                cat.category_id !== excludeId
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.categoryname) {
-            Swal.fire('Required!', 'Please select a category name.', 'warning');
+
+        if (!formData.categoryname.trim()) {
+            Swal.fire('តម្រូវការ!', 'សូមជ្រើសរើសឈ្មោះប្រភេទផលិតផល។', 'warning');
+            return;
+        }
+
+        if (checkDuplicate(formData.categoryname, editingId ?? undefined)) {
+            Swal.fire(
+                'ឈ្មោះប្រភេទស្ទួនគ្នា!',
+                editingId
+                    ? 'ឈ្មោះប្រភេទនេះមានរួចហើយ (សូមជ្រើសរើសឈ្មោះប្រភេទថ្មី)។'
+                    : 'ឈ្មោះប្រភេទនេះមានរួចហើយ មិនអាចបន្ថែមស្ទួនបានទេ។',
+                'warning'
+            );
             return;
         }
 
@@ -89,17 +107,17 @@ const CategoryPage: React.FC = () => {
 
         try {
             const apiData = {
-                categoryname: formData.categoryname,
-                description: formData.description,
+                categoryname: formData.categoryname.trim(),
+                description: formData.description.trim() || undefined,
                 is_active: formData.is_active
             };
 
             if (editingId) {
                 await axios.put(`/seller/category/${editingId}`, apiData);
-                Swal.fire('Updated!', 'Category updated successfully.', 'success');
+                Swal.fire('ជោគជ័យ!', 'បានកែប្រែឈ្មោះប្រភេទរួចរាល់។', 'success');
             } else {
                 await axios.post('/seller/category', apiData);
-                Swal.fire('Added!', 'Category created successfully.', 'success');
+                Swal.fire('ជោគជ័យ!', 'បានបន្ថែមឈ្មោះប្រភេទថ្មី។', 'success');
             }
 
             resetForm();
@@ -109,9 +127,9 @@ const CategoryPage: React.FC = () => {
             if (error.response?.status === 422) {
                 const errors = error.response.data.errors;
                 const errorMessages = Object.values(errors).flat().join('<br>');
-                Swal.fire('Validation Error!', errorMessages, 'error');
+                Swal.fire('កំហុសក្នុងការបញ្ជាក់!', errorMessages, 'error');
             } else {
-                Swal.fire('Error!', error.response?.data?.message || 'Something went wrong.', 'error');
+                Swal.fire('មានបញ្ហា!', error.response?.data?.message || 'មានបញ្ហាមួយចំនួនកើតឡើង។', 'error');
             }
         } finally {
             setSubmitting(false);
@@ -139,11 +157,12 @@ const CategoryPage: React.FC = () => {
 
     const handleDelete = async (id: number) => {
         const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'This will delete the category and all its sub-categories!',
+            title: 'តើអ្នកប្រាកដទេ?',
+            text: 'ថានឹងលុបឈ្មោះប្រភេទនេះ!',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
+            confirmButtonText: 'បាទ/ចាស',
+            cancelButtonText: 'បោះបង់',
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
         });
@@ -151,54 +170,81 @@ const CategoryPage: React.FC = () => {
         if (result.isConfirmed) {
             try {
                 await axios.delete(`/seller/category/${id}`);
-                Swal.fire('Deleted!', 'Category has been deleted.', 'success');
+                Swal.fire('បានលុប!', 'ឈ្មោះប្រភេទត្រូវបានលុបរួចរាល់។', 'success');
                 fetchCategories();
             } catch (error: any) {
                 console.error(error);
                 if (error.response?.status === 409) {
-                    Swal.fire('Cannot Delete!', error.response.data.message, 'error');
+                    Swal.fire('មិនអាចលុបបាន!', error.response.data.message, 'error');
                 } else {
-                    Swal.fire('Error!', 'Failed to delete category.', 'error');
+                    Swal.fire('មានបញ្ហា!', 'មិនអាចលុបឈ្មោះប្រភេទនេះបានទេ។', 'error');
                 }
             }
         }
     };
 
     const toggleActive = async (id: number, currentStatus: boolean) => {
+        if (togglingId === id) return;
+
+        setTogglingId(id);
+
+        setLocalCategories(prev =>
+            prev.map(cat =>
+                cat.category_id === id
+                    ? { ...cat, is_active: !currentStatus }
+                    : cat
+            )
+        );
+
         try {
             await axios.patch(`/seller/category/${id}/toggle-status`, {
                 is_active: !currentStatus
             });
-            Swal.fire('Updated!', 'Status updated successfully.', 'success');
-            fetchCategories();
+
+            setCategories(prev =>
+                prev.map(cat =>
+                    cat.category_id === id
+                        ? { ...cat, is_active: !currentStatus }
+                        : cat
+                )
+            );
         } catch (error) {
-            console.error(error);
-            Swal.fire('Error!', 'Failed to update status.', 'error');
+            console.error('Failed to toggle status:', error);
+
+            setLocalCategories(prev =>
+                prev.map(cat =>
+                    cat.category_id === id
+                        ? { ...cat, is_active: currentStatus }
+                        : cat
+                )
+            );
+        } finally {
+            setTogglingId(null);
         }
     };
 
-    const filteredCategories = categories.filter((category) => {
+    const filteredCategories = localCategories.filter((category) => {
         const term = searchTerm.toLowerCase();
-        const matchesId = category.seller_category_id.toString().includes(term);
-        const matchesName = category.categoryname.toLowerCase().includes(term);
-        return matchesId || matchesName;
+        return (
+            category.seller_category_id.toString().includes(term) ||
+            category.categoryname.toLowerCase().includes(term)
+        );
     });
 
     return (
         <AppLayout>
             <div className="container mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-2 text-gray-800">Category Management</h1>
+                <h1 className="text-2xl font-bold mb-2 text-gray-800">គ្រប់គ្រងឈ្មោះប្រភេទផលិតផល</h1>
 
-                {/* Form Section */}
                 <div className="bg-white rounded-lg shadow-md p-3 mb-2">
                     <h2 className="text-xl font-semibold mb-3 text-gray-700">
-                        {editingId ? 'Edit Category' : 'Add New Category'}
+                        {editingId ? 'កែសម្រួលឈ្មោះប្រភេទ' : 'បន្ថែមឈ្មោះប្រភេទថ្មី'}
                     </h2>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-600">
-                                Category Name *
+                                ឈ្មោះប្រភេទ *
                             </label>
                             <select
                                 name="categoryname"
@@ -210,8 +256,8 @@ const CategoryPage: React.FC = () => {
                             >
                                 <option value="" disabled>
                                     {editingId
-                                        ? 'Keep current or select new category'
-                                        : '-- Choose main category --'}
+                                        ? 'រក្សាឈ្មោះបច្ចុប្បន្ន ឬជ្រើសថ្មី'
+                                        : '-- ជ្រើសរើសឈ្មោះប្រភេទ --'}
                                 </option>
 
                                 {predefinedCategories.map((catName) => (
@@ -224,11 +270,11 @@ const CategoryPage: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-600">
-                                Description
+                                ការពិពណ៌នា
                             </label>
                             <textarea
                                 name="description"
-                                placeholder="Optional: Enter description..."
+                                placeholder="ពិពណ៌នាពីប្រភេទ..."
                                 value={formData.description}
                                 onChange={handleInputChange}
                                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -248,7 +294,7 @@ const CategoryPage: React.FC = () => {
                                 disabled={submitting}
                             />
                             <label htmlFor="is_active" className="text-sm font-medium text-gray-600">
-                                Active
+                                {formData.is_active ? 'ប្រើប្រាស់' : 'មិនទាន់ប្រើប្រាស់'}
                             </label>
                         </div>
 
@@ -260,7 +306,11 @@ const CategoryPage: React.FC = () => {
                                     submitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                                 } text-white transition duration-200`}
                             >
-                                {submitting ? 'Processing...' : editingId ? 'Update Category' : 'Add Category'}
+                                {submitting
+                                    ? 'កំពុងដំណើរការ...'
+                                    : editingId
+                                    ? 'កែប្រែឈ្មោះប្រភេទ'
+                                    : 'បន្ថែមឈ្មោះប្រភេទ'}
                             </button>
 
                             {editingId && (
@@ -270,26 +320,25 @@ const CategoryPage: React.FC = () => {
                                     disabled={submitting}
                                     className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition duration-200"
                                 >
-                                    Cancel
+                                    បោះបង់
                                 </button>
                             )}
                         </div>
                     </form>
                 </div>
 
-                {/* Categories List Section */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-700">Category List</h2>
+                        <h2 className="text-xl font-semibold text-gray-700">បញ្ជីឈ្មោះប្រភេទ</h2>
                         <div className="text-sm text-gray-500">
-                            Total: {filteredCategories.length} categories
+                            សរុប៖ {filteredCategories.length} ប្រភេទ
                         </div>
                     </div>
 
                     <div className="mb-4">
                         <input
                             type="text"
-                            placeholder="Search by ID or Name..."
+                            placeholder="ស្វែងរកតាមលេខសម្គាល់ ឬឈ្មោះ..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -297,23 +346,22 @@ const CategoryPage: React.FC = () => {
                     </div>
 
                     {loading ? (
-                        <div className="text-center py-8">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            <p className="mt-2 text-gray-600">Loading categories...</p>
+                        <div className="text-center py-8 text-gray-600">
+                            កំពុងផ្ទុកប្រភេទ...
                         </div>
                     ) : filteredCategories.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
-                            No categories found.
+                            រកមិនឃើញឈ្មោះប្រភេទណាមួយទេ។
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">លេខសម្គាល់</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ឈ្មោះប្រភេទ</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ស្ថានភាព</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">សកម្មភាព</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -331,13 +379,14 @@ const CategoryPage: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <button
                                                     onClick={() => toggleActive(category.category_id, category.is_active)}
-                                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                    disabled={togglingId === category.category_id}
+                                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 min-w-[90px] ${
                                                         category.is_active
                                                             ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                                             : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                    }`}
+                                                    } ${togglingId === category.category_id ? 'opacity-60 cursor-wait' : ''}`}
                                                 >
-                                                    {category.is_active ? 'Active' : 'Inactive'}
+                                                    {category.is_active ? 'ប្រើប្រាស់' : 'មិនប្រើប្រាស់'}
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -345,13 +394,13 @@ const CategoryPage: React.FC = () => {
                                                     onClick={() => handleEdit(category)}
                                                     className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition duration-200"
                                                 >
-                                                    Edit
+                                                    កែប្រែ
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(category.category_id)}
                                                     className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition duration-200"
                                                 >
-                                                    Delete
+                                                    លុប
                                                 </button>
                                             </td>
                                         </tr>

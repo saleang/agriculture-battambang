@@ -139,6 +139,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
+        // Public products endpoint
+Route::get('/products/public', [ProductController::class, 'publicProducts']);
 
 // Public categories endpoint returning active categories for frontend
 Route::get('/categories', function () {

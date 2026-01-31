@@ -115,20 +115,44 @@ class CategoryController extends Controller
     }
 
     // Delete category (OWNER ONLY)
-    public function destroy($id)
-    {
-        $sellerId = Auth::user()->seller->seller_id;
+public function destroy($id)
+{
+    $sellerId = Auth::user()->seller->seller_id;
 
-        $category = Category::where('category_id', $id)
-            ->where('seller_id', $sellerId)
-            ->firstOrFail();
+    $category = Category::where('category_id', $id)
+        ->where('seller_id', $sellerId)
+        ->firstOrFail();
+    $products = DB::table('product')
+        ->where('category_id', $id)
+        ->select('productname')
+        ->limit(5)                   
+        ->pluck('productname')
+        ->all();
 
-        $category->delete();
+    $productCount = count($products);
+
+    if ($productCount > 0) {
+        $productList = implode('", "', $products);
+        $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
+
+        $message = "មិនអាចលុបបានទេ! ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
+                 . "\"{$productList}\"{$extra}។\n"
+                 . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន។";
 
         return response()->json([
-            'message' => 'Category deleted successfully.'
-        ], 200);
+            'message'       => $message,
+            'product_count' => $productCount,
+            'products'      => $products,          
+            'error'         => 'category_in_use'
+        ], 409);
     }
+
+    $category->delete();
+
+    return response()->json([
+        'message' => 'បានលុបប្រភេទរួចរាល់។'
+    ], 200);
+}
 
     // Toggle status (OWNER ONLY)
     public function toggleStatus($id)
@@ -139,13 +163,45 @@ class CategoryController extends Controller
             ->where('seller_id', $sellerId)
             ->firstOrFail();
 
+        $newStatus = !$category->is_active;
+
+        // Only block when trying to DEACTIVATE (set to inactive / មិនប្រើប្រាស់)
+        if (!$newStatus) {  // if trying to set is_active = false
+            $products = DB::table('product')
+                ->where('category_id', $id)
+                ->select('productname')
+                ->limit(5)  // show first 5 names for helpful message
+                ->pluck('productname')
+                ->all();
+
+            $productCount = count($products);
+
+            if ($productCount > 0) {
+                $productList = implode('", "', $products);
+                $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
+
+                return response()->json([
+                    'message' => "មិនអាចបិទប្រើប្រាស់ (មិនប្រើប្រាស់) បានទេ!\n"
+                            . "ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
+                            . "\"{$productList}\"{$extra}។\n"
+                            . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន រួចអាចបិទប្រើប្រាស់បាន។",
+                    'product_count' => $productCount,
+                    'products'      => $products,  // optional for frontend
+                    'error'         => 'cannot_deactivate_in_use'
+                ], 409);
+            }
+        }
+
+        // Safe to toggle
         $category->update([
-            'is_active' => !$category->is_active
+            'is_active' => $newStatus,
         ]);
 
+        $statusText = $newStatus ? 'បើកប្រើប្រាស់' : 'បិទប្រើប្រាស់ (មិនប្រើប្រាស់)';
+
         return response()->json([
-            'message' => 'Status updated successfully.',
-            'data'    => $category
+            'message' => "បានធ្វើបច្ចុប្បន្នភាពស្ថានភាពជោគជ័យ។ ប្រភេទនេះត្រូវបាន{$statusText}។",
+            'data'    => $category->refresh(),
         ], 200);
     }
 }

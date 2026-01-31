@@ -1,377 +1,220 @@
-// // resources/js/pages/home.tsx
-// import { Link, Head } from '@inertiajs/react';
-// import { PageProps } from '@/types';
-// import { useState } from 'react';
-// import { Header } from '@/components/header-customer';
-// import { Footer } from '@/components/footer-customer';
-
-// export default function Home({ auth }: PageProps) {
-//     const user = auth.user;
-//     const [searchQuery, setSearchQuery] = useState('');
-//     const [cartCount] = useState(2);
-//     const [wishlistCount] = useState(5);
-
-//     return (
-//         <>
-//             <Head title="Home" />
-
-//             <div className="min-h-screen bg-white text-gray-800">
-
-//                 {/* Header */}
-//                 <Header
-//                     cartCount={cartCount}
-//                     wishlistCount={wishlistCount}
-//                     onNavigate={() => {}}
-//                     searchQuery={searchQuery}
-//                     onSearchChange={setSearchQuery}
-//                 />
-
-//                 {/* ============================
-//                    HERO (Agriculture Modern)
-//                 ============================ */}
-//                 <section className="relative pt-32 pb-40 overflow-hidden">
-
-//                     {/* Soft Earth & Green Background */}
-//                     <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-amber-50"></div>
-//                     <div className="absolute -top-32 -right-10 w-80 h-80 bg-green-200 rounded-full blur-3xl opacity-40"></div>
-//                     <div className="absolute -bottom-40 -left-10 w-96 h-96 bg-amber-200 rounded-full blur-3xl opacity-30"></div>
-
-//                     <div className="relative max-w-6xl mx-auto px-6 text-center">
-
-//                         {/* Title */}
-//                         <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 leading-tight">
-//                             Fresh From the Farm
-//                             <br />
-//                             <span className="text-green-600">To Your Home</span>
-//                         </h1>
-
-//                         {/* Subtitle */}
-//                         <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-//                             Connecting local farmers with the community through an easy,
-//                             modern, and nature-inspired marketplace experience.
-//                         </p>
-
-//                         {/* CTA Buttons */}
-//                         <div className="mt-10 flex justify-center gap-4">
-//                             {!user ? (
-//                                 <>
-//                                     <Link
-//                                         href="/register"
-//                                         className="px-10 py-4 text-lg rounded-xl bg-green-600 text-white font-medium shadow-lg shadow-green-600/20 hover:bg-green-700 transition-transform hover:-translate-y-1"
-//                                     >
-//                                         ចាប់ផ្តើមឥឡូវនេះ
-//                                     </Link>
-//                                     <Link
-//                                         href="/login"
-//                                         className="px-10 py-4 text-lg rounded-xl border border-green-600 text-green-700 font-medium hover:bg-green-50 transition-transform hover:-translate-y-1"
-//                                     >
-//                                         ចូលគណនី
-//                                     </Link>
-//                                 </>
-//                             ) : (
-//                                 <Link
-//                                     href="/dashboard"
-//                                     className="px-10 py-4 text-lg bg-green-600 text-white rounded-xl font-medium shadow-lg hover:bg-green-700 transition-transform hover:-translate-y-1"
-//                                 >
-//                                     ទៅកាន់ Dashboard →
-//                                 </Link>
-//                             )}
-//                         </div>
-//                     </div>
-//                 </section>
-
-//                 {/* ============================
-//                    FEATURES (Agri Modern)
-//                 ============================ */}
-//                 <section className="py-28 bg-white">
-//                     <div className="max-w-6xl mx-auto px-6">
-
-//                         <h2 className="text-4xl md:text-5xl font-bold text-center mb-20 text-gray-900">
-//                             អ្វីដែលធ្វើឱ្យយើងខុសគេ
-//                         </h2>
-
-//                         <div className="grid md:grid-cols-3 gap-12">
-
-//                             {[
-//                                 {
-//                                     icon: "🌾",
-//                                     title: "ផលិតផលស្រស់ពីកសិដ្ឋាន",
-//                                     desc: "ផលិតផលស្រស់ៗមកពីកសិករដ៏ទំនុកចិត្តបាននៅក្នុងតំបន់។",
-//                                     color: "bg-green-50 border-green-200"
-//                                 },
-//                                 {
-//                                     icon: "🚚",
-//                                     title: "ដឹកជញ្ជូនលឿន",
-//                                     desc: "ទទួលបានសាច់ញាតិថ្មីៗគ្រប់ពេល ដោយសេវាដឹកជញ្ជូនមានគុណភាព។",
-//                                     color: "bg-amber-50 border-amber-200"
-//                                 },
-//                                 {
-//                                     icon: "💳",
-//                                     title: "ការទូទាត់មានសុវត្ថិភាព",
-//                                     desc: "ABA, Wing, និងវិធីទូទាត់ទំនើបនានាដែលមានសុវត្ថិភាពខ្ពស់។",
-//                                     color: "bg-lime-50 border-lime-200"
-//                                 },
-//                             ].map((item, i) => (
-//                                 <div
-//                                     key={i}
-//                                     className={`p-10 rounded-2xl border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all ${item.color}`}
-//                                 >
-//                                     <div className="text-6xl mb-6">{item.icon}</div>
-//                                     <h3 className="text-2xl font-semibold text-gray-900 mb-3">{item.title}</h3>
-//                                     <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-//                                 </div>
-//                             ))}
-
-//                         </div>
-//                     </div>
-//                 </section>
-
-//                 <Footer />
-//             </div>
-//         </>
-//     );
-// }
-import React, { useState } from 'react';
-import { ShoppingCart, Heart, User, Search, ChevronLeft, ChevronRight, Star, Phone, Mail, Facebook, Instagram, MapPin } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  ShoppingCart,
+  Heart,
+  Star,
+  Phone,
+  Mail,
+} from 'lucide-react';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Header } from './customer/header-customer';
 import { Footer } from './customer/footer-customer';
 
+interface ProductImage {
+  image_url: string;
+  is_primary: boolean;
+}
+
+interface Product {
+  product_id: number;
+  productname: string;
+  price: number;
+  unit: string;
+  images: ProductImage[];
+}
+
 export default function Home({ auth }: PageProps) {
-  const [searchQuery, setSearchQueryHeader] = useState('');
   const user = auth?.user ?? null;
 
-  const categories = [
-    { name: 'Vegetables', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop' },
-    { name: 'Coffee & Drinks', image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop' },
-    { name: 'Meat', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&h=300&fit=crop' },
-    { name: 'Milk & Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop' },
-    { name: 'Fresh Fruits', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop' },
-    { name: 'Cleaning Essential', image: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=300&fit=crop' },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentImages, setCurrentImages] = useState<{ [key: number]: number }>({});
 
-  const bannerProducts = [
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-green-50 to-green-100', image: 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=600&h=400&fit=crop' },
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-orange-50 to-orange-100', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop' },
-    { title: 'Fresh & Healthy', subtitle: 'VEGETABLES', bg: 'from-blue-50 to-blue-100', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop' },
-  ];
+  /* Fetch public products */
+  useEffect(() => {
+    fetch('/products/public')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data.data ?? data);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const featuredProducts = [
-    { name: 'Organic Tomato', price: '$3', oldPrice: '$5', rating: 4.5, image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=400&h=400&fit=crop', discount: '-40%' },
-    { name: 'Vegan Egg Replacer', price: '$5.99', oldPrice: '$8', rating: 4.0, image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop' },
-    { name: 'Strawberry Vanilla', price: '$6.48', oldPrice: '$9', rating: 4.5, image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop', discount: '-28%' },
-  ];
+  /* Filter products based on search */
+  const filteredProducts = products.filter(p =>
+    p.productname.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const dealProducts = [
-    { name: 'Fresh Orange Juice', price: '$1.99', oldPrice: '$3', rating: 4.0, image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=400&fit=crop' },
-    { name: 'Green Peas', price: '$2.99', oldPrice: '$4', rating: 4.0, image: 'https://images.unsplash.com/photo-1587735243615-c03f25aaff15?w=400&h=400&fit=crop' },
-    { name: 'Tomato Sauce', price: '$1.99', oldPrice: '$3', rating: 4.0, image: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400&h=400&fit=crop' },
-    { name: 'Green Tea Bag', price: '$5.99', oldPrice: '$8', rating: 4.5, image: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400&h=400&fit=crop' },
-  ];
+  /* Handle next/previous image */
+  const nextImage = (productId: number, total: number) => {
+    setCurrentImages(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] ?? 0) + 1) % total,
+    }));
+  };
+
+  const prevImage = (productId: number, total: number) => {
+    setCurrentImages(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] ?? 0) - 1 + total) % total,
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top Bar */}
+      <Head title="Home" />
+
+      {/* ================= TOP BAR ================= */}
       <div className="bg-gray-900 text-white py-2.5 px-4 text-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex gap-6">
-            <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" />+855 123 456 789</span>
-            <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />agriconnectbtb312@gmail.com</span>
+            <span className="flex items-center gap-2">
+              <Phone className="w-3.5 h-3.5" /> +855 123 456 789
+            </span>
+            <span className="flex items-center gap-2">
+              <Mail className="w-3.5 h-3.5" /> agriconnectbtb312@gmail.com
+            </span>
           </div>
-          <div className="flex gap-4"><span>My Account</span><span>USD 💵</span></div>
+          <div className="flex gap-4">
+            <span>My Account</span>
+            <span>USD 💵</span>
+          </div>
         </div>
       </div>
 
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <Header
         cartCount={0}
         wishlistCount={0}
         onNavigate={() => {}}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQueryHeader}
+        onSearchChange={setSearchQuery}
         isAuthenticated={!!user}
         userName={user?.username ?? ''}
       />
 
-      {/* Hero */}
+      {/* ================= HERO ================= */}
       <section className="relative bg-gradient-to-br from-green-50 via-white to-green-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 py-24">
+        <div className="max-w-7xl mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-green-600 font-semibold mb-3 text-sm uppercase tracking-wide">UPTO 50% OFF</p>
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">Farm Fresh Organic<br /><span className="text-green-600">Vegetables.</span></h1>
-              <p className="text-gray-600 mb-8 text-lg leading-relaxed">Get our lorem ipsum suspendisse ultrices gravida.<br />Risus commodo viverra maecenas accumsan.</p>
+              <p className="text-green-600 font-semibold mb-3 text-sm uppercase">
+                បញ្ចុះតម្លៃរហូតដល់ 50%
+              </p>
+              <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
+                ស្រស់ៗពីកសិដ្ឋាន សរីរាង្គ
+                <br />
+              </h1>
+              <p className="text-gray-600 mb-8 text-lg">
+                Get our lorem ipsum suspendisse ultrices gravida.
+              </p>
 
               {user ? (
-                <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Shop Online →</Link>
+                <Link
+                  href="/shop"
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold"
+                >
+                  Shop Online →
+                </Link>
               ) : (
-                <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Login to Shop →</Link>
+                <Link
+                  href="/login"
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-semibold"
+                >
+                  Login to Shop →
+                </Link>
               )}
             </div>
-            <div className="relative">
-              <div className="absolute top-0 right-0 w-full h-full bg-green-400 rounded-full blur-3xl opacity-20"></div>
-              <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=800&fit=crop" alt="Fresh Vegetables" className="relative rounded-3xl shadow-2xl w-full" />
-            </div>
+
+            <img
+              src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800"
+              alt="Hero"
+              className="rounded-3xl shadow-2xl object-cover w-full max-w-md md:max-w-lg lg:max-w-xl h-auto mx-auto"
+            />
           </div>
         </div>
       </section>
 
-      {/* Banner Cards */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-6">
-          {bannerProducts.map((item, i) => (
-            <div key={i} className={`bg-gradient-to-br ${item.bg} rounded-2xl p-8 relative overflow-hidden hover:shadow-lg transition`}>
-              <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center text-xs font-bold shadow-lg">OFF<br />30%</div>
-              <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">{item.title}</p>
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">{item.subtitle}</h3>
-              {user ? (
-                <Link href="/shop" className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</Link>
-              ) : (
-                <Link href="/login" className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition transform hover:-translate-y-0.5">Shop Now →</Link>
-              )}
-              <img src={item.image} alt={item.subtitle} className="absolute bottom-0 right-0 w-40 h-40 object-cover opacity-60 rounded-tl-3xl" />
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ================= PRODUCTS ================= */}
+      <section className="max-w-7xl mx-auto px-4 py-0">
+        <h2 className="text-4xl font-bold mb-8">🧺 ផលិតផលទាំងអស់</h2>
+        {loading ? (
+          <p className="text-center text-gray-500">កំពុងផ្ទុកផលិតផល...</p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="text-center text-gray-500">រកមិនឃើញផលិតផល</p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredProducts.map(p => {
+              const images = p.images || [];
+              const currentIndex = currentImages[p.product_id] ?? 0;
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 py-16">
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">Categories</p>
-            <h2 className="text-4xl font-bold text-gray-900">Top Categories</h2>
-          </div>
-          <div className="flex gap-2">
-            <button className="p-2.5 border-2 rounded-full hover:bg-gray-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-            <button className="p-2.5 border-2 rounded-full bg-green-500 text-white border-green-500"><ChevronRight className="w-5 h-5" /></button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {categories.map((cat, i) => (
-            <div key={i} className="bg-white border-2 rounded-2xl overflow-hidden hover:shadow-lg transition cursor-pointer group">
-              <div className="aspect-square overflow-hidden">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <div className="p-4 text-center"><p className="font-semibold text-gray-900">{cat.name}</p></div>
-            </div>
-          ))}
-        </div>
-      </section>
+              return (
+                <div key={p.product_id} className="bg-white rounded-2xl border hover:shadow-xl transition">
+                  {/* Image carousel */}
+                  <div className="relative aspect-square overflow-hidden rounded-t-2xl bg-gray-100 ">
+                    <img
+                      src={images[currentIndex]?.image_url || 'https://via.placeholder.com/400'}
+                      alt={p.productname}
+                      className="w-full h-full object-cover transition"
+                    />
+                    {images.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => prevImage(p.product_id, images.length)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-1 rounded-full shadow"
+                        >
+                          ←
+                        </button>
+                        <button
+                          onClick={() => nextImage(p.product_id, images.length)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-1 rounded-full shadow"
+                        >
+                          →
+                        </button>
+                      </>
+                    )}
+                  </div>
 
-      {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 py-16 bg-gray-50">
-        <div className="flex justify-between items-center mb-10">
-          <h2 className="text-4xl font-bold text-gray-900">Featured Products</h2>
-          <div className="flex gap-6 text-sm font-medium">
-            <button className="text-green-600 border-b-2 border-green-600 pb-1">Featured</button>
-            <button className="text-gray-600 hover:text-green-600 transition">Best Sellers</button>
-            <button className="text-gray-600 hover:text-green-600 transition">Popular</button>
-          </div>
-        </div>
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
-            <h3 className="font-bold text-gray-900 mb-6 text-lg">Categories</h3>
-            <ul className="space-y-3 text-gray-600">
-              {['Coffee & Pastry', 'Bread & Bakery', 'Snacks', 'Dairy', 'Confectionery', 'Popular Items', 'Chocolate & Wafers', 'Beverage'].map((cat, i) => (
-                <li key={i} className="hover:text-green-600 cursor-pointer transition font-medium">{cat}</li>
-              ))}
-            </ul>
-            {user ? (
-              <Link href="/shop" className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg text-center block">Shop Now →</Link>
-            ) : (
-              <Link href="/login" className="mt-8 bg-green-500 text-white w-full py-3 rounded-xl hover:bg-green-600 transition font-semibold shadow-lg text-center block">Login to Shop →</Link>
-            )}
-          </div>
-          {featuredProducts.map((p, i) => (
-            <div key={i} className="bg-white border rounded-2xl p-6 hover:shadow-xl transition group">
-              <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-gray-50">
-                {p.discount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold z-10">{p.discount}</span>}
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition">
-                  <button className="bg-white p-2.5 rounded-full shadow-lg hover:bg-green-500 hover:text-white transition"><Heart className="w-4 h-4" /></button>
-                  <button className="bg-white p-2.5 rounded-full shadow-lg hover:bg-green-500 hover:text-white transition"><Search className="w-4 h-4" /></button>
+                  {/* Product info */}
+                  <div className="p-4">
+                    <h3 className="font-semibold mb-1 line-clamp-2">{p.productname}</h3>
+
+                    <div className="flex mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-orange-400 text-orange-400" />
+                      ))}
+                    </div>
+
+                    <p className="text-green-600 font-bold mb-3">
+                      {p.price.toLocaleString()} ៛ / {p.unit}
+                    </p>
+
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/product/${p.product_id}`}
+                        className="flex-1 bg-green-500 text-white text-center py-2 rounded-xl"
+                      >
+                        ទិញឥឡូវនេះ
+                      </Link>
+                      <button className="p-2 border rounded-xl">
+                        <ShoppingCart />
+                      </button>
+                      <button className="p-2 border rounded-xl">
+                        <Heart />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, j) => <Star key={j} className={`w-4 h-4 ${j < Math.floor(p.rating) ? 'fill-orange-400 text-orange-400' : 'text-gray-300'}`} />)}
-                <span className="text-sm text-gray-500 ml-1">({p.rating})</span>
-              </div>
-                <div className="flex items-center justify-between">
-                <div><span className="text-xl font-bold text-gray-900">{p.price}</span>{p.oldPrice && <span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice}</span>}</div>
-                {user ? (
-                  <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Shop Now</Link>
-                ) : (
-                  <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Login to Shop</Link>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Promo Banners */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
-            <p className="text-green-600 text-sm font-semibold mb-2 uppercase tracking-wide">UPTO 15% OFF</p>
-            <h3 className="text-4xl font-bold text-gray-900 mb-6">Fresh Vegetable</h3>
-            {user ? (
-              <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</Link>
-            ) : (
-              <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Login to Shop →</Link>
-            )}
-            <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop" alt="Vegetables" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-40 rounded-tl-3xl" />
+              );
+            })}
           </div>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-2xl p-12 relative overflow-hidden hover:shadow-lg transition">
-            <h3 className="text-4xl font-bold mb-6">All Tasted Organic &<br />Fresh Products</h3>
-            {user ? (
-              <Link href="/shop" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Shop Now →</Link>
-            ) : (
-              <Link href="/login" className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition transform hover:-translate-y-0.5 shadow-lg">Login to Shop →</Link>
-            )}
-            <img src="https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=400&h=400&fit=crop" alt="Products" className="absolute bottom-0 right-0 w-64 h-64 object-cover opacity-30 rounded-tl-3xl" />
-          </div>
-        </div>
+        )}
       </section>
 
-      {/* Deal of Week */}
-      <section className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Deal Of The Week</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {dealProducts.map((p, i) => (
-            <div key={i} className="bg-white border rounded-2xl p-6 hover:shadow-xl transition text-center group">
-              <div className="aspect-square overflow-hidden rounded-xl bg-gray-50 mb-4">
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
-              <div className="flex items-center justify-center gap-1 mb-3">
-                {[...Array(5)].map((_, j) => <Star key={j} className={`w-4 h-4 ${j < Math.floor(p.rating) ? 'fill-orange-400 text-orange-400' : 'text-gray-300'}`} />)}
-                <span className="text-sm text-gray-500 ml-1">({p.rating})</span>
-              </div>
-              <div className="mb-4"><span className="text-xl font-bold text-gray-900">{p.price}</span><span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice}</span></div>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <button className="p-2 rounded-full border-2 hover:bg-green-50 hover:border-green-500 transition"><Heart className="w-4 h-4" /></button>
-                <button className="p-2 rounded-full border-2 bg-green-500 text-white hover:bg-green-600 border-green-500 transition"><ShoppingCart className="w-4 h-4" /></button>
-                <button className="p-2 rounded-full border-2 hover:bg-green-50 hover:border-green-500 transition"><Search className="w-4 h-4" /></button>
-              </div>
-              {user ? (
-                <Link href="/shop" className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Shop Now</Link>
-              ) : (
-                <Link href="/login" className={`w-full py-2.5 rounded-xl text-white font-semibold transition ${i === 1 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}>Login to Shop</Link>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center gap-2 mt-8">
-          <button className="p-2.5 border-2 rounded-full hover:bg-gray-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-          <button className="p-2.5 border-2 rounded-full bg-green-500 text-white border-green-500 transition"><ChevronRight className="w-5 h-5" /></button>
-        </div>
-      </section>
-
-      {/* Footer */}
+      {/* ================= FOOTER ================= */}
       <Footer />
     </div>
   );

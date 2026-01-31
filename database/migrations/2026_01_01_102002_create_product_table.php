@@ -20,8 +20,6 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->integer('views_count')->default(0);
             $table->timestamps();
-
-            // Ensure unique seller-specific ID
             $table->unique(['seller_id', 'seller_product_id']);
 
             // Foreign keys
