@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   ShoppingCart,
@@ -6,6 +7,7 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+/** @jsxImportSource react */
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Header } from './customer/header-customer';
@@ -81,6 +83,7 @@ export default function Home({ auth }: PageProps) {
           <div className="flex gap-4">
             <span>My Account</span>
             <span>USD 💵</span>
+  
           </div>
         </div>
       </div>
@@ -134,6 +137,7 @@ export default function Home({ auth }: PageProps) {
               alt="Hero"
               className="rounded-3xl shadow-2xl object-cover w-full max-w-md md:max-w-lg lg:max-w-xl h-auto mx-auto"
             />
+      
           </div>
         </div>
       </section>
@@ -215,6 +219,7 @@ export default function Home({ auth }: PageProps) {
       </section>
 
       {/* ================= FOOTER ================= */}
+      
       <Footer />
     </div>
   );

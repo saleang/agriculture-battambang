@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @import "tw-animate-css";
+/* Import custom fonts */
+@import './font.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
