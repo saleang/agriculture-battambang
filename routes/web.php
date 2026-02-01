@@ -9,7 +9,7 @@ use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\CategoryController;
-use App\Http\Controllers\Order\OrderController;         
+use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Order\SellerOrderController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -18,21 +18,21 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Illuminate\Http\Request;
 
-Route::get('/',function(){
-    return Inertia::render('home',[
+Route::get('/', function () {
+    return Inertia::render('home', [
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-            $user = Auth::user();
+        $user = Auth::user();
         // $user->updateLastLogin();
-        return match($user->role) {
-            'admin'=>redirect()->route('admin.dashboard'),
-            'seller'=>redirect()->route('seller.dashboard'),
-            'customer'=>redirect()->route('customer.dashboard'),
-            default=>abort(403, 'Unauthorized'),
+        return match ($user->role) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'seller' => redirect()->route('seller.dashboard'),
+            'customer' => redirect()->route('customer.dashboard'),
+            default => abort(403, 'Unauthorized'),
         };
         // return Inertia::render('dashboard');
     })->name('dashboard');
@@ -65,8 +65,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{user}', [SellerManagementController::class, 'update'])->name('update');
             Route::delete('/{user}', [SellerManagementController::class, 'destroy'])->name('destroy');
         });
-
-
     });
 
     // Seller routes
@@ -100,18 +98,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/communes/{districtId}', [SellerProfileController::class, 'getCommunes'])->name('communes.get');
         Route::get('/villages/{communeId}', [SellerProfileController::class, 'getVillages'])->name('villages.get');
 
-    
+
         // Product Routes
         Route::prefix('product')->name('product.')->group(function () {
-            Route::get('/', [ProductController::class, 'index'])->name('index');        
-            Route::get('/create', [ProductController::class, 'create'])->name('create'); 
-            Route::post('/', [ProductController::class, 'store'])->name('store');     
+            Route::get('/', [ProductController::class, 'index'])->name('index');
+            Route::get('/create', [ProductController::class, 'create'])->name('create');
+            Route::post('/', [ProductController::class, 'store'])->name('store');
             Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [ProductController::class, 'update'])->name('update');
             Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-active', [ProductController::class, 'toggleActive'])->name('toggle-active');
-
-            
         });
         // Category Routes
         Route::prefix('category')->name('category.')->group(function () {
@@ -122,6 +118,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
             Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
             Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
+
     });
 
         // ========================================
@@ -133,6 +130,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
             Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
             Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
+
         });
     });
 
@@ -149,6 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Password routes
         Route::post('/password', [CustomerPasswordController::class, 'update'])->name('password.update');
     });
+
     // ========================================
     // CUSTOMER ORDER ROUTES - NEW
     // ========================================
@@ -162,7 +161,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-        // Public products endpoint
+// Public products endpoint
 Route::get('/products/public', [ProductController::class, 'publicProducts']);
 
 // Public categories endpoint returning active categories for frontend
@@ -174,8 +173,8 @@ Route::get('/categories', function () {
     return response()->json($categories);
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/check-username', function (Request $request) {
     $username = (string) $request->query('username', '');
