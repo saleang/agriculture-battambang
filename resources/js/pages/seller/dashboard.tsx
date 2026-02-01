@@ -81,12 +81,21 @@ export default function SellerDashboard({ seller }: PageProps<{ seller: any }>) 
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        <a href="/" className="inline-block">
                         <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm">
                             View Shop
                         </button>
-                        <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-md">
+                        </a>
+                        <a 
+                        href="/seller/product" 
+                        className="inline-block"
+                        >
+                        <button 
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-md"
+                        >
                             + Add Product
                         </button>
+                        </a>
                     </div>
                 </div>
 
