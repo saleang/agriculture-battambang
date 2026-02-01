@@ -24,7 +24,7 @@ class CategoryController extends Controller
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('categoryname', 'like', "%{$searchTerm}%")
-                ->orWhere('description', 'like', "%{$searchTerm}%");
+                    ->orWhere('description', 'like', "%{$searchTerm}%");
             });
         }
 
@@ -115,44 +115,44 @@ class CategoryController extends Controller
     }
 
     // Delete category (OWNER ONLY)
-public function destroy($id)
-{
-    $sellerId = Auth::user()->seller->seller_id;
+    public function destroy($id)
+    {
+        $sellerId = Auth::user()->seller->seller_id;
 
-    $category = Category::where('category_id', $id)
-        ->where('seller_id', $sellerId)
-        ->firstOrFail();
-    $products = DB::table('product')
-        ->where('category_id', $id)
-        ->select('productname')
-        ->limit(5)                   
-        ->pluck('productname')
-        ->all();
+        $category = Category::where('category_id', $id)
+            ->where('seller_id', $sellerId)
+            ->firstOrFail();
+        $products = DB::table('product')
+            ->where('category_id', $id)
+            ->select('productname')
+            ->limit(5)
+            ->pluck('productname')
+            ->all();
 
-    $productCount = count($products);
+        $productCount = count($products);
 
-    if ($productCount > 0) {
-        $productList = implode('", "', $products);
-        $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
+        if ($productCount > 0) {
+            $productList = implode('", "', $products);
+            $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
 
-        $message = "មិនអាចលុបបានទេ! ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
-                 . "\"{$productList}\"{$extra}។\n"
-                 . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន។";
+            $message = "មិនអាចលុបបានទេ! ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
+                . "\"{$productList}\"{$extra}។\n"
+                . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន។";
+
+            return response()->json([
+                'message'       => $message,
+                'product_count' => $productCount,
+                'products'      => $products,
+                'error'         => 'category_in_use'
+            ], 409);
+        }
+
+        $category->delete();
 
         return response()->json([
-            'message'       => $message,
-            'product_count' => $productCount,
-            'products'      => $products,          
-            'error'         => 'category_in_use'
-        ], 409);
+            'message' => 'បានលុបប្រភេទរួចរាល់។'
+        ], 200);
     }
-
-    $category->delete();
-
-    return response()->json([
-        'message' => 'បានលុបប្រភេទរួចរាល់។'
-    ], 200);
-}
 
     // Toggle status (OWNER ONLY)
     public function toggleStatus($id)
@@ -182,9 +182,9 @@ public function destroy($id)
 
                 return response()->json([
                     'message' => "មិនអាចបិទប្រើប្រាស់ (មិនប្រើប្រាស់) បានទេ!\n"
-                            . "ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
-                            . "\"{$productList}\"{$extra}។\n"
-                            . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន រួចអាចបិទប្រើប្រាស់បាន។",
+                        . "ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
+                        . "\"{$productList}\"{$extra}។\n"
+                        . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន រួចអាចបិទប្រើប្រាស់បាន។",
                     'product_count' => $productCount,
                     'products'      => $products,  // optional for frontend
                     'error'         => 'cannot_deactivate_in_use'
@@ -205,4 +205,3 @@ public function destroy($id)
         ], 200);
     }
 }
-

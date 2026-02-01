@@ -78,97 +78,95 @@ class ProductController extends Controller
 
             DB::commit();
             return response()->json(['message' => 'Product created successfully!', 'data' => $product->load('images')], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Product creation failed: '.$e->getMessage());
+            Log::error('Product creation failed: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to create product.', 'error' => $e->getMessage()], 500);
         }
     }
 
     /** Update product */
- public function update(Request $request, Product $product)
-{
-    $user = Auth::user();
-    if (!$user || !$user->seller || $product->seller_id !== $user->seller->seller_id) {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
+    public function update(Request $request, Product $product)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->seller || $product->seller_id !== $user->seller->seller_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-    $validated = $request->validate([
-        'productname' => 'sometimes|required|string|max:255',
-        'price' => 'sometimes|required|numeric',
-        'category_id' => 'sometimes|required|integer|exists:category,category_id',
-        'images' => 'nullable|array',
-        'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        'delete_images' => 'nullable',
-        'unit' => 'nullable|string|max:20',
-        'stock' => 'sometimes|required|string|in:available,out_of_stock',
-        'description' => 'nullable|string',
-        'is_active' => 'nullable|boolean',
-    ]);
+        $validated = $request->validate([
+            'productname' => 'sometimes|required|string|max:255',
+            'price' => 'sometimes|required|numeric',
+            'category_id' => 'sometimes|required|integer|exists:category,category_id',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'delete_images' => 'nullable',
+            'unit' => 'nullable|string|max:20',
+            'stock' => 'sometimes|required|string|in:available,out_of_stock',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
 
-    DB::beginTransaction();
-    try {
-        $product->update($validated);
+        DB::beginTransaction();
+        try {
+            $product->update($validated);
 
-        // Handle delete_images
-        $deleteImages = [];
-        if ($request->has('delete_images')) {
-            if (is_array($request->delete_images)) {
-                $deleteImages = $request->delete_images;
-            } elseif (is_string($request->delete_images)) {
-                $decoded = json_decode($request->delete_images, true);
-                $deleteImages = is_array($decoded) ? $decoded : [$request->delete_images];
-            }
-
-            // Convert full URLs to storage paths
-            $deleteImages = array_map(function ($url) {
-                $path = parse_url($url, PHP_URL_PATH);
-                // If the path starts with '/storage/', remove that prefix
-                if (strpos($path, '/storage/') === 0) {
-                    return substr($path, 9);
+            // Handle delete_images
+            $deleteImages = [];
+            if ($request->has('delete_images')) {
+                if (is_array($request->delete_images)) {
+                    $deleteImages = $request->delete_images;
+                } elseif (is_string($request->delete_images)) {
+                    $decoded = json_decode($request->delete_images, true);
+                    $deleteImages = is_array($decoded) ? $decoded : [$request->delete_images];
                 }
-                return $url;
-            }, $deleteImages);
 
-            // Delete the images
-            $product->images()->whereIn('image_url', $deleteImages)->delete();
-        }
+                // Convert full URLs to storage paths
+                $deleteImages = array_map(function ($url) {
+                    $path = parse_url($url, PHP_URL_PATH);
+                    // If the path starts with '/storage/', remove that prefix
+                    if (strpos($path, '/storage/') === 0) {
+                        return substr($path, 9);
+                    }
+                    return $url;
+                }, $deleteImages);
 
-        // Add new images
-        if ($request->hasFile('images')) {
-            $maxOrder = $product->images()->max('display_order') ?? -1;
-            
-            foreach ($request->file('images') as $index => $file) {
-                $path = $file->store('product_images', 'public');
-                $product->images()->create([
-                    'image_url' => $path,
-                    'is_primary' => $product->images()->count() === 0 && $index === 0,
-                    'display_order' => $maxOrder + $index + 1,
-                ]);
+                // Delete the images
+                $product->images()->whereIn('image_url', $deleteImages)->delete();
             }
+
+            // Add new images
+            if ($request->hasFile('images')) {
+                $maxOrder = $product->images()->max('display_order') ?? -1;
+
+                foreach ($request->file('images') as $index => $file) {
+                    $path = $file->store('product_images', 'public');
+                    $product->images()->create([
+                        'image_url' => $path,
+                        'is_primary' => $product->images()->count() === 0 && $index === 0,
+                        'display_order' => $maxOrder + $index + 1,
+                    ]);
+                }
+            }
+
+            // Ensure there's at least one primary image
+            if ($product->images()->where('is_primary', true)->doesntExist() && $product->images()->exists()) {
+                $product->images()->orderBy('display_order')->first()->update(['is_primary' => true]);
+            }
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Product updated successfully!',
+                'data' => $product->fresh()->load('images')
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Product update failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update product.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Ensure there's at least one primary image
-        if ($product->images()->where('is_primary', true)->doesntExist() && $product->images()->exists()) {
-            $product->images()->orderBy('display_order')->first()->update(['is_primary' => true]);
-        }
-
-        DB::commit();
-        return response()->json([
-            'message' => 'Product updated successfully!',
-            'data' => $product->fresh()->load('images')
-        ], 200);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Product update failed: '.$e->getMessage());
-        return response()->json([
-            'message' => 'Failed to update product.',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
     /** Toggle active status */
     public function toggleActive($id)
     {
@@ -190,7 +188,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product deleted successfully!'], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Product delete failed: '.$e->getMessage());
+            Log::error('Product delete failed: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to delete product.', 'error' => $e->getMessage()], 500);
         }
     }
