@@ -9,6 +9,8 @@ use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\CategoryController;
+use App\Http\Controllers\Order\OrderController;         
+use App\Http\Controllers\Order\SellerOrderController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -121,6 +123,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
             Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
     });
+
+        // ========================================
+        // SELLER ORDER MANAGEMENT ROUTES - NEW
+        // ========================================
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [SellerOrderController::class, 'index'])->name('index');
+            Route::get('/{order}', [SellerOrderController::class, 'show'])->name('show');
+            Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
+            Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
+            Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
+        });
     });
 
     // Customer Routes
@@ -135,6 +148,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Password routes
         Route::post('/password', [CustomerPasswordController::class, 'update'])->name('password.update');
+    });
+    // ========================================
+    // CUSTOMER ORDER ROUTES - NEW
+    // ========================================
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::post('/', [OrderController::class, 'store'])->name('store');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        Route::post('/{order}/payment', [OrderController::class, 'makePayment'])->name('payment');
     });
 
 });
