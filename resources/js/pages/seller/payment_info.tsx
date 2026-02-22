@@ -25,9 +25,8 @@ export default function PaymentInfo() {
     const { seller } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
 
-    const qrCodeUrl = seller?.payment_qr_code?.startsWith('http')
-        ? seller.payment_qr_code
-        : (seller?.payment_qr_code ? `/storage/${seller.payment_qr_code}` : null);
+    // field now holds shop/farm name directly
+    const shopName = seller?.payment_qr_code || null;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -53,25 +52,11 @@ export default function PaymentInfo() {
                             <div className="mt-1 text-base text-gray-900">{seller?.bank_account_number || '-'}</div>
                         </div>
 
-                        {/* Payment QR Code */}
-                        {qrCodeUrl && (
+                        {/* Farm/Shop Name */}
+                        {shopName && (
                             <div className="pt-6 border-t">
-                                <Label className="text-sm font-medium text-gray-700">QR កូដបង់ប្រាក់</Label>
-                                <div className="mt-2">
-                                    <a
-                                        href={qrCodeUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-block"
-                                    >
-                                        <img
-                                            src={qrCodeUrl}
-                                            alt="QR កូដបង់ប្រាក់"
-                                            className="max-h-40 rounded border-2 border-gray-200 hover:border-green-500 transition"
-                                        />
-                                    </a>
-                                    <p className="text-xs text-gray-600 mt-1">ចុចដើម្បីមើលទំហំពេញ</p>
-                                </div>
+                                <Label className="text-sm font-medium text-gray-700">ឈ្មោះហាង / ស្រែ</Label>
+                                <div className="mt-2 text-base text-gray-900">{shopName}</div>
                             </div>
                         )}
 

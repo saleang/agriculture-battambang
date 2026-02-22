@@ -2,17 +2,6 @@ import { FormEventHandler, useEffect, useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
-
-// const checkUsernameAvailability = async (username: string): Promise<boolean | null> => {
-//   try {
-//     const resp = await axios.get('/check-username', { params: { username } });
-//     return resp?.data?.available ?? null;
-//   } catch (e) {
-//     console.error('checkUsernameAvailability error', e);
-//     return null;
-//   }
-// };
-
 const checkEmailAvailability = async (email: string): Promise<boolean | null> => {
   try {
     const resp = await axios.get('/check-email', { params: { email } });

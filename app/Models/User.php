@@ -35,7 +35,6 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username',
-        // address
         'email',
         'gender',
         'photo',
@@ -120,5 +119,10 @@ class User extends Authenticatable
         //or
         // $this->last_login = now();
         // $this->save();
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'user_id', 'user_id');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Seller\SellerProfileUpdateRequest;
+use App\Http\Requests\Seller\SellerTelegramSettingsRequest;
 use App\Models\Commune;
 use App\Models\District;
 use App\Models\Province;
@@ -313,14 +314,14 @@ class SellerProfileController extends Controller
             'user_id' => $user->user_id,
             'data' => $request->except(['payment_qr_code']),
             'method' => $request->method(),
-            'has_file' => $request->hasFile('payment_qr_code'),
         ]);
 
         try {
             $validated = $request->validate([
                 'bank_account_name' => ['nullable', 'string', 'max:255'],
                 'bank_account_number' => ['nullable', 'string', 'max:255'],
-                'payment_qr_code' => ['nullable', 'file', 'image', 'max:5120'],
+                // repurposed field now holds a simple farm/shop name
+                'payment_qr_code' => ['nullable', 'string', 'max:255'],
             ]);
 
             $seller = $user->seller;
@@ -328,19 +329,10 @@ class SellerProfileController extends Controller
                 $seller = $user->seller()->create(['user_id' => $user->user_id]);
             }
 
-            // Handle QR code file upload
-            if ($request->hasFile('payment_qr_code')) {
-                // Delete old QR code if exists
-                if ($seller->payment_qr_code && Storage::disk('public')->exists($seller->payment_qr_code)) {
-                    Storage::disk('public')->delete($seller->payment_qr_code);
-                }
-                $path = $request->file('payment_qr_code')->store('payment_qrcodes', 'public');
-                $validated['payment_qr_code'] = $path;
-            }
-
-            // Remove null QR code to prevent overwriting existing file
-            if (array_key_exists('payment_qr_code', $validated) && is_null($validated['payment_qr_code'])) {
-                unset($validated['payment_qr_code']);
+            // No file handling anymore; just save the string
+            if (array_key_exists('payment_qr_code', $validated)) {
+                // allow empty string to be saved or null
+                $seller->payment_qr_code = $validated['payment_qr_code'];
             }
 
             $seller->fill($validated);
@@ -358,5 +350,58 @@ class SellerProfileController extends Controller
 
             return back()->withErrors(['error' => 'Failed to update payment settings. Please try again.']);
         }
+    }
+
+    /**
+     * Show the telegram notification settings page.
+     */
+    public function editTelegram(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (!$user->isSeller()) {
+            abort(403, 'You are not authorized to access this page.');
+        }
+
+        $seller = $user->seller;
+        if (!$seller) {
+            $seller = $user->seller()->create(['user_id' => $user->user_id]);
+        }
+
+        return Inertia::render('seller/telegram_settings', [
+            'seller' => $seller,
+        ]);
+    }
+
+    /**
+     * Update telegram notification settings.
+     */
+    public function updateTelegram(SellerTelegramSettingsRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->isSeller()) {
+            abort(403, 'You are not authorized to access this page.');
+        }
+
+        Log::info('Telegram settings update request', [
+            'user_id' => $user->user_id,
+            'data' => $request->all(),
+            'method' => $request->method(),
+        ]);
+
+        $validated = $request->validated();
+
+        $seller = $user->seller;
+        if (!$seller) {
+            $seller = $user->seller()->create(['user_id' => $user->user_id]);
+        }
+
+        $seller->fill($validated);
+        $seller->save();
+
+        Log::info('Telegram settings updated successfully', ['user_id' => $user->user_id]);
+
+        return back()->with('success', 'Telegram settings updated successfully.');
     }
 }

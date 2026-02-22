@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
-import Header from '@/pages/customer/header-customer';
+import Header from '@/pages/header';
 import { Footer } from '@/pages/customer/footer-customer';
 import { toast } from 'sonner';
 
@@ -71,6 +71,7 @@ export default function ProfilePage() {
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             <link href="https://fonts.googleapis.com/css2?family=Moul&family=Siemreap&display=swap" rel="stylesheet" />
             <style>{`
+
                 .font-moul { font-family: 'Moul', serif; }
                 .font-siemreap { font-family: 'Siemreap', sans-serif; }
                 body { font-family: 'Siemreap', sans-serif; }
@@ -82,13 +83,13 @@ export default function ProfilePage() {
     const calculateProfileCompletion = () => {
         let completed = 0;
         let total = 5; // username, email, phone, gender, address
-        
+
         if (user?.username) completed++;
         if (user?.email) completed++;
         if (user?.phone) completed++;
         if (user?.gender) completed++;
         if (user?.address) completed++;
-        
+
         return Math.round((completed / total) * 100);
     };
 
@@ -264,13 +265,13 @@ export default function ProfilePage() {
                 userPhoto={photoPreview || userPhoto}
             />
 
-            <div className="min-h-screen bg-gray-50 pt-28 pb-12 font-siemreap">
+            <div className="min-h-screen bg-gray-50 pt-28 pb-12 font-siemreap mt-20">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-gray-900 font-moul">ប្រូហ្វាល់របស់ខ្ញុំ</h1>
                         <p className="text-gray-600 mt-2">គ្រប់គ្រងព័ត៌មានផ្ទាល់ខ្លួន និងសុវត្ថិភាពគណនីរបស់អ្នក</p>
-                        
+
                         {/* Profile Completion */}
                         <div className="mt-6 max-w-md">
                             <div className="flex items-center justify-between mb-2">
@@ -278,13 +279,13 @@ export default function ProfilePage() {
                                 <span className="text-sm font-bold text-green-600">{profileCompletion}%</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div 
-                                    className="bg-green-600 h-full rounded-full transition-all duration-300" 
+                                <div
+                                    className="bg-green-600 h-full rounded-full transition-all duration-300"
                                     style={{ width: `${profileCompletion}%` }}
                                 ></div>
                             </div>
                             <p className="text-xs text-gray-500 mt-2">
-                                {profileCompletion < 100 
+                                {profileCompletion < 100
                                     ? 'បំពេញព័ត៌មានបន្ថែមដើម្បីបញ្ចប់ប្រូហ្វាល់របស់អ្នក'
                                     : 'ប្រូហ្វាល់របស់អ្នកបានបញ្ចប់ហើយ!'
                                 }
@@ -348,7 +349,7 @@ export default function ProfilePage() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    
+
                                                     {isEditingProfile && (
                                                         <>
                                                             <button
@@ -368,12 +369,12 @@ export default function ProfilePage() {
                                                         </>
                                                     )}
                                                 </div>
-                                                
+
                                                 {/* User Info */}
                                                 <h2 className="text-xl font-bold text-gray-900 mb-1">
                                                     {profileForm.data.username}
                                                 </h2>
-                                                
+
                                                 <div className="flex items-center gap-2 mb-4">
                                                     {isVerified ? (
                                                         <Badge className="bg-green-100 text-green-800 border-green-200">
@@ -416,7 +417,7 @@ export default function ProfilePage() {
                                                             <span>ចុះឈ្មោះ:</span>
                                                         </div>
                                                         <div className="text-right">{registrationDate}</div>
-                                                        
+
                                                         <div className="flex items-center gap-1">
                                                             <Edit className="w-3 h-3" />
                                                             <span>កែសម្រួលចុងក្រោយ:</span>
@@ -761,7 +762,7 @@ export default function ProfilePage() {
                                             </div>
 
                                             {/* Password Match Validation */}
-                                            {passwordForm.data.password_confirmation && 
+                                            {passwordForm.data.password_confirmation &&
                                              passwordForm.data.password !== passwordForm.data.password_confirmation && (
                                                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                                     <p className="text-red-700 text-sm flex items-center gap-2">

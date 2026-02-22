@@ -10,6 +10,7 @@ use App\Http\Controllers\Seller\SellerProfileController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Order\PaymentController;
 use App\Http\Controllers\Order\SellerOrderController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'seller' => redirect()->route('seller.dashboard'),
-            'customer' => redirect()->route('customer.dashboard'),
+            'customer' => redirect()->route('home'),
             default => abort(403, 'Unauthorized'),
         };
         // return Inertia::render('dashboard');
@@ -86,6 +87,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/payment_info', [SellerProfileController::class, 'editPayment'])->name('payment.edit');
         Route::match(['post', 'patch'], '/payment_info', [SellerProfileController::class, 'updatePayment'])->name('payment.update');
 
+        // Telegram notification settings
+        Route::get('/telegram_settings', [SellerProfileController::class, 'editTelegram'])->name('telegram.edit');
+        Route::match(['post', 'patch'], '/telegram_settings', [SellerProfileController::class, 'updateTelegram'])->name('telegram.update');
+
         //password routes
         Route::get('/password', [SellerPasswordController::class, 'edit'])->name('user-password.edit');
 
@@ -121,23 +126,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     });
 
-        // ========================================
-        // SELLER ORDER MANAGEMENT ROUTES - NEW
-        // ========================================
+        // Seller Order Management Routes
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::get('/', [SellerOrderController::class, 'index'])->name('index');
             Route::get('/{order}', [SellerOrderController::class, 'show'])->name('show');
             Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
             Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
             Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
-
         });
     });
 
     // Customer Routes
     Route::middleware(['role:customer'])->prefix('customer')->name('customer.')->group(function () {
         Route::get('/dashboard', function () {
-            return Inertia::render('customer/dashboard');
+            return Inertia::render('home');
         })->name('dashboard');
 
         // Profile routes - IMPORTANT: Use POST for file uploads with _method spoofing
@@ -146,23 +148,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Password routes
         Route::post('/password', [CustomerPasswordController::class, 'update'])->name('password.update');
-    });
 
-    // ========================================
-    // CUSTOMER ORDER ROUTES - NEW
-    // ========================================
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', [OrderController::class, 'index'])->name('index');
-        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-        Route::post('/', [OrderController::class, 'store'])->name('store');
-        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-        Route::post('/{order}/payment', [OrderController::class, 'makePayment'])->name('payment');
-    });
+        // Cart Page - ✅ FIXED: Changed 'CartPage' to 'customer/orders/cart-page'
+        Route::get('/cart', function () {
+            return Inertia::render('customer/orders/cart-page');
+        })->name('cart');
 
+        // Customer Order Routes
+        Route::prefix('orders')->name('orders.')->group(function () {
+            // Checkout Page - ✅ FIXED: Changed 'checkout-page' to proper path
+            Route::get('/checkout', function () {
+                return Inertia::render('customer/orders/checkout-page');
+            })->name('checkout');
+
+            // Order List
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+            Route::post('/', [OrderController::class, 'store'])->name('store');
+            Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+            Route::post('/{order}/payment', [OrderController::class, 'makePayment'])->name('payment');
+
+            Route::post('/{order}/khqr/generate', [PaymentController::class, 'generateKHQR']);
+            Route::post('/{order}/khqr/verify', [PaymentController::class, 'verifyPayment']);
+        });
+    });
 });
 
 // Public products endpoint
 Route::get('/products/public', [ProductController::class, 'publicProducts']);
+
+// Public seller info (farm name only)
+Route::get('/seller/{id}/info', function ($id) {
+    $seller = \App\Models\Seller::select('seller_id', 'farm_name')->find($id);
+    if (!$seller) {
+        return response()->json(['error' => 'Not found'], 404);
+    }
+    return response()->json($seller);
+});
 
 // Public categories endpoint returning active categories for frontend
 Route::get('/categories', function () {

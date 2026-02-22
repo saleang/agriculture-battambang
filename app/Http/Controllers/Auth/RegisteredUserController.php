@@ -142,7 +142,7 @@ class RegisteredUserController extends Controller
             return redirect()->route('seller.dashboard');
         }
 
-        return redirect()->route('customer.dashboard');
+        return redirect()->route('home');
     }
 
     public function checkPhone(Request $request)

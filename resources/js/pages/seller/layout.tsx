@@ -32,6 +32,11 @@ const sidebarNavItems: NavItem[] = [
     icon: Lock,
   },
   {
+    title: "ការកំណត់ការជូនដំណឹង",
+    href: "/seller/telegram_settings",
+    icon: Box,
+  },
+  {
     title: "គ្រប់គ្រងផលិតផល",
     icon: Box,
     children: [
