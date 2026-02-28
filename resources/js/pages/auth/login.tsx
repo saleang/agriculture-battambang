@@ -261,7 +261,7 @@ export default function Login({
 
                             <div className="mt-6 bg-white/10 p-4 rounded-lg">
                                 <p className="text-xs sm:text-sm text-white/90">
-                                    <strong>ចំណាំ៖</strong> ចូលគណនីដើម្បីទទួលបានការបញ្ចុះតម្លៃ 10% លើការបញ្ជាទិញដំបូង
+                                    <strong>ចំណាំ៖</strong> ចូលគណនីដើម្បីទទួលបានការបញ្ចុះតម្លៃ 50% លើការបញ្ជាទិញដំបូង
                                 </p>
                             </div>
                         </div>
