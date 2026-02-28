@@ -46,7 +46,7 @@ export default function Login({
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
                 {/* Main container - centered, limited width, no overflow */}
                 <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row max-h-[95vh] lg:max-h-none">
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row max-h-[90vh] lg:max-h-none">
                         {/* Left - Form (will be centered vertically on desktop) */}
                         <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[50vh] lg:min-h-0">
                             {/* Header */}
