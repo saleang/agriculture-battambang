@@ -21,8 +21,8 @@ class AuthenticatedSessionController extends Controller
     {
         return Inertia::render('auth/login', [
             'canResetPassword' => true,
-            'canRegister' => true,
-            'status' => session('status'),
+            'canRegister'      => true,
+            'status'           => session('status'),
         ]);
     }
 
@@ -32,62 +32,62 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => 'required|string',
+            'email'    => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // Determine if the input is email or phone
-        $loginField = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+        $input = trim($request->email);
 
-        // Find user by email or phone
-        $user = User::where($loginField, $request->email)->first();
+        // កំណត់ว่า input ជា email ឬ phone
+        $loginField = filter_var($input, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        // Check if user exists
-        if (!$user) {
+        // រក User
+        $user = User::where($loginField, $input)->first();
+
+        // User មិនមាន
+        if (! $user) {
             throw ValidationException::withMessages([
                 'email' => $loginField === 'email'
-                    ? 'This email address is not registered.'
-                    : 'This phone number is not registered.',
+                    ? 'អ៊ីមែលនេះមិនត្រូវបានចុះឈ្មោះទេ។'
+                    : 'លេខទូរស័ព្ទនេះមិនត្រូវបានចុះឈ្មោះទេ។',
             ]);
         }
 
-        // Check if password is correct
-        if (!Hash::check($request->password, $user->password)) {
+        // ⚠️ ត្រូវវាស់ hash ផ្ទាល់ពី DB ដោយ getRawOriginal
+        // ព្រោះ User model មាន cast 'hashed' ដូច្នេះ $user->password បាន decode ហើយ
+        // Hash::check() ត្រូវប្រើ raw hash ពី DB
+        $hashedPassword = $user->getRawOriginal('password');
+
+        if (! Hash::check($request->password, $hashedPassword)) {
             throw ValidationException::withMessages([
-                'password' => 'The password is incorrect.',
+                'email' => 'អ៊ីមែល/លេខទូរស័ព្ទ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។',
             ]);
         }
 
-        // Check if user is active
+        // ពិនិត្យ status
         if ($user->status !== 'active') {
-            $statusMessage = match ($user->status) {
-                'inactive' => 'Your account is inactive. Please contact support.',
-                'banned' => 'Your account has been banned. Please contact support.',
-                default => 'Your account status does not allow login. Please contact support.'
+            $msg = match ($user->status) {
+                'inactive' => 'គណនីរបស់អ្នកមិនទាន់ active ទេ។ សូមទាក់ទង support។',
+                'banned'   => 'គណនីរបស់អ្នកត្រូវបាន banned។ សូមទាក់ទង support។',
+                default    => 'គណនីរបស់អ្នកមិនអាចចូលបាន។ សូមទាក់ទង support។',
             };
 
-            throw ValidationException::withMessages([
-                'email' => $statusMessage,
-            ]);
+            throw ValidationException::withMessages(['email' => $msg]);
         }
 
-        // Log the user in
+        // Login ជោគជ័យ
         Auth::login($user, $request->boolean('remember'));
 
-        // Update last login
         $user->updateLastLogin();
 
-        // Regenerate session
         $request->session()->regenerate();
 
-        // Redirect based on role
-        if ($user->role === 'seller') {
-            return redirect()->intended('/seller/dashboard');
-        } elseif ($user->role === 'admin') {
-            return redirect()->intended('/admin/dashboard');
-        } else {
-            return redirect()->intended('/customer/dashboard');
-        }
+        // Redirect តាម role
+        return match ($user->role) {
+            'admin'  => redirect()->intended('/admin/dashboard'),
+            'seller' => redirect()->intended('/seller/dashboard'),
+            default  => redirect()->intended('/'),
+        };
     }
 
     /**
@@ -98,7 +98,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
