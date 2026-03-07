@@ -134,6 +134,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
             Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
         });
+
+         // Seller Order Management Routes
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [SellerOrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [SellerOrderController::class, 'show'])->name('show');
+        Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
+        Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
+        Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
+    });
+
+     Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Seller\PaymentController::class, 'index'])->name('index');
+        Route::get('/{payment}', [App\Http\Controllers\Seller\PaymentController::class, 'show'])->name('show');
+        Route::post('/{payment}/refund', [App\Http\Controllers\Seller\PaymentController::class, 'refund'])->name('refund');
+        Route::get('/export', [App\Http\Controllers\Seller\PaymentController::class, 'export'])->name('export');
+    });
+    });
+
+    // Payment Management Routes
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Seller\PaymentController::class, 'index'])->name('index');
+        Route::get('/{paymentId}', [App\Http\Controllers\Seller\PaymentController::class, 'show'])->name('show');
+        Route::post('/{paymentId}/status', [App\Http\Controllers\Seller\PaymentController::class, 'updateStatus'])->name('status');
+        Route::post('/{paymentId}/refund', [App\Http\Controllers\Seller\PaymentController::class, 'refund'])->name('refund');
+        Route::get('/export', [App\Http\Controllers\Seller\PaymentController::class, 'export'])->name('export');
     });
 
     // Customer Routes
