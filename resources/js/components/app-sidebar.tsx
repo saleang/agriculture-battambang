@@ -44,7 +44,11 @@ const adminNavItems: NavItem[] = [
         title: 'Manage Products',
         href: '/admin/products',
         icon: Package,
-    }
+    },
+    {   title: 'Reports',
+        href: '/admin/reports',
+        icon: ChartColumnIncreasing,
+    },
 ];
 
 const sellerNavItems: NavItem[] = [

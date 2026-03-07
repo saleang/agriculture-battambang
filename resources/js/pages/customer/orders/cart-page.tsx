@@ -249,7 +249,7 @@ export default function CartPage({ auth }: CartPageProps) {
                                                                         <Minus className="w-4 h-4" />
                                                                     </button>
                                                                     <span className="text-lg font-semibold w-10 text-center">
-                                                                        {item.quantity}
+                                                                        {toKhmerPrice(item.quantity)}
                                                                     </span>
                                                                     <button
                                                                         onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
