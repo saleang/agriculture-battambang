@@ -200,12 +200,12 @@ export default function Home({ auth }: PageProps) {
                 </p>
 
                 <h1 className="mb-6 text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                ស្រស់ៗពីកសិដ្ឋាន <br className="hidden sm:block" />
-                <span className="text-green-600">សរីរាង្គ</span>
+                កសិផលស្រស់ៗពីចម្ការ <br className="hidden sm:block" />
+                <span className="text-green-600">ខេត្តបាត់ដំបង</span>
                 </h1>
 
                 <p className="mb-8 text-lg sm:text-xl text-gray-700 max-w-xl mx-auto lg:mx-0">
-                ទិញកសិផលស្រស់ៗ គ្មានគីមី ដឹកជញ្ជូនរហ័ស ដល់ផ្ទះអ្នក។ សុខភាពល្អ ចាប់ផ្តើមពីឥឡូវនេះ!
+                ទិញកសិផលស្រស់ពិតពីកសិករផ្ទាល់ ធម្មជាតិ គ្មានសារធាតុគីមី! ជួយកសិករក្នុងស្រុក ដោយការទិញរបស់អ្នក។
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -213,7 +213,7 @@ export default function Home({ auth }: PageProps) {
                     href={user ? '/shop' : '/login'}
                     className="inline-flex items-center justify-center rounded-full bg-green-600 px-8 py-4 text-base sm:text-lg font-semibold text-white shadow-lg hover:bg-green-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5"
                 >
-                    {user ? 'ទិញឥឡូវនេះ →' : 'ចូលគណនីដើម្បីទិញ →'}
+                    {user ? 'ទិញឥឡូវនេះ →' : 'ចូលគណនី →'}
                 </Link>
 
                 <p className="text-sm text-gray-600">
@@ -226,7 +226,7 @@ export default function Home({ auth }: PageProps) {
             <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
                 <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-green-200/50">
                 <img
-                    src="https://c8.alamy.com/comp/2B3HE74/colorful-fruit-and-vegetables-on-market-in-cambodia-2B3HE74.jpg"
+                    src="https://ufhealth.org/assets/images/stories/_640x426_crop_center-center_line/GettyImages-1409236261.jpg"
                     alt="កសិផលស្រស់ៗពីទីផ្សារកម្ពុជា"
                     className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                     loading="lazy"

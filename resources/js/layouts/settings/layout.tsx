@@ -60,11 +60,11 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 className={cn('w-full justify-start', {
                                     'bg-muted': isSameUrl(
                                         currentPath,
-                                        item.href,
+                                        resolveUrl(item.href),
                                     ),
                                 })}
                             >
-                                <Link href={item.href}>
+                                <Link href={resolveUrl(item.href)}>
                                     {item.icon && (
                                         <item.icon className="h-4 w-4" />
                                     )}

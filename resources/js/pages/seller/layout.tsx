@@ -118,7 +118,7 @@ export default function SellerLayout({ children }: PropsWithChildren) {
                           "bg-green-100 text-green-700"
                       )}
                     >
-                      <Link href={item.href!}>
+                      <Link href={resolveUrl(item.href!)}>
                         {item.icon && (
                           <item.icon className="mr-2 h-4 w-4" />
                         )}
@@ -130,7 +130,7 @@ export default function SellerLayout({ children }: PropsWithChildren) {
                   {/* Children */}
                   {open &&
                     item.children?.map((child) => (
-                      <Button
+                        <Button
                         key={child.title}
                         size="sm"
                         variant="ghost"
@@ -141,7 +141,7 @@ export default function SellerLayout({ children }: PropsWithChildren) {
                             "bg-green-200 text-green-800"
                         )}
                       >
-                        <Link href={child.href!}>
+                        <Link href={resolveUrl(child.href!)}>
                           {child.icon && (
                             <child.icon className="mr-2 h-3.5 w-3.5" />
                           )}
