@@ -7,10 +7,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-
-// Auto-cancel orders every minute
+// AUTO-CANCEL ORDERS
 Schedule::command('orders:auto-cancel')
     ->everyMinute()
     ->withoutOverlapping()
-    ->runInBackground();
-// 23490   7654321
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/auto-cancel.log'));

@@ -197,6 +197,7 @@ Route::get('/categories', function () {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/report.php';
 
 Route::get('/check-username', function (Request $request) {
     $username = (string) $request->query('username', '');
