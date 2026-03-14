@@ -35,23 +35,7 @@ const sidebarNavItems: NavItem[] = [
     title: "ការកំណត់ការជូនដំណឹង",
     href: "/seller/telegram_settings",
     icon: Box,
-  },
-  {
-    title: "គ្រប់គ្រងផលិតផល",
-    icon: Box,
-    children: [
-      {
-        title: "Products",
-        href: "/seller/product",
-        icon: Box,
-      },
-      {
-        title: "Categories",
-        href: "/seller/category",
-        icon: Box,
-      },
-    ],
-  },
+  }
 ];
 
 export default function SellerLayout({ children }: PropsWithChildren) {
