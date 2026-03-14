@@ -158,7 +158,7 @@ export default function Home({ auth }: PageProps) {
       <Head title="ទំព័រដើម - កសិផលខេត្តបាត់ដំបង" />
 
       {/* Top Bar */}
-      <div className="bg-gray-900 px-4 py-2.5 text-sm text-white">
+      {/* <div className="bg-gray-900 px-4 py-2.5 text-sm text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex gap-6">
             <span className="flex items-center gap-2">
