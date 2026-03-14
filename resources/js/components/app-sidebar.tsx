@@ -26,26 +26,36 @@ const mainNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     // ...mainNavItems,
      {
-        title: 'Dashboard',
+        title: 'ផ្ទាំងទំព័រដើម',
         href: '/admin/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'Manage Users',
+        title: 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
         href: '/admin/users',
         icon: LayoutGrid,
     },
     {
-        title: 'Manage Sellers',
+        title: 'គ្រប់គ្រងអាជីវករ',
         href: '/admin/sellers',
         icon: Folder,
     },
     {
-        title: 'Manage Products',
+        title: 'គ្រប់គ្រងផលិតផល',
         href: '/admin/products',
         icon: Package,
     },
-    {   title: 'Reports',
+    {
+        title: 'គ្រប់គ្រងប្រភេទផលិតផល',
+        href: '/admin/categories',
+        icon: Package2,
+    },
+    {
+        title: ' Reviews & Ratings',
+        href: '/seller/reviews',
+        icon: Star,
+    },
+    {   title: 'របាយការណ៍',
         href: '/admin/reports',
         icon: ChartColumnIncreasing,
     },
@@ -54,31 +64,31 @@ const adminNavItems: NavItem[] = [
 const sellerNavItems: NavItem[] = [
     //...mainNavItems,
     {
-        title: 'Dashboard',
+        title: 'ផ្ទាំងទំព័រដើម',
         href: '/seller/dashboard',
         icon: House,
     },
     {
-        title: 'Profile Management',
+        title: 'ប្រូហ្វាលយ៍',
         href: '/seller/profile',
         icon: User,
     },
     {
-        title: 'Product Management',
+        title: 'ការគ្រប់គ្រងផលិតផល',
         icon: Box,
         children: [
-            { title: 'Products', href: '/seller/product', icon: Box },
-            { title: 'Categories', href: '/seller/category', icon: Box },
+            { title: 'ផលិតផល', href: '/seller/product', icon: Box },
+            { title: 'ប្រភេទផលិតផល', href: '/seller/category', icon: Box },
         ],
     },
 
     {
-        title: 'Order Processing',
+        title: 'គ្រប់គ្រងការបញ្ជាទិញ',
         href: '/seller/orders',
         icon: Truck,
     },
     {
-        title: 'Payment Management',
+        title: 'គ្រប់គ្រងការបង់ក្រាក់',
         href: '/seller/payments',
         icon: DollarSign,
     },
@@ -88,7 +98,7 @@ const sellerNavItems: NavItem[] = [
         icon: Star,
     },
     {
-        title: ' Reports',
+        title: ' របាយការណ៍',
         href: '/seller/reports',
         icon: ChartColumnIncreasing
     },

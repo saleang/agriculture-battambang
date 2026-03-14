@@ -16,38 +16,52 @@ use Inertia\Response;
 
 class UserManagementController extends Controller
 {
-    // Display listing of users.
+    /**
+     * Display a listing of the users with global statistics.
+     */
     public function index(Request $request): Response
     {
         $query = User::with('seller');
 
         // Search functionality
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('username', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
         // Filter by role
-        if ($request->has('role') && $request->role) {
+        if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
         // Filter by status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         $users = $query->latest('created_at')
-                       ->paginate(10)
-                       ->withQueryString();
+            ->paginate(10)
+            ->withQueryString();
+
+        // ──────────────────────────────────────────────────────────────
+        // Global totals (not affected by search / filter / pagination)
+        // ──────────────────────────────────────────────────────────────
+        $totalStats = [
+            'total_users'     => User::count(),
+            'total_admins'    => User::where('role', 'admin')->count(),
+            'total_sellers'   => User::where('role', 'seller')->count(),
+            'total_customers' => User::where('role', 'customer')->count(),
+            'total_active'    => User::where('status', 'active')->count(),
+        ];
 
         return Inertia::render('admin/users/index', [
-            'users' => $users,
-            'filters' => $request->only(['search', 'role', 'status'])
+            'users'      => $users,
+            'filters'    => $request->only(['search', 'role', 'status']),
+            'totalStats' => $totalStats,
         ]);
     }
 
@@ -60,46 +74,51 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Store a newly created user.
+     * Store a newly created user in storage.
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'username' => 'required|string|max:50|unique:users,username',
-            'email' => 'required|string|lowercase|email|max:100|unique:users,email',
-            'password' => ['required', 'confirmed', 'min:3'],//Rules\Password::defaults()
-            'role' => 'required|in:admin,seller,customer',
-            'phone' => 'required|string|max:20',
-            'status' => 'required|in:active,inactive,banned',
-            'farm_name' => 'required_if:role,seller|nullable|string|max:100',
-            'location_district' => 'required_if:role,seller|nullable|string|max:100',
-            'description' => 'nullable|string|max:1000',
+            'username'            => 'required|string|max:50|unique:users,username',
+            'email'               => 'required|string|lowercase|email|max:100|unique:users,email',
+            'password'            => ['required', 'confirmed', 'min:3'], // Rules\Password::defaults()
+            'role'                => 'required|in:admin,seller,customer',
+            'phone'               => 'required|string|max:20',
+            'status'              => 'required|in:active,inactive,banned',
+            'farm_name'           => 'required_if:role,seller|nullable|string|max:100',
+            'location_district'   => 'required_if:role,seller|nullable|string|max:100',
+            'description'         => 'nullable|string|max:1000',
         ]);
 
         $user = User::create([
             'username' => $validated['username'],
-            'email' => $validated['email'],
+            'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'phone' => $validated['phone'],
-            'status' => $validated['status'],
+            'role'     => $validated['role'],
+            'phone'    => $validated['phone'],
+            'status'   => $validated['status'],
         ]);
 
         if ($validated['role'] === 'seller') {
             Seller::create([
-                'user_id' => $user->user_id,
-                'farm_name' => $validated['farm_name'],
+                'user_id'           => $user->user_id,
+                'farm_name'         => $validated['farm_name'],
                 'location_district' => $validated['location_district'],
-                'description' => $validated['description'] ?? null,
+                'description'       => $validated['description'] ?? null,
             ]);
         }
-        Log::info('New user created', ['user_id' => $user->user_id, 'role' => $user->role]);
+
+        Log::info('New user created', [
+            'user_id' => $user->user_id,
+            'role'    => $user->role,
+        ]);
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
     }
 
     /**
-     * Show the form for editing the user.
+     * Show the form for editing the specified user.
      */
     public function edit(User $user): Response
     {
@@ -111,41 +130,41 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Update the specified user.
+     * Update the specified user in storage.
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        // Debug incoming request to help diagnose method/URL/payload issues
         Log::debug('User update incoming', [
             'method' => $request->method(),
-            'uri' => $request->path(),
-            'input' => $request->all(),
+            'uri'    => $request->path(),
+            'input'  => $request->all(),
         ]);
 
         $validated = $request->validate([
-            'username' => 'required|string|max:50|unique:users,username,' . $user->user_id . ',user_id',
-            'email' => 'required|string|lowercase|email|max:100|unique:users,email,' . $user->user_id . ',user_id',
-            'role' => 'required|in:admin,seller,customer',
-            'phone' => 'required|string|max:20',
-            'status' => 'required|in:active,inactive,banned',
-            'farm_name' => 'required_if:role,seller|nullable|string|max:100',
-            'location_district' => 'required_if:role,seller|nullable|string|max:100',
-            'description' => 'nullable|string|max:1000',
+            'username'            => 'required|string|max:50|unique:users,username,' . $user->user_id . ',user_id',
+            'email'               => 'required|string|lowercase|email|max:100|unique:users,email,' . $user->user_id . ',user_id',
+            'role'                => 'required|in:admin,seller,customer',
+            'phone'               => 'required|string|max:20',
+            'status'              => 'required|in:active,inactive,banned',
+            'farm_name'           => 'required_if:role,seller|nullable|string|max:100',
+            'location_district'   => 'required_if:role,seller|nullable|string|max:100',
+            'description'         => 'nullable|string|max:1000',
         ]);
 
         $user->update([
             'username' => $validated['username'],
-            'email' => $validated['email'],
-            'role' => $validated['role'],
-            'phone' => $validated['phone'],
-            'status' => $validated['status'],
+            'email'    => $validated['email'],
+            'role'     => $validated['role'],
+            'phone'    => $validated['phone'],
+            'status'   => $validated['status'],
         ]);
 
         // Update password if provided
         if ($request->filled('password')) {
             $request->validate([
-                'password' => ['required', 'confirmed','min:3' ],//Rules\Password::defaults()   
+                'password' => ['required', 'confirmed', 'min:3'],
             ]);
+
             $user->update([
                 'password' => Hash::make($request->password),
             ]);
@@ -155,20 +174,20 @@ class UserManagementController extends Controller
         if ($validated['role'] === 'seller') {
             if ($user->seller) {
                 $user->seller->update([
-                    'farm_name' => $validated['farm_name'],
+                    'farm_name'         => $validated['farm_name'],
                     'location_district' => $validated['location_district'],
-                    'description' => $validated['description'] ?? null,
+                    'description'       => $validated['description'] ?? null,
                 ]);
             } else {
                 Seller::create([
-                    'user_id' => $user->user_id,
-                    'farm_name' => $validated['farm_name'],
+                    'user_id'           => $user->user_id,
+                    'farm_name'         => $validated['farm_name'],
                     'location_district' => $validated['location_district'],
-                    'description' => $validated['description'] ?? null,
+                    'description'       => $validated['description'] ?? null,
                 ]);
             }
         } else {
-            // If changing from seller to another role, delete seller profile
+            // Remove seller profile if role changed away from seller
             if ($user->seller) {
                 $user->seller->delete();
             }
@@ -179,12 +198,11 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Remove the specified user.
+     * Remove the specified user from storage.
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting own account
-        if ($user->user_id === Auth::user()->user_id) {
+        if ($user->user_id === Auth::id()) {
             return redirect()->route('admin.users.index')
                 ->with('error', 'You cannot delete your own account.');
         }

@@ -1,5 +1,5 @@
 // import AppLogoIcon from './app-logo-icon';
-import Logo from '@/assets/logo.png';
+import Logo from '@/assets/image.png';
 
 
 export default function AppLogo() {
@@ -19,11 +19,19 @@ export default function AppLogo() {
         //         </span>
         //     </div> */}
         // </>
-         <div className="flex items-center justify-center">
+         <div className="flex items-center justify-center w-full">
             <img
                 src={Logo}
                 alt="App Logo"
-                className="w-[200px] h-[100px] "
+                className="
+                    w-32 
+                    sm:w-60 
+                    md:w-68 
+                    lg:w-56 
+                    xl:w-64 
+                    h-auto 
+                    object-contain
+                "
             />
         </div>
     );

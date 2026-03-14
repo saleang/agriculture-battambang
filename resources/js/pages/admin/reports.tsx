@@ -34,11 +34,11 @@ export default function Reports({ auth, initialData }: ReportsProps) {
 
       if (response.data.success) {
         setReportData(response.data.data);
-        alert('Report generated successfully!');
+        alert('របាយការណ៍ត្រូវបានបង្កើតដោយជោគជ័យ!');
       }
     } catch (error) {
       console.error('Error generating report:', error);
-      alert('Failed to generate report. Please try again.');
+      alert('ការបង្កើតរបាយការណ៍បានបរាជ័យ។ សូម​ព្យាយាម​ម្តង​ទៀត។');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
       link.remove();
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('PDF export feature is coming soon!');
+      alert('មុខងារនាំចេញជា PDF នឹងមកដល់ឆាប់ៗនេះ!');
     }
   };
 
@@ -86,21 +86,21 @@ export default function Reports({ auth, initialData }: ReportsProps) {
       link.remove();
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      alert('Failed to export CSV. Please try again.');
+      alert('ការនាំចេញ CSV បានបរាជ័យ។ សូម​ព្យាយាម​ម្តង​ទៀត។');
     }
   };
 
   return (
     <AppLayout>
-      <Head title="Reports & Analytics" />
+      <Head title="របាយការណ៍ និងការវិភាគ" />
 
       <div className="py-12">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-[#228B22]">Reports & Analytics</h2>
-              <p className="text-gray-600 mt-1">View insights and generate custom reports</p>
+              <h2 className="text-3xl font-bold text-[#228B22]">របាយការណ៍ និងការវិភាគ</h2>
+              <p className="text-gray-600 mt-1">មើលការយល់ដឹង និងបង្កើតរបាយការណ៍ផ្ទាល់ខ្លួន</p>
             </div>
           </div>
 
@@ -110,12 +110,12 @@ export default function Reports({ auth, initialData }: ReportsProps) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm">Total Sales</p>
+                    <p className="text-gray-600 text-sm">ការលក់សរុប</p>
                     <p className="text-2xl font-bold mt-1">
                       ៛{(reportData?.key_metrics?.total_sales || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-green-600 mt-1">
-                      ↑ {(reportData?.key_metrics?.sales_growth || 0).toFixed(1)}% this period
+                      ↑ {(reportData?.key_metrics?.sales_growth || 0).toFixed(1)}% ក្នុងអំឡុងពេលនេះ
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-[#90EE90] bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -129,11 +129,11 @@ export default function Reports({ auth, initialData }: ReportsProps) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm">User Growth</p>
+                    <p className="text-gray-600 text-sm">កំណើនអ្នកប្រើប្រាស់</p>
                     <p className="text-2xl font-bold mt-1">
                       +{reportData?.key_metrics?.new_users || 0}
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">New users this period</p>
+                    <p className="text-xs text-blue-600 mt-1">អ្នកប្រើប្រាស់ថ្មីក្នុងអំឡុងពេលនេះ</p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Users className="w-6 h-6 text-blue-600" />
@@ -146,11 +146,11 @@ export default function Reports({ auth, initialData }: ReportsProps) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm">Active Sellers</p>
+                    <p className="text-gray-600 text-sm">អ្នកលក់សកម្ម</p>
                     <p className="text-2xl font-bold mt-1">
                       {reportData?.key_metrics?.active_sellers || 0}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">This period</p>
+                    <p className="text-xs text-gray-500 mt-1">ក្នុងអំឡុងពេលនេះ</p>
                   </div>
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-orange-600" />
@@ -163,11 +163,11 @@ export default function Reports({ auth, initialData }: ReportsProps) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm">Popular Products</p>
+                    <p className="text-gray-600 text-sm">ផលិតផលពេញនិយម</p>
                     <p className="text-2xl font-bold mt-1">
                       {reportData?.key_metrics?.popular_products || 0}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Trending items</p>
+                    <p className="text-xs text-gray-500 mt-1">ទំនិញកំពុងពេញនិយម</p>
                   </div>
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <Package className="w-6 h-6 text-purple-600" />
@@ -180,26 +180,26 @@ export default function Reports({ auth, initialData }: ReportsProps) {
           {/* Custom Report Generator */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#228B22]">Generate Custom Report</CardTitle>
+              <CardTitle className="text-[#228B22]">បង្កើតរបាយការណ៍ផ្ទាល់ខ្លួន</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="report-type">Report Type</Label>
+                  <Label htmlFor="report-type">ប្រភេទរបាយការណ៍</Label>
                   <Select value={reportType} onValueChange={setReportType}>
                     <SelectTrigger id="report-type">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sales">Sales Report</SelectItem>
-                      <SelectItem value="users">Users Report</SelectItem>
-                      <SelectItem value="products">Products Report</SelectItem>
-                      <SelectItem value="sellers">Sellers Report</SelectItem>
+                      <SelectItem value="sales">របាយការណ៍​ការ​លក់</SelectItem>
+                      <SelectItem value="users">របាយការណ៍អ្នកប្រើប្រាស់</SelectItem>
+                      <SelectItem value="products">របាយការណ៍​ផលិតផល</SelectItem>
+                      <SelectItem value="sellers">របាយការណ៍អ្នកលក់</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="start-date">Start Date</Label>
+                  <Label htmlFor="start-date">កាលបរិច្ឆេទចាប់ផ្តើម</Label>
                   <Input
                     id="start-date"
                     type="date"
@@ -208,7 +208,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="end-date">End Date</Label>
+                  <Label htmlFor="end-date">កាលបរិច្ឆេទបញ្ចប់</Label>
                   <Input
                     id="end-date"
                     type="date"
@@ -222,7 +222,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                     disabled={loading}
                     className="bg-[#228B22] hover:bg-[#1a6b1a] text-white rounded-lg flex-1"
                   >
-                    {loading ? 'Generating...' : 'Generate'}
+                    {loading ? 'កំពុងបង្កើត...' : 'បង្កើត'}
                   </Button>
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                   className="gap-2 rounded-lg"
                 >
                   <Download className="w-4 h-4" />
-                  Export PDF
+                  នាំចេញជា PDF
                 </Button>
                 <Button
                   variant="outline"
@@ -241,7 +241,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                   className="gap-2 rounded-lg"
                 >
                   <Download className="w-4 h-4" />
-                  Export CSV
+                  នាំចេញជា CSV
                 </Button>
               </div>
             </CardContent>
@@ -252,7 +252,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
             {/* Sales by Category */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#228B22]">Sales by Category</CardTitle>
+                <CardTitle className="text-[#228B22]">ការលក់តាមប្រភេទ</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -262,8 +262,8 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                     <YAxis stroke="#666" />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="sales" fill="#228B22" name="Sales (៛)" />
-                    <Bar dataKey="orders" fill="#90EE90" name="Orders" />
+                    <Bar dataKey="sales" fill="#228B22" name="ការលក់ (៛)" />
+                    <Bar dataKey="orders" fill="#90EE90" name="ការបញ្ជាទិញ" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -272,7 +272,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
             {/* Daily User Growth */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#228B22]">Daily User Growth</CardTitle>
+                <CardTitle className="text-[#228B22]">កំណើនអ្នកប្រើប្រាស់ប្រចាំថ្ងៃ</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -288,7 +288,7 @@ export default function Reports({ auth, initialData }: ReportsProps) {
                       stroke="#228B22"
                       strokeWidth={2}
                       dot={{ fill: '#228B22', r: 4 }}
-                      name="New Users"
+                      name="អ្នកប្រើប្រាស់ថ្មី"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -301,16 +301,16 @@ export default function Reports({ auth, initialData }: ReportsProps) {
             {/* Top Sellers */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#228B22]">Top Sellers</CardTitle>
+                <CardTitle className="text-[#228B22]">អ្នកលក់កំពូល</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Seller Name</TableHead>
-                      <TableHead>Sales</TableHead>
-                      <TableHead>Orders</TableHead>
-                      <TableHead>Rating</TableHead>
+                      <TableHead>ឈ្មោះអ្នកលក់</TableHead>
+                      <TableHead>ការលក់</TableHead>
+                      <TableHead>ការបញ្ជាទិញ</TableHead>
+                      <TableHead>ការវាយតម្លៃ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -332,16 +332,16 @@ export default function Reports({ auth, initialData }: ReportsProps) {
             {/* Top Products */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#228B22]">Popular Products</CardTitle>
+                <CardTitle className="text-[#228B22]">ផលិតផលពេញនិយម</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product Name</TableHead>
-                      <TableHead>Sales</TableHead>
-                      <TableHead>Views</TableHead>
-                      <TableHead>Rating</TableHead>
+                      <TableHead>ឈ្មោះ​ផលិតផល</TableHead>
+                      <TableHead>ការលក់</TableHead>
+                      <TableHead>ការមើល</TableHead>
+                      <TableHead>ការវាយតម្លៃ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

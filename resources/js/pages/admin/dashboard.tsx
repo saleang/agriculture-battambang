@@ -27,84 +27,60 @@ interface AdminStats {
     total_users: number;
     total_sellers: number;
     total_customers: number;
+    total_products: number;
+    active_products: number;
     pending_approvals?: number;
-    total_products?: number;
     pending_orders?: number;
     total_revenue?: number;
 }
 
-export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats }>) {
+interface RecentActivity {
+    id: number;
+    action: string;
+    user: string;
+    time: string;
+    status: string;
+    type: string;
+}
 
-    // សកម្មភាពថ្មីៗ
-    const recentActivities = [
-        { 
-            id: 1, 
-            action: 'កសិករថ្មីបានចុះឈ្មោះ', 
-            user: 'កសិករម៉ឹង',
-            time: '៥ នាទីមុន',
-            status: 'pending',
-            type: 'seller'
-        },
-        { 
-            id: 2, 
-            action: 'ផលិតផលថ្មីត្រូវបានបញ្ចូល', 
-            user: 'កសិករសុខា',
-            time: '២០ នាទីមុន',
-            status: 'approved',
-            type: 'product'
-        },
-        { 
-            id: 3, 
-            action: 'ការបញ្ជាទិញត្រូវបានបញ្ចប់', 
-            user: 'លោក សុភា',
-            time: '៤០ នាទីមុន',
-            status: 'completed',
-            type: 'order'
-        },
-        { 
-            id: 4, 
-            action: 'ការកែប្រែព័ត៌មានកសិករ', 
-            user: 'កសិករវ៉ាន់',
-            time: '១ ម៉ោងមុន',
-            status: 'updated',
-            type: 'profile'
-        },
-        { 
-            id: 5, 
-            action: 'ផលិតផលត្រូវបានកែសម្រួល', 
-            user: 'កសិកររតនា',
-            time: '៣ ម៉ោងមុន',
-            status: 'modified',
-            type: 'product'
-        },
-    ];
+interface RecentOrder {
+    id: string;
+    customer: string;
+    amount: string;
+    status: string;
+    date: string;
+}
 
-    // ការបញ្ជាទិញថ្មីៗ
-    const recentOrders = [
-        { id: 'ORD-001', customer: 'លោក សុខ', amount: '៛65,000', status: 'completed', date: 'ថ្ងៃនេះ' },
-        { id: 'ORD-002', customer: 'លោកស្រី មាស', amount: '៛42,500', status: 'pending', date: 'ថ្ងៃនេះ' },
-        { id: 'ORD-003', customer: 'លោក វិជ្ជា', amount: '៛38,000', status: 'processing', date: 'ម្សិលមិញ' },
-        { id: 'ORD-004', customer: 'លោក ស៊ុន', amount: '៛92,000', status: 'completed', date: 'ម្សិលមិញ' },
-        { id: 'ORD-005', customer: 'លោកស្រី ស្រីពេជ្រ', amount: '៛21,500', status: 'pending', date: 'ម្សិលមិញ' },
-    ];
+interface PendingSeller {
+    id: number;
+    name: string;
+    location: string;
+    products: number;
+    date: string;
+}
 
-    // កសិកររង់ចាំអនុម័ត
-    const pendingSellers = [
-        { id: 1, name: 'កសិករម៉ឹង', location: 'ឯកភ្នំ', products: 12, date: '២ ថ្ងៃមុន' },
-        { id: 2, name: 'កសិករសុខា', location: 'បវេល', products: 8, date: '១ ថ្ងៃមុន' },
-        { id: 3, name: 'កសិករវ៉ាន់', location: 'មោង', products: 15, date: 'ថ្ងៃនេះ' },
-    ];
+export default function AdminDashboard({ stats, recentActivities, recentOrders, pendingSellers }: PageProps<{
+    stats: AdminStats;
+    recentActivities: RecentActivity[];
+    recentOrders: RecentOrder[];
+    pendingSellers: PendingSeller[]
+}>) {
 
-    // ទទួលបានតម្លៃ default
+    // Provide defaults for props to prevent undefined errors
     const safeStats = {
-        total_users: stats?.total_users || 0,
-        total_sellers: stats?.total_sellers || 0,
-        total_customers: stats?.total_customers || 0,
-        pending_approvals: stats?.pending_approvals || 3,
-        total_products: stats?.total_products || 245,
-        pending_orders: stats?.pending_orders || 12,
-        total_revenue: stats?.total_revenue || 18500000,
+        total_users: stats?.total_users ?? 0,
+        total_sellers: stats?.total_sellers ?? 0,
+        total_customers: stats?.total_customers ?? 0,
+        total_products: stats?.total_products ?? 0,
+        active_products: stats?.active_products ?? 0,
+        pending_approvals: stats?.pending_approvals ?? 0,
+        pending_orders: stats?.pending_orders ?? 0,
+        total_revenue: stats?.total_revenue ?? 0,
     };
+
+    const safeRecentActivities = recentActivities || [];
+    const safeRecentOrders = recentOrders || [];
+    const safePendingSellers = pendingSellers || [];
 
     // បម្លែងលុយទៅជាទ្រង់ទ្រាយ
     const formatCurrency = (amount: number) => {
@@ -115,10 +91,22 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
         }).format(amount);
     };
 
+    // Helper to safely calculate percentage
+    const safePercentage = (value: number, total: number) => {
+        if (total === 0) return 0;
+        return Math.round((value / total) * 100);
+    };
+
+    // Dynamic calculations
+    const activeProductsRate = safePercentage(safeStats.active_products, safeStats.total_products);
+    const orderCompletionRate = safePercentage(safeStats.total_products - safeStats.pending_orders, safeStats.total_products);
+    const userActivityRate = safePercentage(safeStats.total_customers, safeStats.total_users);
+
+
     return (
         <AppLayout>
             <Head title="ផ្ទាំងគ្រប់គ្រង - កសិផលខេត្តបាត់ដំបង" />
-            
+
             {/* Add custom fonts */}
             <Head>
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -138,7 +126,7 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                 </div>
 
                 {/* SUMMARY CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
                     {/* Total Users Card */}
                     <Card className="border-l-4 border-l-[#228B22] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-4 md:p-6">
@@ -174,6 +162,27 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                                 </div>
                                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-green-50 flex items-center justify-center">
                                     <Store className="text-[#32CD32]" size={24} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Total Products Card */}
+                    <Card className="border-l-4 border-l-[#FFD700] shadow-sm hover:shadow-md transition-shadow">
+                        <CardContent className="p-4 md:p-6">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-gray-600">ផលិតផលសរុប</p>
+                                    <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{safeStats.total_products}</p>
+                                    <div className="mt-2">
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                            <CheckCircle className="w-3 h-3 mr-1" />
+                                            {safeStats.active_products} សកម្ម
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-yellow-50 flex items-center justify-center">
+                                    <Package className="text-[#FFD700]" size={24} />
                                 </div>
                             </div>
                         </CardContent>
@@ -232,23 +241,23 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                                 {/* Products Growth */}
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-medium">ការរីកចម្រើនផលិតផល</span>
-                                        <span className="text-sm font-bold text-green-600">+{safeStats.total_products}</span>
+                                        <span className="text-sm font-medium">អត្រាផលិតផលសកម្ម</span>
+                                        <span className="text-sm font-bold text-green-600">{activeProductsRate}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: `${activeProductsRate}%` }}></div>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">75% កើនឡើងពីខែមុន</p>
+                                    <p className="text-xs text-gray-500 mt-1">{safeStats.active_products} នៃ {safeStats.total_products} ផលិតផលកំពុងសកម្ម</p>
                                 </div>
 
                                 {/* Order Completion */}
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium">អត្រាបញ្ចប់ការបញ្ជាទិញ</span>
-                                        <span className="text-sm font-bold text-green-600">92%</span>
+                                        <span className="text-sm font-bold text-green-600">{orderCompletionRate}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: '92%' }}></div>
+                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: `${orderCompletionRate}%` }}></div>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">ការបញ្ជាទិញ {safeStats.pending_orders} នៅសល់</p>
                                 </div>
@@ -257,10 +266,10 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium">សកម្មភាពអ្នកប្រើប្រាស់</span>
-                                        <span className="text-sm font-bold text-green-600">សកម្ម 85%</span>
+                                        <span className="text-sm font-bold text-green-600">សកម្ម {userActivityRate}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: '85%' }}></div>
+                                        <div className="bg-green-600 h-full rounded-full transition-all duration-300" style={{ width: `${userActivityRate}%` }}></div>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">អ្នកប្រើប្រាស់សកម្មជាង 30 ថ្ងៃចុងក្រោយ</p>
                                 </div>
@@ -284,13 +293,13 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {recentOrders.map((order) => (
+                                        {safeRecentOrders.map((order) => (
                                             <TableRow key={order.id}>
                                                 <TableCell className="font-medium">{order.id}</TableCell>
                                                 <TableCell>{order.customer}</TableCell>
                                                 <TableCell className="font-bold text-green-600">{order.amount}</TableCell>
                                                 <TableCell>
-                                                    <Badge 
+                                                    <Badge
                                                         className={
                                                             order.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
                                                             order.status === 'processing' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
@@ -323,7 +332,7 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                                 <CardDescription>{safeStats.pending_approvals} នាក់រង់ចាំការអនុម័ត</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {pendingSellers.map((seller) => (
+                                {safePendingSellers.map((seller) => (
                                     <div key={seller.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition">
                                         <div>
                                             <p className="font-medium">{seller.name}</p>
@@ -346,146 +355,39 @@ export default function AdminDashboard({ stats }: PageProps<{ stats: AdminStats 
                             </CardContent>
                             <CardFooter>
                                 <Button variant="outline" className="w-full border-green-200 text-green-600 hover:bg-green-50">
-                                    មើលកសិករទាំងអស់
+                                    មើលសំណើទាំងអស់
                                 </Button>
                             </CardFooter>
                         </Card>
 
-                        {/* System Status */}
+                        {/* Recent Activities */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-[#228B22] font-moul">ស្ថានភាពប្រព័ន្ធ</CardTitle>
+                                <CardTitle className="text-[#228B22] font-moul">សកម្មភាពថ្មីៗ</CardTitle>
+                                <CardDescription>ការជូនដំណឹងចុងក្រោយ</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span>ម៉ាស៊ីនមេ</span>
+                                {safeRecentActivities.map((activity) => (
+                                    <div key={activity.id} className="flex items-start">
+                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                                            {activity.type === 'user' && <UserCheck className="w-4 h-4 text-blue-500" />}
+                                            {activity.type === 'order' && <ShoppingCart className="w-4 h-4 text-green-500" />}
+                                            {activity.type === 'product' && <Package className="w-4 h-4 text-yellow-500" />}
+                                            {activity.type === 'security' && <Shield className="w-4 h-4 text-red-500" />}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm" dangerouslySetInnerHTML={{ __html: activity.action }}></p>
+                                            <p className="text-xs text-gray-500 mt-1 flex items-center">
+                                                <Clock className="w-3 h-3 mr-1" />
+                                                {activity.time}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <Badge className="bg-green-100 text-green-800">ដំណើរការ</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span>មូលដ្ឋានទិន្នន័យ</span>
-                                    </div>
-                                    <Badge className="bg-green-100 text-green-800">ស្ថេរ</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span>ការទូទាត់</span>
-                                    </div>
-                                    <Badge className="bg-green-100 text-green-800">ដំណើរការ</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                        <span>ប្រព័ន្ធសុវត្ថិភាព</span>
-                                    </div>
-                                    <Badge className="bg-blue-100 text-blue-800">ធានា</Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Quick Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-[#228B22] font-moul">ស្ថិតិរហ័ស</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-green-50 p-4 rounded-lg">
-                                        <p className="text-2xl font-bold text-green-700">{safeStats.total_products}</p>
-                                        <p className="text-sm text-gray-600">ផលិតផលសរុប</p>
-                                    </div>
-                                    <div className="bg-blue-50 p-4 rounded-lg">
-                                        <p className="text-2xl font-bold text-blue-700">{safeStats.pending_orders}</p>
-                                        <p className="text-sm text-gray-600">ការបញ្ជាទិញរង់ចាំ</p>
-                                    </div>
-                                </div>
-                                <div className="text-center text-sm text-gray-500">
-                                    <Clock className="w-4 h-4 inline mr-1" />
-                                    ធ្វើបច្ចុប្បន្នភាព: {new Date().toLocaleDateString('km-KH')}
-                                </div>
+                                ))}
                             </CardContent>
                         </Card>
                     </div>
                 </div>
-
-                {/* QUICK ACTIONS */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-[#228B22] font-moul">សកម្មភាពរហ័ស</CardTitle>
-                        <CardDescription>គ្រប់គ្រងប្រព័ន្ធដោយរហ័ស</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                            <Button className="bg-[#228B22] hover:bg-[#1a6b1a] text-white h-auto py-3">
-                                <Users className="w-4 h-4 mr-2" />
-                                គ្រប់គ្រងអ្នកប្រើ
-                            </Button>
-                            <Button className="bg-[#32CD32] hover:bg-[#28a428] text-white h-auto py-3">
-                                <Store className="w-4 h-4 mr-2" />
-                                អនុម័តកសិករ
-                            </Button>
-                            <Button className="bg-[#006400] hover:bg-[#004d00] text-white h-auto py-3">
-                                <BarChart className="w-4 h-4 mr-2" />
-                                របាយការណ៍
-                            </Button>
-                            <Button className="bg-[#90EE90] hover:bg-[#7cd87c] text-gray-800 h-auto py-3">
-                                <Shield className="w-4 h-4 mr-2" />
-                                សុវត្ថិភាព
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Recent Activities */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-[#228B22] font-moul">សកម្មភាពថ្មីៗ</CardTitle>
-                        <CardDescription>សកម្មភាពចុងក្រោយនៅលើប្រព័ន្ធ</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {recentActivities.map((activity) => (
-                                <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
-                                    <div className={`p-2 rounded-full ${
-                                        activity.type === 'seller' ? 'bg-blue-100' :
-                                        activity.type === 'product' ? 'bg-green-100' :
-                                        activity.type === 'order' ? 'bg-purple-100' : 'bg-yellow-100'
-                                    }`}>
-                                        {activity.type === 'seller' ? <Users className="w-4 h-4 text-blue-600" /> :
-                                         activity.type === 'product' ? <Package className="w-4 h-4 text-green-600" /> :
-                                         activity.type === 'order' ? <ShoppingCart className="w-4 h-4 text-purple-600" /> :
-                                         <FileText className="w-4 h-4 text-yellow-600" />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium">{activity.action}</p>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-sm text-gray-500">{activity.user}</span>
-                                            <Badge 
-                                                variant="outline" 
-                                                className={
-                                                    activity.status === 'approved' ? 'border-green-200 text-green-700' :
-                                                    activity.status === 'completed' ? 'border-blue-200 text-blue-700' :
-                                                    activity.status === 'pending' ? 'border-yellow-200 text-yellow-700' :
-                                                    'border-gray-200 text-gray-700'
-                                                }
-                                            >
-                                                {activity.status === 'approved' ? 'បានអនុម័ត' :
-                                                 activity.status === 'completed' ? 'បានបញ្ចប់' :
-                                                 activity.status === 'pending' ? 'រង់ចាំ' : 'បានកែប្រែ'}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-gray-400">{activity.time}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
         </AppLayout>
     );
