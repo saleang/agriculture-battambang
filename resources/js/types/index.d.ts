@@ -75,4 +75,15 @@ export type PageProps<T = {}> = T & {
     auth: {
         user: User | null;
     };
+
+}
+
+export interface Product {
+  [x: string]: any;
+  product_id: number;
+  productname: string;
+  price: number;
+  unit: string;
+  image?: string;
+
 }
