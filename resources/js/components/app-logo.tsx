@@ -1,5 +1,5 @@
 // import AppLogoIcon from './app-logo-icon';
-import Logo from '@/assets/image.png';
+import Logo from '@/assets/logo_transparent.png';
 
 
 export default function AppLogo() {
@@ -7,9 +7,9 @@ export default function AppLogo() {
         // <>
         //     <div className="flex aspect-square w-50 items-center justify-center h-50 bg-sidebar-primary text-sidebar-primary-foreground">
         //         {/* <AppLogoIcon className="size-5 fill-current text-white dark:text-black" /> */}
-        //          <img 
-        //             src={Logo} 
-        //             alt="App Logo" 
+        //          <img
+        //             src={Logo}
+        //             alt="App Logo"
         //             className="size-50 fill-current text-white dark:text-black "
         //         />
         //     </div>
@@ -24,12 +24,12 @@ export default function AppLogo() {
                 src={Logo}
                 alt="App Logo"
                 className="
-                    w-32 
-                    sm:w-60 
-                    md:w-68 
-                    lg:w-56 
-                    xl:w-64 
-                    h-auto 
+                    w-32
+                    sm:w-60
+                    md:w-68
+                    lg:w-56
+                    xl:w-64
+                    h-auto
                     object-contain
                 "
             />

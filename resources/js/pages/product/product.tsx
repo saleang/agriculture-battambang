@@ -21,7 +21,7 @@ interface Product {
 
 interface Category {
     category_id: number;
-    categoryname: string;
+    category_name: string;
     is_active?: boolean;
 }
 
@@ -58,12 +58,8 @@ const ProductPage: React.FC = () => {
     >([]);
     const [showImageModal, setShowImageModal] = useState(false);
 
-    // ──────────────────────────────────────────────
-    // Utility & Helper Functions
-    // ──────────────────────────────────────────────
-
     const getCategoryName = (id?: number) =>
-        categories.find((c) => c.category_id === id)?.categoryname ?? 'មិនមាន';
+        categories.find((c) => c.category_id === id)?.category_name ?? 'មិនមាន';
 
     const khmerToWestern = (value: string): string => {
         const map: Record<string, string> = {
@@ -132,10 +128,8 @@ const ProductPage: React.FC = () => {
         e.preventDefault();
     };
 
-    // ──────────────────────────────────────────────
+    
     // Data Fetching
-    // ──────────────────────────────────────────────
-
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -158,11 +152,13 @@ const ProductPage: React.FC = () => {
 
     const fetchCategories = async () => {
         try {
-            const res = await axios.get('/seller/category');
+            const res = await axios.get('/seller/category/my-categories');
             const data = res.data?.data || res.data || [];
-            setCategories(
-                Array.isArray(data) ? data.filter((c) => c.is_active) : [],
-            );
+            // setCategories(
+            //     Array.isArray(data) ? data.filter((c) => c.is_active) : [],
+            // );
+      
+            setCategories(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('កំហុសក្នុងការទាញយកប្រភេទ៖', err);
         }
@@ -182,10 +178,8 @@ const ProductPage: React.FC = () => {
         }
     }, [formData.price]);
 
-    // ──────────────────────────────────────────────
+    
     // Form Handlers
-    // ──────────────────────────────────────────────
-
     const cleanupNewImages = () => {
         formData.newImagePreviews?.forEach((url) => {
             if (url) URL.revokeObjectURL(url);
@@ -343,10 +337,8 @@ const ProductPage: React.FC = () => {
         });
     };
 
-    // ──────────────────────────────────────────────
+    
     // Action Handlers
-    // ──────────────────────────────────────────────
-
     const handleSubmit = async () => {
         const isUpdate = !!formData.product_id;
 
@@ -544,10 +536,8 @@ const ProductPage: React.FC = () => {
         setShowImageModal(true);
     };
 
-    // ──────────────────────────────────────────────
+    
     // Computed Values
-    // ──────────────────────────────────────────────
-
     const filteredProducts = products.filter((p) => {
         if (!searchTerm.trim()) return true;
         const term = searchTerm.trim().toLowerCase();
@@ -566,10 +556,6 @@ const ProductPage: React.FC = () => {
                 return true;
         }
     });
-
-    // ──────────────────────────────────────────────
-    // Render
-    // ──────────────────────────────────────────────
 
     return (
         <AppLayout>
@@ -665,7 +651,7 @@ const ProductPage: React.FC = () => {
                                         key={c.category_id}
                                         value={c.category_id}
                                     >
-                                        {c.categoryname}
+                                        {c.category_name}
                                     </option>
                                 ))}
                             </select>

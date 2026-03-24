@@ -29,7 +29,7 @@ class Seller extends Model
         'total_sales',
         'bank_account_name', // acquiringBank example: ABA, ACLEDA, BAKONG, etc
         'bank_account_number', // bakong account Id example: qwer_fdj@aclb
-        'payment_qr_code', // merchantName example: Store II
+        'payment_qr_code', // merchantName example: Store II, Username of system or bank app
         'telegram_bot_token',
         'telegram_chat_id',
         'telegram_notifications_enabled',
@@ -52,18 +52,14 @@ class Seller extends Model
             && $this->telegram_notifications_enabled;
     }
 
-    /**
-     * Enable telegram notifications and save seller.
-     */
+    // Enable telegram notifications and save seller.
     public function enableTelegramNotifications(): void
     {
         $this->telegram_notifications_enabled = true;
         $this->save();
     }
 
-    /**
-     * Disable telegram notifications and save seller.
-     */
+    //Disable telegram notifications and save seller.
     public function disableTelegramNotifications(): void
     {
         $this->telegram_notifications_enabled = false;
@@ -81,34 +77,26 @@ class Seller extends Model
         $this->attributes['telegram_chat_id'] = trim($value);
     }
 
-    /**
-     * ✅ Check if seller has Bakong payment configured
-     */
+    // Check if seller has Bakong payment configured
     public function hasBakongConfigured(): bool
     {
         return !empty($this->bank_account_number)
             && !empty($this->payment_qr_code);
     }
 
-    /**
-     * Get acquiring bank code (for API)
-     */
+    //Get acquiring bank code (for API)
     public function getAcquiringBankAttribute(): ?string
     {
         return $this->bank_account_name;
     }
 
-    /**
-     * Get merchant name for KHQR (for API)
-     */
+    //Get merchant name for KHQR (for API)
     public function getMerchantNameAttribute(): string
     {
         return $this->payment_qr_code ?? $this->farm_name;
     }
 
-    /**
-     * Get Bakong Account ID (for API)
-     */
+    //Get Bakong Account ID (for API)
     public function getBakongAccountAttribute(): ?string
     {
         return $this->bank_account_number;
@@ -170,5 +158,14 @@ class Seller extends Model
 
         // return implode(', ', $parts);
         return !empty($parts) ? implode(', ', $parts) : '-';
+    }
+    public function categories()
+    {
+        return $this->belongsToMany(
+            Category::class,
+            'seller_category',
+            'seller_id',
+            'category_id'
+        )->withTimestamps();
     }
 }

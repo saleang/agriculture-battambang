@@ -12,15 +12,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Admin Report Routes
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [AdminReportController::class, 'index'])->name('index');
-            Route::post('/generate', [AdminReportController::class, 'generate'])->name('generate');
-            Route::post('/export/pdf', [AdminReportController::class, 'exportPDF'])->name('export.pdf');
-            Route::post('/export/csv', [AdminReportController::class, 'exportCSV'])->name('export.csv');
+    Route::middleware(['role:admin'])
+        ->prefix('admin/reports')
+        ->name('admin.reports.')
+        ->group(function () {
+            Route::get('/',                  [AdminReportController::class, 'index'])->name('index');
+            Route::post('/generate',         [AdminReportController::class, 'generate'])->name('generate');
+            Route::get('/archive/{archive}', [AdminReportController::class, 'showArchive'])->name('archive.show');
+            Route::get('/export/csv',        [AdminReportController::class, 'exportCSV'])->name('export.csv');
         });
-    });
+
 
     // Seller Report Routes
     Route::middleware(['role:seller'])->prefix('seller')->name('seller.')->group(function () {

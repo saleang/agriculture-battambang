@@ -14,28 +14,33 @@ class Category extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'seller_id',
-        'seller_category_id', // ✅ REQUIRED
-        'categoryname',
+        'category_name',
+        'category_image',
         'description',
         'is_active',
+
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'      => 'boolean',
+
     ];
 
-    /**
-     * Child categories (optional)
-     */
-    public function children()
+
+
+    
+
+    // Sellers who selected this category
+    public function sellers()
     {
-        return $this->hasMany(Category::class, 'parent_category_id', 'category_id');
+        return $this->belongsToMany(
+            Seller::class,
+            'seller_category',
+            'category_id',
+            'seller_id'
+        )->withTimestamps();
     }
 
-    /**
-     * Scope active categories
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

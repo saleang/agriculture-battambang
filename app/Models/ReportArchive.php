@@ -1,69 +1,88 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Models;
 
-return new class extends Migration
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ReportArchive extends Model
 {
+    use HasFactory;
+
+    protected $table = 'report_archive';
+    protected $primaryKey = 'report_id';
+
+    protected $fillable = [
+        'report_type',
+        'user_type',
+        'generated_by',
+        'generated_for',
+        'period_start',
+        'period_end',
+        'summary_metrics',
+        'chart_data',
+        'table_data',
+        'activity_logs',
+    ];
+
+    protected $casts = [
+        'period_start' => 'date',
+        'period_end' => 'date',
+        'summary_metrics' => 'array',
+        'chart_data' => 'array',
+        'table_data' => 'array',
+        'activity_logs' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     /**
-     * Run the migrations.
+     * Get the user who generated this report
      */
-    public function up(): void
+    public function generatedBy(): BelongsTo
     {
-        Schema::create('report_archive', function (Blueprint $table) {
-            $table->id('report_id');
-
-            // Report type and user
-            $table->enum('report_type', [
-                'seller_sales',
-                'admin_sales',
-                'admin_users',
-                'admin_products',
-                'admin_sellers'
-            ]);
-            $table->enum('user_type', ['admin', 'seller']);
-            $table->unsignedBigInteger('generated_by'); // user_id
-            $table->unsignedBigInteger('generated_for')->nullable(); // seller_id (if seller-specific)
-
-            // Date range
-            $table->date('period_start');
-            $table->date('period_end');
-
-            // Report data (stored as JSON)
-            $table->json('summary_metrics')->nullable();
-            // Example: {"total_revenue": 50506, "total_orders": 618, "avg_order": 81.75}
-
-            $table->json('chart_data')->nullable();
-            // Example: {"monthly_sales": [...], "category_breakdown": [...]}
-
-            $table->json('table_data')->nullable();
-            // Example: {"top_products": [...], "top_sellers": [...]}
-
-            $table->json('activity_logs')->nullable(); // For admin only
-
-            // Metadata
-            $table->timestamps();
-
-            // Indexes
-            $table->index('report_type');
-            $table->index('user_type');
-            $table->index('generated_by');
-            $table->index('generated_for');
-            $table->index('period_start');
-            $table->index('period_end');
-            $table->index('created_at');
-
-            // Foreign keys
-            $table->foreign('generated_by')->references('user_id')->on('users')->onDelete('cascade');
-        });
+        return $this->belongsTo(User::class, 'generated_by', 'user_id');
     }
 
     /**
-     * Reverse the migrations.
+     * Get the seller this report is for (if applicable)
      */
-    public function down(): void
+    public function seller(): BelongsTo
     {
-        Schema::dropIfExists('report_archive');
+        return $this->belongsTo(Seller::class, 'generated_for', 'seller_id');
     }
-};
+
+    /**
+     * Scope for seller reports
+     */
+    public function scopeSellerReports($query)
+    {
+        return $query->where('user_type', 'seller');
+    }
+
+    /**
+     * Scope for admin reports
+     */
+    public function scopeAdminReports($query)
+    {
+        return $query->where('user_type', 'admin');
+    }
+
+    /**
+     * Scope for reports within date range
+     */
+    public function scopeInPeriod($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('period_start', [$startDate, $endDate])
+            ->orWhereBetween('period_end', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope for recent reports
+     */
+    public function scopeRecent($query, $days = 30)
+    {
+        return $query->where('created_at', '>=', now()->subDays($days));
+    }
+}

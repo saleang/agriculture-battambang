@@ -9,26 +9,26 @@ return new class extends Migration {
     {
         Schema::create('category', function (Blueprint $table) {
             $table->bigIncrements('category_id');
-            $table->unsignedBigInteger('seller_id');
-            $table->unsignedInteger('seller_category_id');
-            $table->string('categoryname', 100);
+            $table->string('category_name', 100);
+            $table->string('category_image', 255)->nullable();
             $table->text('description')->nullable();
+           
             $table->boolean('is_active')->default(true);
+          
             $table->timestamps();
-            $table->unique(['seller_id', 'categoryname']);
-            $table->unique(['seller_id', 'seller_category_id']);
 
-            // Foreign key
-            $table->foreign('seller_id')
-                ->references('seller_id')
-                ->on('sellers')
-                ->onDelete('cascade');
+           
+
+            // Optional: prevent duplicate category names (you can remove if you want same name in different parents)
+            $table->unique('category_name');
         });
+
+
     }
 
     public function down(): void
     {
+
         Schema::dropIfExists('category');
     }
 };
-

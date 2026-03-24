@@ -1,354 +1,314 @@
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router } from '@inertiajs/react';
-import { PageProps } from '@/types';
-import { route } from '@/lib/route';
-import { Search, Filter, Plus, Edit2, Trash2, MapPin, Calendar, Mail, Phone, Store } from 'lucide-react';
-import { toast } from 'sonner';
-interface Seller {
-    user_id: number;
-    username: string;
-    email: string;
-    phone: string;
-    status: 'active' | 'inactive' | 'banned';
+// pages/admin/sellers/index.tsx
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import { Head, Link, router } from "@inertiajs/react";
+import { PageProps } from "@/types";
+import {
+    Search, Plus, Edit2, Trash2, Mail, Phone, Store,
+    Calendar, MapPin, Grid, List, Filter, User as UserIcon,
+} from "lucide-react";
+import Swal from "sweetalert2";
+
+/* ── SweetAlert2 mixins ─────────────────────────────────────── */
+const swal = Swal.mixin({
+    customClass: {
+        popup:         "!rounded-2xl !shadow-2xl !border !border-slate-200",
+        title:         "!text-slate-900 !text-base !font-bold",
+        htmlContainer: "!text-slate-600 !text-sm",
+        confirmButton: "!bg-rose-600 hover:!bg-rose-700 !rounded-xl !px-6 !py-2.5 !text-sm !font-semibold !shadow-none",
+        cancelButton:  "!bg-white hover:!bg-slate-50 !border !border-slate-200 !text-slate-700 !rounded-xl !px-6 !py-2.5 !text-sm !font-semibold !shadow-none",
+    },
+    buttonsStyling: false,
+    reverseButtons: true,
+});
+const swalSuccess = Swal.mixin({
+    customClass: {
+        popup:         "!rounded-2xl !shadow-xl !border !border-emerald-100",
+        title:         "!text-emerald-800 !text-base !font-bold",
+        htmlContainer: "!text-emerald-700 !text-sm",
+        confirmButton: "!bg-[#228B22] hover:!bg-[#1a6b1a] !rounded-xl !px-6 !py-2.5 !text-sm !font-semibold !shadow-none",
+    },
+    buttonsStyling: false,
+    icon: "success",
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+});
+
+/* ── Types ──────────────────────────────────────────────────── */
+interface SellerUser {
+    user_id:    number;
+    username:   string;
+    email:      string;
+    phone:      string;
+    status:     string;
     created_at: string;
     seller?: {
-        farm_name: string;
-        location_district: string;
+        farm_name:     string;
+        full_location?: string;
     };
 }
 
-interface SellersPageProps extends PageProps {
-    sellers: {
-        data: Seller[];
-        links: any[];
-    };
-    filters: {
-        search?: string;
-        status?: string;
-    };
+interface TotalStats {
+    total: number; active: number; inactive: number; banned: number;
 }
 
-export default function SellersIndex({ sellers, filters }: SellersPageProps) {
-    const [search, setSearch] = useState(filters.search || '');
-    const [status, setStatus] = useState(filters.status || '');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+/* ── Component ──────────────────────────────────────────────── */
+export default function SellersIndex({
+    sellers, filters, totalStats,
+}: PageProps<{
+    sellers:    { data: SellerUser[]; links: any[] };
+    filters:    { search?: string; status?: string };
+    totalStats: TotalStats;
+}>) {
+    const [search,   setSearch]   = useState(filters.search || "");
+    const [status,   setStatus]   = useState(filters.status || "");
+    const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-    const handleSearch = () => {
+    // FIX: always navigate with both params so filter resets work
+    const handleFilter = () => {
         router.get(
-            route('admin.sellers.index'),
+            "/admin/sellers",
             { search, status },
             { preserveState: true, replace: true }
         );
     };
 
-    const handleDelete = (id: number, name: string) => {
-        if (confirm(`Delete seller "${name}"? This cannot be undone.`)) {
-            router.delete(route('admin.sellers.destroy', id), {
-                preserveScroll: true,
-                onSuccess: () => {
-            toast.success(`Seller "${name}" has been deleted successfully.`);
-        },
-        onError: (errors) => {
-            toast.error('Failed to delete seller. Please try again.');
-        },
-            });
-        }
+    const handleDelete = async (userId: number, username: string) => {
+        const result = await swal.fire({
+            icon: "warning",
+            title: "លុបអ្នកលក់?",
+            html: `តើអ្នកប្រាកដជាចង់លុប <strong>${username}</strong> មែនទេ?<br/><span class="text-xs text-slate-400 mt-1 block">សកម្មភាពនេះមិនអាចមានកថ្មីវិញបានទេ</span>`,
+            showCancelButton: true,
+            confirmButtonText: "បាទ/ចាស លុប",
+            cancelButtonText:  "បោះបង់",
+        });
+        if (!result.isConfirmed) return;
+
+        // FIX: use hardcoded URL — same pattern as user delete fix
+        router.post(`/admin/sellers/${userId}/destroy`, {}, {
+            preserveState:  false,
+            preserveScroll: false,
+            onSuccess: () => swalSuccess.fire({
+                title: "បានលុបដោយជោគជ័យ!",
+                html:  `អ្នកលក់ <strong>${username}</strong> ត្រូវបានលុបចេញ`,
+            }),
+            onError: () => swal.fire({
+                icon: "error", title: "មិនអាចលុបបានទេ",
+                html: `មានបញ្ហាក្នុងការលុប <strong>${username}</strong>`,
+                showCancelButton: false, confirmButtonText: "យល់ព្រម",
+            }),
+        });
     };
 
-    const getStatusColor = (status: string) => {
-        const colors = {
-            active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            inactive: 'bg-slate-50 text-slate-700 border-slate-200',
-            banned: 'bg-rose-50 text-rose-700 border-rose-200',
-        };
-        return colors[status as keyof typeof colors];
-    };
+    const getStatusStyle = (s: string) => ({
+        active:   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+        inactive: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500"   },
+        banned:   { bg: "bg-rose-50",    text: "text-rose-700",    dot: "bg-rose-500"    },
+    }[s] ?? { bg: "bg-slate-50", text: "text-slate-700", dot: "bg-slate-400" });
 
-    const getStatusDot = (status: string) => {
-        const colors = {
-            active: 'bg-emerald-500',
-            inactive: 'bg-slate-400',
-            banned: 'bg-rose-500',
-        };
-        return colors[status as keyof typeof colors];
-    };
+    const getStatusLabel = (s: string) =>
+        ({ active: "សកម្ម", inactive: "មិនសកម្ម", banned: "បានបិទ" }[s] ?? s);
 
-    // Calculate stats
-    const totalSellers = sellers.data.length;
-    const activeSellers = sellers.data.filter(s => s.status === 'active').length;
-    const inactiveSellers = sellers.data.filter(s => s.status === 'inactive').length;
-    const bannedSellers = sellers.data.filter(s => s.status === 'banned').length;
+    const KM_MONTHS = ["មករា","កុម្ភៈ","មីនា","មេសា","ឧសភា","មិថុនា","កក្កដា","សីហា","កញ្ញា","តុលា","វិច្ឆិកា","ធ្នូ"];
+    const formatDate = (d: string) => {
+        const dt = new Date(d);
+        return `${dt.getDate()} ${KM_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+    };
 
     return (
         <AppLayout>
-            <Head title="Sellers Management" />
+            <Head title="ការគ្រប់គ្រងអ្នកលក់" />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-                {/* Header Section */}
-                <div className="bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-sm bg-opacity-90">
-                    <div className="max-w-7xl mx-auto px-6 py-6">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-900 mb-2">Sellers Management</h1>
-                                <p className="text-slate-600">Manage and monitor all registered sellers</p>
-                            </div>
-                            <Link
-                                href={route('admin.sellers.create')}
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-200 transition-all duration-200 hover:shadow-xl hover:scale-105"
-                            >
-                                <Plus size={20} />
-                                <span className="font-semibold">Add Seller</span>
-                            </Link>
+            <div className="min-h-screen bg-slate-50/70">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ការគ្រប់គ្រងអ្នកលក់</h1>
+                            <p className="mt-1.5 text-gray-600 text-sm">គ្រប់គ្រងអ្នកលក់ និងកសិករក្នុងប្រព័ន្ធ</p>
                         </div>
+                        <Link href="/admin/sellers/create"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg shadow-sm hover:bg-green-700 transition-colors text-sm">
+                            <Plus size={17} /> បន្ថែមអ្នកលក់
+                        </Link>
+                    </div>
 
-                        {/* Search and Filters */}
-                        <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                        {[
+                            { label: "អ្នកលក់សរុប", value: totalStats.total,    color: "text-gray-600",    bg: "bg-gray-50",    icon: Store      },
+                            { label: "សកម្ម",        value: totalStats.active,   color: "text-emerald-600", bg: "bg-emerald-50", dot: "bg-emerald-500" },
+                            { label: "មិនសកម្ម",     value: totalStats.inactive, color: "text-amber-600",   bg: "bg-amber-50",   dot: "bg-amber-500"   },
+                            { label: "បានបិទ",       value: totalStats.banned,   color: "text-rose-600",    bg: "bg-rose-50",    dot: "bg-rose-500"    },
+                        ].map((s, i) => (
+                            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow transition-shadow">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-medium text-gray-600">{s.label}</span>
+                                    {(s as any).icon
+                                        ? <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.bg} ${s.color}`}><s.icon size={17}/></div>
+                                        : <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.bg}`}><div className={`w-3 h-3 rounded-full ${(s as any).dot}`}/></div>
+                                    }
+                                </div>
+                                <div className="text-2xl font-bold text-gray-900">{s.value.toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Filters */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
+                        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
                             <div className="flex-1 relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name, email, phone, or farm..."
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                                <input type="text"
+                                    placeholder="ស្វែងរក ឈ្មោះ, អ៊ីមែល, លេខទូរស័ព្ទ, ឈ្មោះហាង..."
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-                                />
+                                    onChange={e => setSearch(e.target.value)}
+                                    onKeyDown={e => e.key === "Enter" && handleFilter()}
+                                    className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition text-sm" />
                             </div>
-
-                            <div className="flex gap-3">
-                                <select
-                                    value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
-                                    className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                                >
-                                    <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="banned">Banned</option>
+                            <div className="flex flex-wrap gap-3">
+                                <select value={status} onChange={e => setStatus(e.target.value)}
+                                    className="min-w-[150px] px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">គ្រប់ស្ថានភាព</option>
+                                    <option value="active">សកម្ម</option>
+                                    <option value="inactive">មិនសកម្ម</option>
+                                    <option value="banned">បានបិទ</option>
                                 </select>
-
-                                <button
-                                    onClick={handleSearch}
-                                    className="px-6 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-900 font-medium transition-colors"
-                                >
-                                    Filter
+                                <button onClick={handleFilter}
+                                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition flex items-center gap-2 text-sm">
+                                    <Filter size={15} /> ស្វែងរក
                                 </button>
-
-                                <div className="flex bg-slate-100 rounded-xl p-1">
-                                    <button
-                                        onClick={() => setViewMode('grid')}
-                                        className={`px-4 py-2 rounded-lg transition-all ${
-                                            viewMode === 'grid'
-                                                ? 'bg-white shadow-sm text-slate-900'
-                                                : 'text-slate-600'
-                                        }`}
-                                    >
-                                        Grid
+                                {/* Reset */}
+                                {(search || status) && (
+                                    <button onClick={() => { setSearch(""); setStatus(""); router.get("/admin/sellers", {}, { replace: true }); }}
+                                        className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 font-medium transition text-sm">
+                                        លុបតម្រង
                                     </button>
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`px-4 py-2 rounded-lg transition-all ${
-                                            viewMode === 'list'
-                                                ? 'bg-white shadow-sm text-slate-900'
-                                                : 'text-slate-600'
-                                        }`}
-                                    >
-                                        List
-                                    </button>
+                                )}
+                                <div className="flex bg-gray-100 rounded-lg p-1">
+                                    {(["list","grid"] as const).map(mode => (
+                                        <button key={mode} onClick={() => setViewMode(mode)}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${viewMode === mode ? "bg-white shadow text-gray-900" : "text-gray-600 hover:bg-gray-50"}`}>
+                                            {mode === "list"
+                                                ? <><List size={14} className="inline mr-1"/>បញ្ជី</>
+                                                : <><Grid size={14} className="inline mr-1"/>ក្រឡា</>
+                                            }
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Stats Cards */}
-                <div className="max-w-7xl mx-auto px-6 py-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-600 text-sm font-medium">Total Sellers</span>
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                                    <Store size={20} className="text-blue-600" />
-                                </div>
-                            </div>
-                            <div className="text-3xl font-bold text-slate-900">{totalSellers}</div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-600 text-sm font-medium">Active</span>
-                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                                </div>
-                            </div>
-                            <div className="text-3xl font-bold text-slate-900">{activeSellers}</div>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {totalSellers > 0 ? Math.round((activeSellers / totalSellers) * 100) : 0}% of total
-                            </p>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-600 text-sm font-medium">Inactive</span>
-                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center">
-                                    <div className="w-3 h-3 bg-slate-400 rounded-full"></div>
-                                </div>
-                            </div>
-                            <div className="text-3xl font-bold text-slate-900">{inactiveSellers}</div>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {totalSellers > 0 ? Math.round((inactiveSellers / totalSellers) * 100) : 0}% of total
-                            </p>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-600 text-sm font-medium">Banned</span>
-                                <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-                                    <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-                                </div>
-                            </div>
-                            <div className="text-3xl font-bold text-slate-900">{bannedSellers}</div>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {totalSellers > 0 ? Math.round((bannedSellers / totalSellers) * 100) : 0}% of total
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Sellers Grid/List */}
+                    {/* Content */}
                     {sellers.data.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Store size={32} className="text-slate-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-slate-900 mb-2">No sellers found</h3>
-                            <p className="text-slate-600">Try adjusting your search or filter criteria</p>
+                        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                            <Store className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">មិនមានអ្នកលក់</h3>
+                            <p className="text-gray-500 text-sm">សូមព្យាយាមកែប្រែលក្ខខណ្ឌស្វែងរក</p>
                         </div>
-                    ) : viewMode === 'grid' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {sellers.data.map((seller) => (
-                                <div
-                                    key={seller.user_id}
-                                    className="group bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl hover:border-emerald-200 transition-all duration-300 hover:-translate-y-1"
-                                >
-                                    {/* Status Badge */}
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(seller.status)}`}>
-                                            <div className={`w-2 h-2 rounded-full ${getStatusDot(seller.status)}`}></div>
-                                            {seller.status.charAt(0).toUpperCase() + seller.status.slice(1)}
-                                        </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Link
-                                                href={route('admin.sellers.edit', seller.user_id)}
-                                                className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                            >
-                                                <Edit2 size={16} />
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(seller.user_id, seller.username)}
-                                                className="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
 
-                                    {/* Seller Info */}
-                                    <div className="mb-4">
-                                        <h3 className="text-xl font-bold text-slate-900 mb-1">{seller.username}</h3>
-                                        <div className="flex items-center gap-2 text-emerald-600 font-semibold mb-3">
-                                            <Store size={16} />
-                                            <span className="text-sm">{seller.seller?.farm_name}</span>
+                    ) : viewMode === "grid" ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {sellers.data.map(seller => {
+                                const ss = getStatusStyle(seller.status);
+                                return (
+                                    <div key={seller.user_id}
+                                        className="group bg-white rounded-xl border border-gray-200 p-6 hover:border-green-200 hover:shadow-md transition-all">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${ss.bg} ${ss.text}`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${ss.dot}`}/>{getStatusLabel(seller.status)}
+                                            </div>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Link href={`/admin/sellers/${seller.user_id}/edit`}
+                                                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
+                                                    <Edit2 size={15}/>
+                                                </Link>
+                                                <button onClick={() => handleDelete(seller.user_id, seller.username)}
+                                                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
+                                                    <Trash2 size={15}/>
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Contact Details */}
-                                    <div className="space-y-2 mb-4 text-sm">
-                                        <div className="flex items-center gap-2 text-slate-600">
-                                            <Mail size={16} className="text-slate-400" />
-                                            <span className="truncate">{seller.email}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-slate-600">
-                                            <Phone size={16} className="text-slate-400" />
-                                            <span>{seller.phone}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-slate-600">
-                                            <MapPin size={16} className="text-slate-400" />
-                                            <span>{seller.seller?.location_district}</span>
-                                        </div>
-                                    </div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">{seller.username}</h3>
+                                        {seller.seller && (
+                                            <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-sm mb-3">
+                                                <Store size={14}/><span className="truncate">{seller.seller.farm_name}</span>
+                                            </div>
+                                        )}
 
-                                    {/* Footer */}
-                                    <div className="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
-                                        <Calendar size={14} />
-                                        <span>Joined {new Date(seller.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        <div className="space-y-1.5 text-sm text-gray-600">
+                                            <div className="flex items-center gap-2"><Mail size={14} className="text-gray-400 flex-shrink-0"/><span className="truncate">{seller.email}</span></div>
+                                            <div className="flex items-center gap-2"><Phone size={14} className="text-gray-400 flex-shrink-0"/><span>{seller.phone || "—"}</span></div>
+                                            {seller.seller?.full_location && (
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin size={14} className="text-gray-400 flex-shrink-0"/>
+                                                    <span className="truncate text-xs">{seller.seller.full_location}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-1.5">
+                                            <Calendar size={12}/> ចុះឈ្មោះ {formatDate(seller.created_at)}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
+
                     ) : (
-                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                             <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                <table className="w-full min-w-[800px]">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Seller</th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Farm</th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Location</th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Joined</th>
-                                            <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                                            {["អ្នកលក់","ហាង / ទីតាំង","ស្ថានភាព","ថ្ងៃចុះឈ្មោះ","សកម្មភាព"].map((h, i) => (
+                                                <th key={h} className={`px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider ${i===4?"text-right":"text-left"}`}>{h}</th>
+                                            ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200">
-                                        {sellers.data.map((seller) => (
-                                            <tr key={seller.user_id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div>
-                                                        <div className="font-semibold text-slate-900">{seller.username}</div>
-                                                        <div className="text-sm text-slate-600">{seller.email}</div>
-                                                        <div className="text-sm text-slate-500">{seller.phone}</div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-2 text-emerald-600 font-medium">
-                                                        <Store size={16} />
-                                                        {seller.seller?.farm_name}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-600">
-                                                    <div className="flex items-center gap-2">
-                                                        <MapPin size={16} className="text-slate-400" />
-                                                        {seller.seller?.location_district}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(seller.status)}`}>
-                                                        <div className={`w-2 h-2 rounded-full ${getStatusDot(seller.status)}`}></div>
-                                                        {seller.status.charAt(0).toUpperCase() + seller.status.slice(1)}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">
-                                                    {new Date(seller.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Link
-                                                            href={route('admin.sellers.edit', seller.user_id)}
-                                                            className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => handleDelete(seller.user_id, seller.username)}
-                                                            className="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                    <tbody className="divide-y divide-gray-100">
+                                        {sellers.data.map(seller => {
+                                            const ss = getStatusStyle(seller.status);
+                                            return (
+                                                <tr key={seller.user_id} className="hover:bg-gray-50/60 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-medium text-gray-900 text-sm">{seller.username}</div>
+                                                        <div className="text-xs text-gray-500 mt-0.5">{seller.email}</div>
+                                                        <div className="text-xs text-gray-400 mt-0.5">{seller.phone}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {seller.seller && <>
+                                                            <div className="text-sm font-medium text-emerald-700 flex items-center gap-1"><Store size={13}/>{seller.seller.farm_name}</div>
+                                                            {seller.seller.full_location && (
+                                                                <div className="text-xs text-gray-400 mt-1 flex items-center gap-1"><MapPin size={11}/>{seller.seller.full_location}</div>
+                                                            )}
+                                                        </>}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${ss.bg} ${ss.text}`}>
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${ss.dot}`}/>{getStatusLabel(seller.status)}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-xs text-gray-500">{formatDate(seller.created_at)}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Link href={`/admin/sellers/${seller.user_id}/edit`}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 text-xs font-medium transition">
+                                                                <Edit2 size={13}/> កែប្រែ
+                                                            </Link>
+                                                            <button onClick={() => handleDelete(seller.user_id, seller.username)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium transition">
+                                                                <Trash2 size={13}/> លុប
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -356,25 +316,20 @@ export default function SellersIndex({ sellers, filters }: SellersPageProps) {
                     )}
 
                     {/* Pagination */}
-                    {sellers.links.length > 3 && (
+                    {sellers.links?.length > 3 && (
                         <div className="mt-8 flex justify-center">
-                            <div className="flex gap-2">
-                                {sellers.links.map((link, i) => (
-                                    <Link
-                                        key={i}
-                                        href={link.url || '#'}
-                                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                                            link.active
-                                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
-                                                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                                        } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            <div className="inline-flex rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                                {sellers.links.map((link: any, i: number) => (
+                                    <Link key={i} href={link.url || "#"}
+                                        className={`px-4 py-2 text-sm font-medium transition-colors ${link.active ? "bg-green-600 text-white" : "text-gray-700 hover:bg-gray-50"} ${!link.url ? "opacity-40 pointer-events-none" : ""}`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
-                                        preserveState
+                                        preserveState={false}
                                     />
                                 ))}
                             </div>
                         </div>
                     )}
+
                 </div>
             </div>
         </AppLayout>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { toast } from 'sonner';
+import Swal from 'sweetalert2';
 // import { type BreadcrumbItem, type SharedData } from '@/types';
 
 interface Product {
@@ -62,7 +64,34 @@ interface PaginatedOrders {
     total: number;
 }
 
-type OrderFilter = 'all' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
+type OrderFilter = 'all' | 'confirmed' | 'completed' | 'cancelled';
+
+// Translation helper for order status
+const getOrderStatusKhmer = (status: Order['status']): string => {
+    const statusMap: Record<Order['status'], string> = {
+        confirmed: 'បានបញ្ជាក់',
+        processing: 'កំពុងដំណើរការ',
+        completed: 'បានបញ្ចប់',
+        cancelled: 'បានលុបចោល'
+    };
+    return statusMap[status] || status.toUpperCase();
+};
+
+// Translation helper for payment status
+const getPaymentStatusKhmer = (status: Order['payment_status']): string => {
+    return status === 'paid' ? 'បង់ប្រាក់រួច' : 'មិនបានបង់ប្រាក់';
+};
+
+// Translation helper for filter labels
+const getFilterLabelKhmer = (filter: OrderFilter): string => {
+    const filterMap: Record<OrderFilter, string> = {
+        all: 'ទាំងអស់',
+        confirmed: 'បានបញ្ជាក់',
+        completed: 'បានបញ្ចប់',
+        cancelled: 'បានលុបចោល'
+    };
+    return filterMap[filter] || filter;
+};
 
 const SellerOrderManagement: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -90,22 +119,31 @@ const SellerOrderManagement: React.FC = () => {
     };
 
     const handleCompleteOrder = async (orderId: number): Promise<void> => {
-        if (!confirm('Are you sure you want to mark this order as completed?')) {
+        const result = await Swal.fire({
+            title: 'បញ្ជាក់ការបញ្ចប់',
+            text: 'តើលោកអ្នកចង់បញ្ជាក់ថាបានបញ្ចប់ការបញ្ជាទិញនេះឬ?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'បាទ, បញ្ជាក់',
+            cancelButtonText: 'ក្នុងលក្ខណៈលុបចោល'
+        });
+
+        if (!result.isConfirmed) {
             return;
         }
 
         try {
             await axios.post(`/seller/orders/${orderId}/complete`);
-            alert('Order completed successfully');
+            toast.success('ការបញ្ចប់ការបញ្ជាទិញបានដោះស្រាយដោយជោគជ័យ');
             fetchOrders();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Failed to complete order');
+            toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការបញ្ចប់ការបញ្ជាទិញ');
         }
     };
 
     const handleCancelOrder = async (orderId: number): Promise<void> => {
         if (!cancelReason.trim()) {
-            alert('Please provide a reason for cancellation');
+            toast.error('សូមផ្តល់នូវលក្ខខណ្ឌក្នុងការលុបចោល');
             return;
         }
 
@@ -113,12 +151,12 @@ const SellerOrderManagement: React.FC = () => {
             await axios.post(`/seller/orders/${orderId}/cancel`, {
                 reason: cancelReason
             });
-            alert('Order cancelled successfully');
+            toast.success('ការលុបចោលការបញ្ជាទិញបានដោះស្រាយដោយជោគជ័យ');
             setShowCancelModal(false);
             setCancelReason('');
             fetchOrders();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Failed to cancel order');
+            toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការលុបចោលការបញ្ជាទិញ');
         }
     };
 
@@ -127,11 +165,11 @@ const SellerOrderManagement: React.FC = () => {
             await axios.post(`/seller/orders/${orderId}/payment-status`, {
                 payment_status: status
             });
-            alert('Payment status updated successfully');
+            toast.success('ស្ថានភាពការទូទាត់ត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ');
             setShowPaymentModal(false);
             fetchOrders();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Failed to update payment status');
+            toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាពការទូទាត់');
         }
     };
 
@@ -159,22 +197,22 @@ const SellerOrderManagement: React.FC = () => {
     if (loading) {
         return (
             <>
-                <Head title="Order Management" />
-                <div className="flex justify-center items-center h-64">Loading...</div>
+                <Head title="គ្រប់គ្រងការបញ្ជាទិញ - កសិផលខេត្ត​បាត់ដំបង" />
+                <div className="flex justify-center items-center h-64">កំពុងផ្ទុក...</div>
             </>
         );
     }
 
     return (
         <AppLayout>
-            <Head title="Order Management" />
+            <Head title="គ្រប់គ្រងការបញ្ជាទិញ - កសិផលខេត្ត​បាត់ដំបង" />
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Order Management</h1>
+                    <h1 className="text-3xl font-bold">គ្រប់គ្រងការបញ្ជាទិញ</h1>
 
                     {/* Filter Tabs */}
                     <div className="flex gap-2">
-                        {(['all', 'confirmed', 'processing', 'completed', 'cancelled'] as const).map((status) => (
+                        {(['all', 'confirmed', 'completed', 'cancelled'] as const).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilter(status)}
@@ -184,7 +222,7 @@ const SellerOrderManagement: React.FC = () => {
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                {getFilterLabelKhmer(status)}
                             </button>
                         ))}
                     </div>
@@ -192,7 +230,7 @@ const SellerOrderManagement: React.FC = () => {
 
                 {filteredOrders.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500 text-lg">No orders found</p>
+                        <p className="text-gray-500 text-lg">មិនមានការបញ្ជាទិញដែលរកឃើញ</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -203,71 +241,94 @@ const SellerOrderManagement: React.FC = () => {
                                     <div>
                                         <h3 className="text-xl font-semibold">{order.order_number}</h3>
                                         <p className="text-gray-600 text-sm">
-                                            Ordered: {new Date(order.created_at).toLocaleString()}
+                                            កាលបរិច្ឆេទ : {new Date(order.created_at).toLocaleString()}
                                         </p>
                                         {order.user && (
                                             <p className="text-gray-600 text-sm">
-                                                Customer: {order.user.username || order.recipient_name}
+                                                ឈ្មោះអថិតិជន: {order.user.username || order.recipient_name}
                                             </p>
                                         )}
                                     </div>
                                     <div className="flex gap-2">
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                                            {order.status.toUpperCase()}
+                                            {getOrderStatusKhmer(order.status)}
                                         </span>
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusColor(order.payment_status)}`}>
-                                            {order.payment_status.toUpperCase()}
+                                            {getPaymentStatusKhmer(order.payment_status)}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Order Items (Only seller's items) */}
                                 <div className="border-t border-b py-4 mb-4">
-                                    <h4 className="font-semibold mb-2">Your Items:</h4>
-                                    {order.items?.map((item) => (
-                                        <div key={item.item_id} className="flex items-center gap-4 mb-3">
-                                            {item.product_image && (
+                                    {/* <h4 className="font-semibold mb-2">Your Items:</h4> */}
+                                    {order.items?.map((item) => {
+                                        // Handle different image URL formats
+                                        let imageUrl = 'https://via.placeholder.com/64?text=No+Image';
+                                        
+                                        if (item.product_image) {
+                                            // If it's already a full URL (starts with http), use it as is
+                                            if (item.product_image.startsWith('http')) {
+                                                imageUrl = item.product_image;
+                                            } else {
+                                                // If it's a relative path, prepend /storage/
+                                                imageUrl = `/storage/${item.product_image}`;
+                                            }
+                                        } else if (item.product?.images?.[0]?.image_url) {
+                                            // Fallback to product images
+                                            if (item.product.images[0].image_url.startsWith('http')) {
+                                                imageUrl = item.product.images[0].image_url;
+                                            } else {
+                                                imageUrl = `/storage/${item.product.images[0].image_url}`;
+                                            }
+                                        }
+                                        
+                                        return (
+                                            <div key={item.item_id} className="flex items-center gap-4 mb-3">
                                                 <img
-                                                    src={`/storage/${item.product_image}`}
+                                                    src={imageUrl}
                                                     alt={item.product_name}
                                                     className="w-16 h-16 object-cover rounded"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=No+Image';
+                                                    }}
                                                 />
-                                            )}
-                                            <div className="flex-1">
-                                                <p className="font-medium">{item.product_name}</p>
-                                                <p className="text-sm text-gray-600">
-                                                    {item.quantity} {item.unit} × ${Number(item.price_per_unit).toFixed(2)}
+                                                <div className="flex-1">
+                                                    <p className="font-medium">{item.product_name}</p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {item.quantity} {item.unit} × {Number(item.price_per_unit).toFixed(2)}​ ៛
+                                                    </p>
+                                                </div>
+                                                <p className="font-semibold">
+                                                    {(item.quantity * Number(item.price_per_unit)).toFixed(2)} ៛
                                                 </p>
                                             </div>
-                                            <p className="font-semibold">
-                                                ${(item.quantity * Number(item.price_per_unit)).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Customer Details */}
                                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm bg-gray-50 p-4 rounded">
                                     <div>
-                                        <p className="text-gray-600">Recipient:</p>
+                                        <p className="text-gray-600">អ្នកទទួល:</p>
                                         <p className="font-medium">{order.recipient_name}</p>
                                         <p className="text-gray-600">{order.recipient_phone}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">Shipping Address:</p>
+                                        <p className="text-gray-600">អាសយដ្ឋានដឹកជញ្ជូន:</p>
                                         <p className="font-medium">{order.shipping_address}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">Payment Method:</p>
+                                        <p className="text-gray-600">វិធីសាស្រ្តទូ        ទាត់ប្រាក់:</p>
                                         <p className="font-medium">{order.payment_method}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">Total Amount:</p>
-                                        <p className="font-semibold text-lg">${Number(order.total_amount).toFixed(2)}</p>
+                                        <p className="text-gray-600">តម្លៃសរុប:</p>
+                                        <p className="font-semibold text-lg">{Number(order.total_amount).toFixed(2)} ៛</p>
                                     </div>
                                     {order.customer_notes && (
                                         <div className="col-span-2">
-                                            <p className="text-gray-600">Customer Notes:</p>
+                                            <p className="text-gray-600">កំណត់ចំណាត់:</p>
                                             <p className="font-medium">{order.customer_notes}</p>
                                         </div>
                                     )}
@@ -275,25 +336,22 @@ const SellerOrderManagement: React.FC = () => {
 
                                 {/* Cancellation Info */}
                                 {order.status === 'cancelled' && order.cancellation_reason && (
-                                    <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
-                                        <p className="text-sm font-medium text-red-800">Cancellation Reason:</p>
-                                        <p className="text-sm text-red-700">{order.cancellation_reason}</p>
-                                        <p className="text-xs text-red-600 mt-1">
-                                            Cancelled by: {order.cancelled_by}
-                                        </p>
+                                    <div className="bg-red-50 border border-red-200 rounded p-3 mb-1">
+                                        <p className="text-sm font-medium text-red-800">មូលហេតុនៃការលុបចោលការបញ្ជាទិញ :​ ​{order.cancellation_reason}</p>
+                                        
+                                        ​{order.cancelled_by === 'customer' || order.cancelled_by === 'system' &&(
+                                            <p className="text-xs text-red-600 mt-0">
+                                                បានលុបចោលដោយ: {order.cancelled_by}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* Action Buttons */}
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 ml-205">
                                     {(order.status === 'confirmed' || order.status === 'processing') && (
                                         <>
-                                            <button
-                                                onClick={() => handleCompleteOrder(order.order_id)}
-                                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                                            >
-                                                Complete Order
-                                            </button>
+                                            
                                             <button
                                                 onClick={() => {
                                                     setSelectedOrder(order);
@@ -301,7 +359,13 @@ const SellerOrderManagement: React.FC = () => {
                                                 }}
                                                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                                             >
-                                                Cancel Order
+                                                លុបចោលការបញ្ជាទិញ
+                                            </button>
+                                            <button
+                                                onClick={() => handleCompleteOrder(order.order_id)}
+                                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                            >
+                                                បញ្ចប់ការបញ្ជាទិញ
                                             </button>
                                         </>
                                     )}
@@ -327,16 +391,16 @@ const SellerOrderManagement: React.FC = () => {
 
                 {/* Cancel Modal */}
                 {showCancelModal && selectedOrder && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                            <h3 className="text-xl font-bold mb-4">Cancel Order</h3>
+                    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-gray-200 rounded-lg p-6 max-w-md w-full">
+                            <h3 className="text-xl font-bold mb-4">លុបចោលការបញ្ជាទិញ</h3>
                             <p className="mb-4 text-gray-600">
-                                You must provide a reason for cancelling order {selectedOrder.order_number}
+                                សូមផ្តល់នូវលក្ខខណ្ឌក្នុងការលុបចោលការបញ្ជាទិញ {selectedOrder.order_number}
                             </p>
                             <textarea
                                 className="w-full border rounded p-2 mb-4"
                                 rows={4}
-                                placeholder="Reason for cancellation (required)"
+                                placeholder="មូលហេតុក្នុងការលុបចោល"
                                 value={cancelReason}
                                 onChange={(e) => setCancelReason(e.target.value)}
                                 required
@@ -349,13 +413,13 @@ const SellerOrderManagement: React.FC = () => {
                                     }}
                                     className="flex-1 px-4 py-2 border rounded hover:bg-gray-50"
                                 >
-                                    Close
+                                    បិទ
                                 </button>
                                 <button
                                     onClick={() => handleCancelOrder(selectedOrder.order_id)}
                                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                                 >
-                                    Confirm Cancel
+                                    លុបចោល
                                 </button>
                             </div>
                         </div>
@@ -366,22 +430,22 @@ const SellerOrderManagement: React.FC = () => {
                 {showPaymentModal && selectedOrder && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                            <h3 className="text-xl font-bold mb-4">Update Payment Status</h3>
+                            <h3 className="text-xl font-bold mb-4">ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការទូទាត់</h3>
                             <p className="mb-4 text-gray-600">
-                                Has the customer paid for order {selectedOrder.order_number}?
+                                តើអតិថិជនបានបង់ប្រាក់សម្រាប់ការបញ្ជាទិញ {selectedOrder.order_number} ឬ?
                             </p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setShowPaymentModal(false)}
                                     className="flex-1 px-4 py-2 border rounded hover:bg-gray-50"
                                 >
-                                    Cancel
+                                    បោះបង់
                                 </button>
                                 <button
                                     onClick={() => handleUpdatePaymentStatus(selectedOrder.order_id, 'paid')}
                                     className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                                 >
-                                    Mark as Paid
+                                    សម្គាល់ថាបានបង់រូបិយវត្ថុ
                                 </button>
                             </div>
                         </div>

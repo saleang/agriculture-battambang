@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\Customer\CustomerPasswordController;
 
@@ -40,24 +42,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     //admin route
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('admin/dashboard', [
-                'stats' => [
-                    'total_users' => User::count(),
-                    'total_sellers' => User::where('role', 'seller')->count(),
-                    'total_customers' => User::where('role', 'customer')->count(),
-                ]
-            ]);
-        })->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        // User Management Routes
-        Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
-        Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
-        Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
-        Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
-        Route::post('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
-        Route::get('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
-
+        // // User Management Routes
+        // Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+        // Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
+        // Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
+        // Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+        // Route::post('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        // Route::get('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+        // ── User Management ──────────────────────────────────────────
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/',            [UserManagementController::class, 'index']  )->name('index');
+            Route::get('/create',      [UserManagementController::class, 'create'] )->name('create');
+            Route::post('/',           [UserManagementController::class, 'store']  )->name('store');
+            Route::get('/{user}/edit', [UserManagementController::class, 'edit']   )->name('edit');
+            Route::post(  '/{user}',   [UserManagementController::class, 'update'] )->name('update');
+            Route::post('/{user}/destroy', [UserManagementController::class, 'destroy'])->name('destroy');
+        });
         Route::prefix('sellers')->name('sellers.')->group(function () {
             Route::get('/', [SellerManagementController::class, 'index'])->name('index');
             Route::get('/create', [SellerManagementController::class, 'create'])->name('create');
@@ -65,6 +67,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{user}/edit', [SellerManagementController::class, 'edit'])->name('edit');
             Route::post('/{user}', [SellerManagementController::class, 'update'])->name('update');
             Route::delete('/{user}', [SellerManagementController::class, 'destroy'])->name('destroy');
+        });
+
+        // Product Management Routes
+        Route::prefix('products')->name('products.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\ProductController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\ProductController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\ProductController::class, 'store'])->name('store');
+            Route::get('/{product}', [App\Http\Controllers\Admin\ProductController::class, 'show'])->name('show');
+            Route::get('/{product}/edit', [App\Http\Controllers\Admin\ProductController::class, 'edit'])->name('edit');
+            Route::put('/{product}', [App\Http\Controllers\Admin\ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}', [App\Http\Controllers\Admin\ProductController::class, 'destroy'])->name('destroy');
+            Route::patch('/{product}/toggle-active', [App\Http\Controllers\Admin\ProductController::class, 'toggleActive'])->name('toggle-active');
+            Route::post('/bulk-action', [App\Http\Controllers\Admin\ProductController::class, 'bulkAction'])->name('bulk-action');
+        });
+
+
+        // ── ADMIN: Global category CRUD ──────────────────────────────────────────────
+        // Inside: Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(...)
+
+        Route::prefix('categories')->name('categories.')->group(function () {
+            Route::get('/',                           [AdminCategoryController::class, 'index'])        ->name('index');
+            Route::post('/',                          [AdminCategoryController::class, 'store'])        ->name('store');
+            Route::put('/{category}',                 [AdminCategoryController::class, 'update'])       ->name('update');
+            Route::delete('/{category}',              [AdminCategoryController::class, 'destroy'])      ->name('destroy');
+            Route::patch('/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('toggle-status');
         });
     });
 
@@ -114,17 +141,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-active', [ProductController::class, 'toggleActive'])->name('toggle-active');
         });
-        // Category Routes
-        Route::prefix('category')->name('category.')->group(function () {
-            Route::get('/', [CategoryController::class, 'index'])->name('index');
-            Route::get('/create', [CategoryController::class, 'create'])->name('create');
-            Route::post('/', [CategoryController::class, 'store'])->name('store');
-            Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
-            Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
-            Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
-            Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
+        // // Category Routes
+        // Route::prefix('category')->name('category.')->group(function () {
+        //     Route::get('/', [CategoryController::class, 'index'])->name('index');
+        //     Route::get('/create', [CategoryController::class, 'create'])->name('create');
+        //     Route::post('/', [CategoryController::class, 'store'])->name('store');
+        //     Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+        //     Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+        //     Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+        //     Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
 
-    });
+        // ── SELLER: Browse & pick global categories ──────────────────────────────────
+        // Inside: Route::middleware(['role:seller'])->prefix('seller')->name('seller.')->group(...)
+
+        Route::prefix('category')->name('category.')->group(function () {
+            Route::get('/',                         [CategoryController::class, 'index'])->name('index');
+            Route::post('/attach',                  [CategoryController::class, 'attach'])->name('attach');
+            Route::delete('/{category}/detach',     [CategoryController::class, 'detach'])->name('detach');
+            Route::get('/my-categories',            [CategoryController::class, 'myCategories'])->name('my-categories');
+        });
+
 
         // Seller Order Management Routes
         Route::prefix('orders')->name('orders.')->group(function () {
@@ -211,15 +247,24 @@ Route::get('/seller/{id}/info', function ($id) {
     return response()->json($seller);
 });
 
-// Public categories endpoint returning active categories for frontend
+// // Public categories endpoint returning active categories for frontend
+// Route::get('/categories', function () {
+//     $categories = \App\Models\Category::where('is_active', true)
+//         ->orderBy('categoryname')
+//         ->get();
+
+//     return response()->json($categories);
+// });
+
+// Public categories (used by frontend product pages)
 Route::get('/categories', function () {
     $categories = \App\Models\Category::where('is_active', true)
-        ->orderBy('categoryname')
+        ->orderBy('name')           // ← fixed
+        ->select('category_id', 'name', 'description')
         ->get();
 
     return response()->json($categories);
 });
-
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/report.php';

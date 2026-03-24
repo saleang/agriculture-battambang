@@ -245,10 +245,10 @@ class SellerReportController extends Controller
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->where('orders.status', '!=', Order::STATUS_CANCELLED)
             ->select(
-                'category.categoryname as name',
+                'category.category_name as name',
                 DB::raw('SUM(order_items.quantity * order_items.price_per_unit) as sales')
             )
-            ->groupBy('category.category_id', 'category.categoryname')
+            ->groupBy('category.category_id', 'category.category_name')
             ->orderBy('sales', 'desc')
             ->get();
 

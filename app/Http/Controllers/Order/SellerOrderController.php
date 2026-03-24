@@ -75,9 +75,7 @@ class SellerOrderController extends Controller
         return response()->json(['data' => $order]);
     }
 
-    /**
-     * Complete order (seller confirms they've prepared the order)
-     */
+    //  Complete order (seller confirms they've prepared the order)
     public function complete(Order $order)
     {
         $user = Auth::user();

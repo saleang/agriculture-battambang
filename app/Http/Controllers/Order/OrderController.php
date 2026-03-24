@@ -72,7 +72,7 @@ class OrderController extends Controller
 
             DB::beginTransaction();
 
-            // ✅ GROUP ITEMS BY SELLER
+            // GROUP ITEMS BY SELLER
             $itemsBySeller = [];
 
             foreach ($validated['items'] as $item) {
@@ -176,7 +176,7 @@ class OrderController extends Controller
     }
 
     /**
-     * ✅ SEND TELEGRAM NOTIFICATION TO SINGLE SELLER
+     * SEND TELEGRAM NOTIFICATION TO SINGLE SELLER
      */
     protected function notifySeller(Order $order, Seller $seller): void
     {
@@ -223,7 +223,7 @@ class OrderController extends Controller
     }
 
     /**
-     * ✅ CUSTOMER CAN CANCEL ONLY IF NOT COMPLETED
+     * CUSTOMER CAN CANCEL ONLY IF NOT COMPLETED
      */
     public function cancel(Request $request, Order $order)
     {
@@ -233,7 +233,7 @@ class OrderController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // ✅ Can only cancel if seller hasn't completed yet
+        // Can only cancel if seller hasn't completed yet
         if (!$order->canBeCancelledByCustomer()) {
             if ($order->status === Order::STATUS_COMPLETED) {
                 return response()->json([

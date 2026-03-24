@@ -1,4 +1,4 @@
-// components/SellerEditForm.tsx - FIXED with persistent file display
+// components/SellerEditForm.tsx — Clean modern professional redesign
 import React, { useRef, useState } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,11 @@ interface SellerEditFormProps {
     seller: any;
     provinces: any[];
     onClose: () => void;
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) return null;
+    return <p className="mt-1.5 text-xs text-red-500">{message}</p>;
 }
 
 export default function SellerEditForm({ seller, provinces, onClose }: SellerEditFormProps) {
@@ -35,99 +40,71 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                toast.error('Photo must be less than 2MB');
-                return;
-            }
-
-            if (!file.type.startsWith('image/')) {
-                toast.error('Please upload an image file');
-                return;
-            }
-
-            setData('photo', file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { toast.error('Photo must be less than 2MB'); return; }
+        if (!file.type.startsWith('image/')) { toast.error('Please upload an image file'); return; }
+        setData('photo', file);
+        const reader = new FileReader();
+        reader.onloadend = () => setPhotoPreview(reader.result as string);
+        reader.readAsDataURL(file);
     };
 
     const handleCertChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error('Certification file must be less than 5MB');
-                if (certInputRef.current) {
-                    certInputRef.current.value = '';
-                }
-                return;
-            }
-
-            setData('certification', file);
-            setNewCertSelected(true);
-
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setCertPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Certification file must be less than 5MB');
+            if (certInputRef.current) certInputRef.current.value = '';
+            return;
         }
+        setData('certification', file);
+        setNewCertSelected(true);
+        const reader = new FileReader();
+        reader.onloadend = () => setCertPreview(reader.result as string);
+        reader.readAsDataURL(file);
     };
 
     const removePhoto = () => {
         setPhotoPreview(auth?.user?.photo_url || null);
         setData('photo', null);
-        if (photoInputRef.current) {
-            photoInputRef.current.value = '';
-        }
+        if (photoInputRef.current) photoInputRef.current.value = '';
     };
 
     const removeCert = () => {
         setCertPreview(seller?.certification_url || null);
         setData('certification', null);
         setNewCertSelected(false);
-        if (certInputRef.current) {
-            certInputRef.current.value = '';
-        }
+        if (certInputRef.current) certInputRef.current.value = '';
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         post('/seller/profile', {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Profile updated successfully');
-
                 router.reload({ only: ['auth', 'seller'] });
                 onClose();
             },
             onError: (errors) => {
-                console.error('Validation errors:', errors);
-                toast.error('Failed to update profile');
-
                 const firstError = Object.values(errors)[0];
-                if (firstError) {
-                    toast.error(firstError as string);
-                }
+                toast.error(firstError ? (firstError as string) : 'Failed to update profile');
             },
         });
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-            {/* Photo Upload */}
-            <div className="flex items-center gap-4 pb-4 border-b">
-                <div className="relative">
-                    <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+        <form onSubmit={handleSubmit} className="space-y-6 max-h-[72vh] overflow-y-auto pr-1">
+
+            {/* ── Photo Upload ───────────────────────────── */}
+            <div className="flex items-center gap-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="relative shrink-0">
+                    <div className="h-18 w-18 h-[72px] w-[72px] overflow-hidden rounded-full bg-gray-200 flex items-center justify-center ring-2 ring-white shadow">
                         {photoPreview ? (
                             <img src={photoPreview} alt="Profile" className="h-full w-full object-cover" />
                         ) : (
-                            <span className="text-gray-400 text-2xl">
+                            <span className="text-gray-400 text-2xl font-semibold">
                                 {auth?.user?.username?.[0]?.toUpperCase()}
                             </span>
                         )}
@@ -135,29 +112,29 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                     <button
                         type="button"
                         onClick={() => photoInputRef.current?.click()}
-                        className="absolute bottom-0 right-0 rounded-full bg-green-600 p-1.5 text-white hover:bg-green-700 transition"
+                        className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center
+                                   rounded-full bg-emerald-600 text-white shadow hover:bg-emerald-700 transition-colors"
                     >
-                        <Camera className="h-3 w-3" />
+                        <Camera className="h-3.5 w-3.5" />
                     </button>
                 </div>
-                <div className="flex-1">
-                    <Label>រូបភាពប្រូហ្វាល់</Label>
-                    <p className="text-xs text-gray-600">JPG, PNG max 2MB</p>
+
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800">រូបភាពប្រូហ្វាល់</p>
+                    <p className="text-xs text-gray-500 mt-0.5">JPG, PNG · max 2MB</p>
                     {photoPreview && photoPreview !== auth?.user?.photo_url && (
-                        <Button
+                        <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
                             onClick={removePhoto}
-                            className="text-red-600 mt-1"
+                            className="mt-1.5 flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
                         >
-                            លុបរូបភាព
-                        </Button>
+                            <X className="h-3 w-3" /> លុបរូបភាព
+                        </button>
                     )}
                 </div>
+
                 <input
                     ref={photoInputRef}
-                    id="photo"
                     type="file"
                     accept="image/jpeg,image/png,image/jpg"
                     onChange={handlePhotoChange}
@@ -165,205 +142,211 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                 />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            {/* ── Personal Info Grid ─────────────────────── */}
+            <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <Label htmlFor="username">គោត្តនាម​ និងនាម​ *</Label>
+                    <Label htmlFor="username" className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        គោត្តនាម​ និងនាម​ <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                         id="username"
                         value={data.username}
                         onChange={(e) => setData('username', e.target.value)}
-                        className="mt-1"
+                        className="mt-1.5 h-9 text-sm border-gray-200 focus:border-emerald-400 focus:ring-emerald-400"
                         required
                     />
-                    {errors.username && (
-                        <p className="text-sm text-red-600 mt-1">{errors.username}</p>
-                    )}
+                    <FieldError message={errors.username} />
                 </div>
 
                 <div>
-                    <Label htmlFor="email">អ៊ីមែល *</Label>
+                    <Label htmlFor="email" className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        អ៊ីមែល <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                         id="email"
                         type="email"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
-                        className="mt-1"
+                        className="mt-1.5 h-9 text-sm border-gray-200 focus:border-emerald-400 focus:ring-emerald-400"
                         required
                     />
-                    {errors.email && (
-                        <p className="text-sm text-red-600 mt-1">{errors.email}</p>
-                    )}
+                    <FieldError message={errors.email} />
                 </div>
 
                 <div>
-                    <Label htmlFor="phone">លេខទូរស័ព្ទ</Label>
+                    <Label htmlFor="phone" className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        លេខទូរស័ព្ទ
+                    </Label>
                     <Input
                         id="phone"
                         value={data.phone}
                         onChange={(e) => setData('phone', e.target.value)}
-                        className="mt-1"
+                        className="mt-1.5 h-9 text-sm border-gray-200 focus:border-emerald-400 focus:ring-emerald-400"
                     />
-                    {errors.phone && (
-                        <p className="text-sm text-red-600 mt-1">{errors.phone}</p>
-                    )}
+                    <FieldError message={errors.phone} />
                 </div>
 
                 <div>
-                    <Label htmlFor="gender">ភេទ</Label>
+                    <Label htmlFor="gender" className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        ភេទ
+                    </Label>
                     <select
                         id="gender"
                         value={data.gender}
                         onChange={(e) => setData('gender', e.target.value)}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        className="mt-1.5 h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm
+                                   text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400
+                                   focus:outline-none transition-colors"
                     >
                         <option value="">ជ្រើសរើសភេទ</option>
                         <option value="male">ប្រុស</option>
                         <option value="female">ស្រី</option>
                         <option value="other">មិនបញ្ជាក់</option>
                     </select>
-                    {errors.gender && (
-                        <p className="text-sm text-red-600 mt-1">{errors.gender}</p>
-                    )}
+                    <FieldError message={errors.gender} />
                 </div>
             </div>
 
-            {/* Certification Upload - IMPROVED */}
-            <div className="pt-4 border-t">
-                <Label>ឯកសារ (អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ)</Label>
-                <p className="text-xs text-gray-600 mb-3">
-                    សូមបញ្ចូលរូបភាពនៃឯកសារ (អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ)(JPG, PNG, PDF - max 5MB)
-                </p>
+            {/* ── Certification Upload ───────────────────── */}
+            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+                <div>
+                    <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        ឯកសារ (អត្តសញ្ញាណប័ណ្ណ / វិញ្ញាបនប័ត្រ)
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400">JPG, PNG, PDF · max 5MB</p>
+                </div>
 
-                {/* Show existing certification */}
+                {/* Existing cert */}
                 {hasExistingCert && !newCertSelected && (
-                    <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
-                                {certPreview && (
-                                    <img
-                                        src={certPreview}
-                                        alt="Current Certification"
-                                        className="h-20 w-20 object-cover rounded border-2 border-green-300"
-                                    />
-                                )}
+                    <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+                        {certPreview && (
+                            <img
+                                src={certPreview}
+                                alt="Current Certification"
+                                className="h-14 w-14 rounded-md border border-emerald-200 object-cover shrink-0"
+                            />
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <CheckCircle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                <span className="text-xs font-semibold text-emerald-800">ឯកសារបច្ចុប្បន្នរបស់អ្នក</span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                    <span className="text-sm font-medium text-green-900">
-                                        ឯកសារបច្ចុប្បន្នរបស់អ្នក
-                                    </span>
-                                </div>
-                                <p className="text-xs text-green-700">
-                                    ឯកសារអ្នកបានបញ្ចូលរួចហើយ។ បញ្ចូលឯកសារថ្មីដើម្បីជំនួសវា។
-                                </p>
-                                {certPreview && (
-                                    <a
-                                        href={certPreview}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-green-600 hover:text-green-700 underline mt-1 inline-block"
-                                    >
-                                        មើលឯកសារ →
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Show new certification preview */}
-                {newCertSelected && certPreview && (
-                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 relative">
-                                <img
-                                    src={certPreview}
-                                    alt="New Certification"
-                                    className="h-20 w-20 object-cover rounded border-2 border-blue-300"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={removeCert}
-                                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition shadow-lg"
+                            <p className="text-xs text-emerald-700 mt-0.5">
+                                បញ្ចូលឯកសារថ្មីដើម្បីជំនួស
+                            </p>
+                            {certPreview && (
+                                <a
+                                    href={certPreview}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-emerald-600 hover:underline"
                                 >
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Upload className="h-4 w-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-900">
-                                        ឯកសារថ្មីដែលបានជ្រើសរើស
-                                    </span>
-                                </div>
-                                <p className="text-xs text-blue-700">
-                                    ឯកសារថ្មីនេះនឹងជំនួសឯកសារបច្ចុប្បន្នរបស់អ្នក។
-                                </p>
-                            </div>
+                                    មើលឯកសារ →
+                                </a>
+                            )}
                         </div>
                     </div>
                 )}
 
-                {/* File input */}
-                <div className="relative">
+                {/* New cert preview */}
+                {newCertSelected && certPreview && (
+                    <div className="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3">
+                        <div className="relative shrink-0">
+                            <img
+                                src={certPreview}
+                                alt="New Certification"
+                                className="h-14 w-14 rounded-md border border-blue-200 object-cover"
+                            />
+                            <button
+                                type="button"
+                                onClick={removeCert}
+                                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center
+                                           rounded-full bg-red-500 text-white shadow hover:bg-red-600 transition-colors"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <Upload className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                                <span className="text-xs font-semibold text-blue-800">ឯកសារថ្មីដែលបានជ្រើស</span>
+                            </div>
+                            <p className="text-xs text-blue-600 mt-0.5">
+                                ឯកសារនេះនឹងជំនួសឯកសារបច្ចុប្បន្ន
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* File Input */}
+                <label
+                    htmlFor="certification"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300
+                               bg-gray-50 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-emerald-400
+                               hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                    <Upload className="h-4 w-4 shrink-0" />
+                    <span>ជ្រើសឯកសារ...</span>
                     <input
                         ref={certInputRef}
                         id="certification"
                         type="file"
                         accept="image/jpeg,image/png,image/jpg,image/gif,application/pdf"
                         onChange={handleCertChange}
-                        className="block w-full text-sm text-gray-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-green-50 file:text-green-700
-                            hover:file:bg-green-100 cursor-pointer
-                            border border-gray-300 rounded-md"
+                        className="hidden"
                     />
-                </div>
+                </label>
 
-                {errors.certification && (
-                    <p className="text-sm text-red-600 mt-2">{errors.certification}</p>
-                )}
+                {errors.certification && <FieldError message={errors.certification} />}
 
                 {!hasExistingCert && !newCertSelected && (
-                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <p className="flex items-center gap-1 text-xs text-gray-400">
                         <File className="h-3 w-3" />
-                        ឯកសារ(អត្តសញ្ញាណប័ណ្ណអ្នកលក់ / វិញ្ញាបនប័ត្រ) មិនបានបញ្ចូលទេ
+                        មិនទាន់មានឯកសារ
                     </p>
                 )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 justify-end pt-4 border-t">
+            {/* ── Actions ────────────────────────────────── */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
                 <Button
+                    type="button"
                     variant="ghost"
                     onClick={onClose}
-                    type="button"
                     disabled={processing}
+                    className="text-sm text-gray-600 hover:text-gray-900"
                 >
                     បោះបង់
                 </Button>
                 <Button
                     type="submit"
                     disabled={processing}
-                    className="min-w-[120px]"
+                    className="min-w-[110px] bg-emerald-600 hover:bg-emerald-700 text-white text-sm shadow-none"
                 >
-                    {processing ? 'កំពុងកែប្រែ...' : 'រក្សាទុក'}
+                    {processing ? (
+                        <span className="flex items-center gap-1.5">
+                            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                            </svg>
+                            កំពុងរក្សា...
+                        </span>
+                    ) : 'រក្សាទុក'}
                 </Button>
             </div>
 
-            {/* Success Message */}
+            {/* Success Toast */}
             <Transition
                 show={recentlySuccessful}
-                enter="transition ease-in-out duration-300"
-                enterFrom="opacity-0"
-                leave="transition ease-in-out duration-300"
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 translate-y-1"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition ease-in duration-150"
                 leaveTo="opacity-0"
             >
-                <p className="text-sm text-green-600 font-medium bg-green-50 p-3 rounded">
-                    ✓ ការធ្វើបច្ចុប្បន្នភាពបានជោគជ័យ!
+                <p className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 border border-emerald-100">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    ការធ្វើបច្ចុប្បន្នភាពបានជោគជ័យ!
                 </p>
             </Transition>
         </form>

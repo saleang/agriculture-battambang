@@ -44,8 +44,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title="ការកំណត់"
+                description="គ្រប់គ្រងព័ត៌មានផ្ទាល់ខ្លួន និងការកំណត់គណនី"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
@@ -60,11 +60,11 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 className={cn('w-full justify-start', {
                                     'bg-muted': isSameUrl(
                                         currentPath,
-                                        item.href,
+                                        resolveUrl(item.href),
                                     ),
                                 })}
                             >
-                                <Link href={item.href}>
+                                <Link href={resolveUrl(item.href)}>
                                     {item.icon && (
                                         <item.icon className="h-4 w-4" />
                                     )}

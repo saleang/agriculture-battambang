@@ -5,203 +5,112 @@ namespace App\Http\Controllers\Product;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
-    // List categories (SELLER ONLY)
+    /**
+     * Seller sees all active global categories + which ones they have selected
+     */
     public function index(Request $request)
     {
         $sellerId = Auth::user()->seller->seller_id;
 
-        $query = Category::where('seller_id', $sellerId);
+        // Qualify with table name to avoid ambiguous column error
+        $chosenIds = Category::whereHas('sellers', function ($q) use ($sellerId) {
+            $q->where('sellers.seller_id', $sellerId);
+        })->pluck('category_id')->toArray();
 
-        // 🔍 Apply search filter if provided
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('categoryname', 'like', "%{$searchTerm}%")
-                    ->orWhere('description', 'like', "%{$searchTerm}%");
+        $query = Category::active(); // removed ->with('parent:...') — no parent relationship
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('category_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-        $categories = $query->orderBy('created_at', 'desc')->get();
+        $categories = $query
+            ->orderBy('category_name')
+            ->get()
+            ->map(function ($cat) use ($chosenIds) {
+                $cat->is_chosen = in_array($cat->category_id, $chosenIds);
+                return $cat;
+            });
 
         if ($request->wantsJson()) {
             return response()->json(['data' => $categories], 200);
         }
 
         return Inertia::render('product/category', [
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 
-    // Store category (attach seller_id)
-    public function store(Request $request)
+    /**
+     * Attach (select) a global category
+     */
+    public function attach(Request $request)
     {
-        $sellerId = Auth::user()->seller->seller_id;
-
         $request->validate([
-            'categoryname' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('category', 'categoryname')
-                    ->where('seller_id', $sellerId),
-            ],
-            'description' => 'nullable|string',
-            'is_active'   => 'boolean',
+            'category_id' => 'required|exists:category,category_id',
         ]);
 
-        $category = DB::transaction(function () use ($request, $sellerId) {
+        $category = Category::findOrFail($request->category_id);
 
-            // 🔢 Get next seller-specific category number
-            $nextSellerCategoryId = Category::where('seller_id', $sellerId)
-                ->lockForUpdate()
-                ->max('seller_category_id');
-
-            $nextSellerCategoryId = $nextSellerCategoryId ? $nextSellerCategoryId + 1 : 1;
-
-            return Category::create([
-                'seller_id'           => $sellerId,
-                'seller_category_id'  => $nextSellerCategoryId,
-                'categoryname'        => $request->categoryname,
-                'description'         => $request->description,
-                'is_active'           => $request->boolean('is_active', true),
-            ]);
-        });
+        Auth::user()->seller->categories()->syncWithoutDetaching($category->category_id);
 
         return response()->json([
-            'message' => 'Category created successfully.',
-            'data'    => $category
-        ], 201);
-    }
-
-    // Update category (OWNER ONLY)
-    public function update(Request $request, $id)
-    {
-        $sellerId = Auth::user()->seller->seller_id;
-
-        $category = Category::where('category_id', $id)
-            ->where('seller_id', $sellerId)
-            ->firstOrFail();
-
-        $request->validate([
-            'categoryname' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('category', 'categoryname')
-                    ->where('seller_id', $sellerId)
-                    ->ignore($category->category_id, 'category_id'),
-            ],
-            'description' => 'nullable|string',
-            'is_active'   => 'boolean',
-        ]);
-
-        $category->update([
-            'categoryname' => $request->categoryname,
-            'description'  => $request->description,
-            'is_active'    => $request->boolean('is_active', $category->is_active),
-        ]);
-
-        return response()->json([
-            'message' => 'Category updated successfully.',
-            'data'    => $category
+            'message' => 'បានបន្ថែមប្រភេទទៅក្នុងហាងរបស់អ្នក។',
+            'data'    => $category->only(['category_id', 'category_name', 'description', 'category_image']),
         ], 200);
     }
 
-    // Delete category (OWNER ONLY)
-    public function destroy($id)
+    /**
+     * Detach (remove) a category — blocked if products are using it
+     */
+    public function detach(Request $request, $categoryId)
     {
-        $sellerId = Auth::user()->seller->seller_id;
+        $seller = Auth::user()->seller;
+        $category = Category::findOrFail($categoryId);
 
-        $category = Category::where('category_id', $id)
-            ->where('seller_id', $sellerId)
-            ->firstOrFail();
-        $products = DB::table('product')
-            ->where('category_id', $id)
-            ->select('productname')
-            ->limit(5)
-            ->pluck('productname')
-            ->all();
+        $usedCount = DB::table('product')
+            ->where('seller_id', $seller->seller_id)
+            ->where('category_id', $categoryId)
+            ->count();
 
-        $productCount = count($products);
-
-        if ($productCount > 0) {
-            $productList = implode('", "', $products);
-            $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
-
-            $message = "មិនអាចលុបបានទេ! ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
-                . "\"{$productList}\"{$extra}។\n"
-                . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន។";
-
+        if ($usedCount > 0) {
             return response()->json([
-                'message'       => $message,
-                'product_count' => $productCount,
-                'products'      => $products,
-                'error'         => 'category_in_use'
+                'message' => "មិនអាចលុបប្រភេទនេះបានទេ — មានផលិតផល {$usedCount} កំពុងប្រើប្រាស់។ សូមផ្លាស់ប្តូរប្រភេទផលិតផលជាមុន។",
+                'error'   => 'category_in_use',
             ], 409);
         }
 
-        $category->delete();
+        $seller->categories()->detach($categoryId);
 
         return response()->json([
-            'message' => 'បានលុបប្រភេទរួចរាល់។'
+            'message' => 'បានលុបប្រភេទចេញពីហាងរបស់អ្នក។',
         ], 200);
     }
 
-    // Toggle status (OWNER ONLY)
-    public function toggleStatus($id)
+    /**
+     * Get only the categories THIS seller has selected
+     * → used in product create/edit dropdown
+     */
+    public function myCategories(Request $request)
     {
         $sellerId = Auth::user()->seller->seller_id;
 
-        $category = Category::where('category_id', $id)
-            ->where('seller_id', $sellerId)
-            ->firstOrFail();
+        $categories = Category::active()
+            ->whereHas('sellers', function ($q) use ($sellerId) {
+                $q->where('sellers.seller_id', $sellerId); // ← qualified
+            })
+            ->orderBy('category_name')
+            ->get(['category_id', 'category_name', 'description', 'category_image']);
 
-        $newStatus = !$category->is_active;
-
-        // Only block when trying to DEACTIVATE (set to inactive / មិនប្រើប្រាស់)
-        if (!$newStatus) {  // if trying to set is_active = false
-            $products = DB::table('product')
-                ->where('category_id', $id)
-                ->select('productname')
-                ->limit(5)  // show first 5 names for helpful message
-                ->pluck('productname')
-                ->all();
-
-            $productCount = count($products);
-
-            if ($productCount > 0) {
-                $productList = implode('", "', $products);
-                $extra = $productCount > 5 ? ' និងផ្សេងទៀត' : '';
-
-                return response()->json([
-                    'message' => "មិនអាចបិទប្រើប្រាស់ (មិនប្រើប្រាស់) បានទេ!\n"
-                        . "ប្រភេទនេះកំពុងត្រូវបានប្រើដោយផលិតផលដូចខាងក្រោម:\n"
-                        . "\"{$productList}\"{$extra}។\n"
-                        . "សូមផ្លាស់ប្តូរប្រភេទរបស់ផលិតផលទាំងនេះទៅប្រភេទផ្សេងជាមុនសិន រួចអាចបិទប្រើប្រាស់បាន។",
-                    'product_count' => $productCount,
-                    'products'      => $products,  // optional for frontend
-                    'error'         => 'cannot_deactivate_in_use'
-                ], 409);
-            }
-        }
-
-        // Safe to toggle
-        $category->update([
-            'is_active' => $newStatus,
-        ]);
-
-        $statusText = $newStatus ? 'បើកប្រើប្រាស់' : 'បិទប្រើប្រាស់ (មិនប្រើប្រាស់)';
-
-        return response()->json([
-            'message' => "បានធ្វើបច្ចុប្បន្នភាពស្ថានភាពជោគជ័យ។ ប្រភេទនេះត្រូវបាន{$statusText}។",
-            'data'    => $category->refresh(),
-        ], 200);
+        return response()->json(['data' => $categories], 200);
     }
 }

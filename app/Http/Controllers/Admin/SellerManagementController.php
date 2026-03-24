@@ -8,126 +8,152 @@ use App\Models\Seller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SellerManagementController extends Controller
 {
-    /**
-     * Display a listing of sellers only
-     */
-    
+    /* ─────────────────────────────────────────
+     | INDEX
+     ───────────────────────────────────────── */
     public function index(Request $request): Response
     {
-        $query = User::with('seller')->where('role', 'seller');
+        $query = User::with(['seller', 'seller.province', 'seller.district'])
+            ->where('role', 'seller');
 
-        // Search by username, email, phone, or farm name
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('username', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhereHas('seller', function ($sq) use ($search) {
-                        $sq->where('farm_name', 'like', "%{$search}%")
-                            ->orWhere('location_district', 'like', "%{$search}%");
-                    });
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('username', 'like', "%$s%")
+                    ->orWhere('email',   'like', "%$s%")
+                    ->orWhere('phone',   'like', "%$s%")
+                    ->orWhereHas(
+                        'seller',
+                        fn($sq) =>
+                        $sq->where('farm_name', 'like', "%$s%")
+                    );
             });
         }
 
-        // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $sellers = $query->latest()->paginate(10)->withQueryString();
+        $sellers = $query->latest('created_at')->paginate(12)->withQueryString();
+
+        // Global totals — not affected by filters
+        $totalStats = [
+            'total'    => User::where('role', 'seller')->count(),
+            'active'   => User::where('role', 'seller')->where('status', 'active')->count(),
+            'inactive' => User::where('role', 'seller')->where('status', 'inactive')->count(),
+            'banned'   => User::where('role', 'seller')->where('status', 'banned')->count(),
+        ];
 
         return Inertia::render('admin/sellers/index', [
-            'sellers' => $sellers,
-            'filters'  => $request->only(['search', 'status']),
+            'sellers'    => $sellers,
+            'filters'    => $request->only(['search', 'status']),
+            'totalStats' => $totalStats,
         ]);
     }
 
-    /**
-     * Show form for creating a new seller
-     */
+    /* ─────────────────────────────────────────
+     | CREATE
+     ───────────────────────────────────────── */
     public function create(): Response
     {
         return Inertia::render('admin/sellers/create');
     }
 
-    /**
-     * Store a newly created seller
-     */
+    /* ─────────────────────────────────────────
+     | STORE
+     ───────────────────────────────────────── */
     public function store(Request $request): RedirectResponse
     {
+        // Only null-clean location fields — NOT password fields
+        $request->merge(
+            collect($request->only(['province_id', 'district_id', 'commune_id', 'village_id']))
+                ->map(fn($v) => $v === '' ? null : $v)
+                ->toArray()
+        );
+
         $validated = $request->validate([
-            'username'           => 'required|string|max:50|unique:users,username',
-            'email'              => 'required|email|lowercase|max:100|unique:users,email',
-            'password'           => ['required', 'confirmed', 'min:3'],
-            'phone'              => 'required|string|max:20',
-            'status'             => 'required|in:active,inactive,banned',
-            'farm_name'          => 'required|string|max:100',
-            'location_district'  => 'required|string|max:100',
-            'description'        => 'nullable|string|max:1000',
+            'username'    => 'required|string|max:50|unique:users,username',
+            'email'       => 'required|string|lowercase|email|max:100|unique:users,email',
+            'password'    => ['required', 'confirmed', 'min:8'],
+            'phone'       => 'required|string|max:20',
+            'status'      => 'required|in:active,inactive,banned',
+            'farm_name'   => 'required|string|max:100',
+            'description' => 'nullable|string|max:1000',
+            'province_id' => 'required|exists:provinces,province_id',
+            'district_id' => 'required|exists:districts,district_id',
+            'commune_id'  => 'nullable|exists:communes,commune_id',
+            'village_id'  => 'nullable|exists:villages,village_id',
         ]);
 
+        // User model has 'password' => 'hashed' in $casts — pass plain text
         $user = User::create([
             'username' => $validated['username'],
             'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
             'role'     => 'seller',
             'phone'    => $validated['phone'],
             'status'   => $validated['status'],
         ]);
 
         Seller::create([
-            'user_id'           => $user->user_id,
-            'farm_name'         => $validated['farm_name'],
-            'location_district' => $validated['location_district'],
-            'description'       => $validated['description'] ?? null,
+            'user_id'     => $user->user_id,
+            'farm_name'   => $validated['farm_name'],
+            'description' => $validated['description'] ?? null,
+            'province_id' => $validated['province_id'] ?? null,
+            'district_id' => $validated['district_id'] ?? null,
+            'commune_id'  => $validated['commune_id']  ?? null,
+            'village_id'  => $validated['village_id']  ?? null,
         ]);
+
+        Log::info('Admin created seller', ['user_id' => $user->user_id]);
 
         return redirect()->route('admin.sellers.index')
             ->with('success', 'Seller created successfully.');
     }
 
-    /**
-     * Show form for editing a seller
-     */
+    /* ─────────────────────────────────────────
+     | EDIT
+     ───────────────────────────────────────── */
     public function edit(User $user): Response
     {
-        // Ensure only sellers can be edited here
-        if ($user->role !== 'seller') {
-            abort(404);
-        }
+        if ($user->role !== 'seller') abort(404);
 
-        $user->loadMissing('seller');
+        $user->load(['seller', 'seller.province', 'seller.district', 'seller.commune', 'seller.village']);
 
-        return Inertia::render('admin/sellers/edit', [
-            'seller' => $user
-        ]);
+        return Inertia::render('admin/sellers/edit', ['seller' => $user]);
     }
 
-    /**
-     * Update the specified seller
-     */
+    /* ─────────────────────────────────────────
+     | UPDATE
+     ───────────────────────────────────────── */
     public function update(Request $request, User $user): RedirectResponse
     {
-        if ($user->role !== 'seller') {
-            abort(404);
-        }
+        if ($user->role !== 'seller') abort(404);
+
+        // Only null-clean location fields
+        $request->merge(
+            collect($request->only(['province_id', 'district_id', 'commune_id', 'village_id']))
+                ->map(fn($v) => $v === '' ? null : $v)
+                ->toArray()
+        );
 
         $validated = $request->validate([
-            'username'           => 'required|string|max:50|unique:users,username,' . $user->user_id . ',user_id',
-            'email'              => 'required|email|lowercase|max:100|unique:users,email,' . $user->user_id . ',user_id',
-            'phone'              => 'required|string|max:20',
-            'status'             => 'required|in:active,inactive,banned',
-            'farm_name'          => 'required|string|max:100',
-            'location_district'  => 'required|string|max:100',
-            'description'        => 'nullable|string|max:1000',
+            'username'    => 'required|string|max:50|unique:users,username,' . $user->user_id . ',user_id',
+            'email'       => 'required|string|lowercase|email|max:100|unique:users,email,' . $user->user_id . ',user_id',
+            'phone'       => 'required|string|max:20',
+            'status'      => 'required|in:active,inactive,banned',
+            'farm_name'   => 'required|string|max:100',
+            'description' => 'nullable|string|max:1000',
+            'province_id' => 'required|exists:provinces,province_id',
+            'district_id' => 'required|exists:districts,district_id',
+            'commune_id'  => 'nullable|exists:communes,commune_id',
+            'village_id'  => 'nullable|exists:villages,village_id',
         ]);
 
         $user->update([
@@ -137,41 +163,56 @@ class SellerManagementController extends Controller
             'status'   => $validated['status'],
         ]);
 
-        // Update password only if provided
+        // Password — only if provided; pass plain text (cast handles hashing)
         if ($request->filled('password')) {
-            $request->validate([
-                'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            ]);
-            $user->update(['password' => Hash::make($request->password)]);
+            $request->validate(['password' => ['required', 'confirmed', 'min:8']]);
+            $user->update(['password' => $request->password]);
         }
 
-        $user->seller()->update([
-            'farm_name'         => $validated['farm_name'],
-            'location_district' => $validated['location_district'],
-            'description'       => $validated['description'] ?? null,
-        ]);
+        $sellerData = [
+            'farm_name'   => $validated['farm_name'],
+            'description' => $validated['description'] ?? null,
+            'province_id' => $validated['province_id'] ?? null,
+            'district_id' => $validated['district_id'] ?? null,
+            'commune_id'  => $validated['commune_id']  ?? null,
+            'village_id'  => $validated['village_id']  ?? null,
+        ];
+
+        $user->seller
+            ? $user->seller->update($sellerData)
+            : Seller::create(array_merge($sellerData, ['user_id' => $user->user_id]));
 
         return redirect()->route('admin.sellers.index')
             ->with('success', 'Seller updated successfully.');
     }
 
-    /**
-     * Delete the specified seller
-     */
+    /* ─────────────────────────────────────────
+     | DESTROY
+     ───────────────────────────────────────── */
     public function destroy(User $user): RedirectResponse
     {
-        if ($user->role !== 'seller') {
-            abort(404);
-        }
+        if ($user->role !== 'seller') abort(404);
 
-        if ($user->user_id === Auth::id()) {
+        if ((int) $user->user_id === (int) Auth::id()) {
             return redirect()->route('admin.sellers.index')
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        $user->delete();
+        $name = $user->username;
+
+        try {
+            if ($user->seller) {
+                $user->seller()->delete();
+            }
+            $user->delete();
+            Log::info('Admin deleted seller', ['user_id' => $user->user_id, 'username' => $name]);
+        } catch (\Exception $e) {
+            Log::error('Failed to delete seller', ['error' => $e->getMessage()]);
+            return redirect()->route('admin.sellers.index')
+                ->with('error', "Cannot delete \"{$name}\". They may have related records.");
+        }
 
         return redirect()->route('admin.sellers.index')
-            ->with('success', 'Seller deleted successfully.');
+            ->with('success', "Seller \"{$name}\" deleted successfully.");
     }
 }
