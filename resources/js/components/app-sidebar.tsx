@@ -7,12 +7,11 @@ import {
     SidebarFooter,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Box, ChartColumnIncreasing, DollarSign, Folder, House, LayoutGrid,Package, Package2, Star, Truck, User } from 'lucide-react';
+import { Box, ChartColumnIncreasing, Folder, House, LayoutGrid,Package, Star, Truck, User, ShoppingBasket, Tags } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -69,21 +68,22 @@ const sellerNavItems: NavItem[] = [
         icon: House,
     },
     {
-        title: 'ប្រូហ្វាលយ៍',
+        title: 'គណនីរបស់ខ្ញុំ',
         href: '/seller/profile',
         icon: User,
+        
     },
     {
-        title: 'ការគ្រប់គ្រងផលិតផល',
+        title: 'ផលិតផលរបស់ខ្ញុំ',
         icon: Box,
         children: [
-            { title: 'ផលិតផល', href: '/seller/product', icon: Box },
-            { title: 'ប្រភេទផលិតផល', href: '/seller/category', icon: Box },
+            { title: 'ផលិតផល', href: '/seller/product', icon: ShoppingBasket },
+            { title: 'ក្រុមផលិតផល', href: '/seller/category', icon: Tags },
         ],
     },
 
     {
-        title: 'គ្រប់គ្រងការបញ្ជាទិញ',
+        title: 'ចំនួននៃការបញ្ជាទិញ',
         href: '/seller/orders',
         icon: Truck,
     },
@@ -93,12 +93,12 @@ const sellerNavItems: NavItem[] = [
         icon: DollarSign,
     },
     {
-        title: ' Reviews & Ratings',
+        title: 'ការវាយតម្លៃរបស់ខ្ញុំ',
         href: '/seller/reviews',
         icon: Star,
     },
     {
-        title: ' របាយការណ៍',
+        title: 'របាយការណ៍របស់ខ្ញុំ',
         href: '/seller/reports',
         icon: ChartColumnIncreasing
     },

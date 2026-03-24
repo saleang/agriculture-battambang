@@ -25,7 +25,6 @@ class Product extends Model
         'stock',
         'category_id',
         'is_active',
-        'views_count',
     ];
 
     /**
@@ -35,7 +34,6 @@ class Product extends Model
         'price'             => 'decimal:2',
         'stock'             => 'string',
         'is_active'         => 'boolean',
-        'views_count'       => 'integer',
         'seller_id'         => 'integer',
         'seller_product_id' => 'integer',
         'category_id'       => 'integer',
@@ -85,5 +83,24 @@ class Product extends Model
     public function getStockLabelAttribute(): string
     {
         return $this->isAvailable() ? 'Available' : 'Out of Stock';
+    }
+
+    /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName()
+    {
+        return 'product_id';
+    }
+
+    // public function photo()
+    // {
+    //     return $this->belongsTo(...); // ← missing or wrong
+    // }
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'product_id', 'product_id');
     }
 }

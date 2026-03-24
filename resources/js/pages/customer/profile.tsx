@@ -256,8 +256,6 @@ export default function ProfilePage() {
 
             {/* Header with profile photo */}
             <Header
-                cartCount={0}
-                wishlistCount={0}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQueryHeader}
                 isAuthenticated={!!user}

@@ -78,9 +78,19 @@ createInertiaApp({
     },
     setup({ el, App, props }) {
         const root = createRoot(el);
+        const handleRemoveFromCart = (productId: number) => {
+            const saved = localStorage.getItem('orderedProducts');
+            if (saved) {
+                const ordered: number[] = JSON.parse(saved);
+                const updated = ordered.filter((id) => id !== productId);
+                localStorage.setItem('orderedProducts', JSON.stringify(updated));
+                window.dispatchEvent(new Event('storage')); // Manually trigger storage event
+            }
+        };
+
         root.render(
             <>
-        <CartProvider>
+        <CartProvider onRemoveFromCart={handleRemoveFromCart}>
             <App {...props} />
         </CartProvider>
         <Toaster position="top-right" richColors />

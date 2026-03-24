@@ -55,10 +55,8 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
         return (
             <>
                 <Head title="ការទូទាត់ - កសិផលខេត្តបាត់ដំបង" />
-                <div className="min-h-screen bg-gray-50 font-siemreap">
+                <div className="min-h-screen bg-gray-50">
                     <Header
-                        cartCount={0}
-                        wishlistCount={0}
                         searchQuery=""
                         onSearchChange={() => {}}
                         isAuthenticated={!!user}
@@ -110,10 +108,8 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
     return (
         <>
             <Head title="ការទូទាត់ - កសិផលខេត្តបាត់ដំបង" />
-            <div className="min-h-screen bg-gray-50 font-siemreap">
+            <div className="min-h-screen bg-gray-50">
                 <Header
-                    cartCount={getTotalItems()}
-                    wishlistCount={0}
                     searchQuery=""
                     onSearchChange={() => {}}
                     isAuthenticated={!!user}
@@ -144,7 +140,7 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
                             )}
                             
                             <a
-                                href="/customer/cart"
+                                href="/cart"
                                 className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
                             >
                                 <ArrowLeft className="w-4 h-4" />

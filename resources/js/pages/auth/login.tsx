@@ -9,8 +9,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { useForm, Head } from '@inertiajs/react';
-import { Mail, Lock, Eye, EyeOff, Smartphone, Leaf, ChevronRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';   // ← Add this line
 
 interface LoginProps {
     status?: string;
@@ -36,6 +37,9 @@ export default function Login({
         e.preventDefault();
         post('/login', {
             onFinish: () => reset('password'),
+            onError: (errors) => {
+                console.log('Login errors:', errors);
+            },
         });
     };
 
@@ -43,229 +47,206 @@ export default function Login({
         <>
             <Head title="ចូលគណនី - កសិផលខេត្តបាត់ដំបង" />
 
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
-                {/* Main container - centered, limited width, no overflow */}
-                <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row max-h-[90vh] lg:max-h-none">
-                        {/* Left - Form (will be centered vertically on desktop) */}
-                        <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[50vh] lg:min-h-0">
-                            {/* Header */}
-                            <div className="text-center mb-6 lg:mb-8">
-                                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-green-600 to-emerald-500 rounded-full mb-3 mx-auto">
-                                    <Leaf className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            <div
+                className="min-h-screen flex items-center justify-center bg-cover bg-center px-4"
+                style={{
+                    backgroundImage:
+                        "url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6')",
+                }}
+            >
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+                    {/* Logo */}
+                    <div className="text-center mb-6">
+                        <h1 className="text-2xl font-bold text-emerald-600">
+                            សូមស្វាគមន៍មកកាន់វេទិកាកសិផលខេត្តបាត់ដំបង
+                        </h1>
+                    </div>
+
+                    {/* Status Message */}
+                    {status && (
+                        <div className="mb-4 text-sm text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                            {status}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Email/Phone Field */}
+                        <div>
+                            <Label htmlFor="email" className="text-sm text-gray-700 font-medium">
+                                អ៊ីមែល ឬលេខទូរស័ព្ទ
+                            </Label>
+                            <div className="relative mt-1">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Mail className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">ចូលគណនី</h1>
-                                <p className="text-gray-600 text-xs sm:text-sm">កសិផលស្រស់ៗពីខេត្តបាត់ដំបង</p>
-                            </div>
-
-                            {/* Toggle */}
-                            <div className="flex mb-5 bg-gray-100 rounded-lg p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPhoneMode(false)}
-                                    className={`flex-1 py-2 sm:py-2.5 text-center rounded-md text-xs sm:text-sm font-medium transition-all ${
-                                        !isPhoneMode ? 'bg-white text-green-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="text"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    required
+                                    autoFocus
+                                    autoComplete="email"
+                                    placeholder="អ៊ីមែល ឬលេខទូរស័ព្ទរបស់អ្នក"
+                                    className={`pl-10 rounded-lg ${
+                                        errors.email
+                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300'
                                     }`}
-                                >
-                                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                                        <Mail className="w-4 h-4" />
-                                        អ៊ីមែល
-                                    </div>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPhoneMode(true)}
-                                    className={`flex-1 py-2 sm:py-2.5 text-center rounded-md text-xs sm:text-sm font-medium transition-all ${
-                                        isPhoneMode ? 'bg-white text-green-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                                        <Smartphone className="w-4 h-4" />
-                                        លេខទូរស័ព្ទ
-                                    </div>
-                                </button>
+                                />
                             </div>
-
-                            {status && (
-                                <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-xs sm:text-sm rounded-lg border border-emerald-200 text-center">
-                                    {status}
+                            <p className="text-xs text-gray-500 mt-1">
+                                You can login with email or phone number
+                            </p>
+                            {errors.email && (
+                                <div className="mt-2 flex items-start gap-2 bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm text-red-600 font-medium">{errors.email}</p>
                                 </div>
                             )}
+                        </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                {/* Identifier */}
-                                <div>
-                                    <Label htmlFor="email" className="text-sm text-gray-700 font-medium mb-1.5 block">
-                                        {isPhoneMode ? 'លេខទូរស័ព្ទ' : 'អ៊ីមែល'}
-                                    </Label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            {isPhoneMode ? <Smartphone className="h-5 w-5 text-gray-400" /> : <Mail className="h-5 w-5 text-gray-400" />}
-                                        </div>
-                                        <Input
-                                            id="email"
-                                            type={isPhoneMode ? "tel" : "email"}
-                                            value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
-                                            required
-                                            autoFocus
-                                            placeholder={isPhoneMode ? "ឧ. 012345678" : "ឧ. example@email.com"}
-                                            className={`pl-10 h-10 sm:h-11 rounded-lg text-sm ${
-                                                errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
-                                            }`}
-                                        />
-                                    </div>
-                                    {errors.email && <InputError message={errors.email} className="mt-1 text-xs" />}
+                        {/* Password Field */}
+                        <div>
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="password" className="text-sm text-gray-700 font-medium">
+                                    ពាក្យសម្ងាត់
+                                </Label>
+                            </div>
+
+                            <div className="relative mt-1">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-gray-400" />
                                 </div>
-
-                                {/* Password */}
-                                <div>
-                                    <div className="flex justify-between items-center mb-1.5">
-                                        <Label htmlFor="password" className="text-sm text-gray-700 font-medium">
-                                            ពាក្យសម្ងាត់
-                                        </Label>
-                                        {canResetPassword && (
-                                            <TextLink href={request()} className="text-xs text-emerald-600 hover:underline">
-                                                ភ្លេច?
-                                            </TextLink>
-                                        )}
-                                    </div>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Lock className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <Input
-                                            id="password"
-                                            type={showPassword ? 'text' : 'password'}
-                                            value={data.password}
-                                            onChange={(e) => setData('password', e.target.value)}
-                                            required
-                                            placeholder="••••••••"
-                                            className={`pl-10 pr-10 h-10 sm:h-11 rounded-lg text-sm ${
-                                                errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
-                                            }`}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                                        >
-                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                        </button>
-                                    </div>
-                                    {errors.password && <InputError message={errors.password} className="mt-1 text-xs" />}
-                                </div>
-
-                                <div className="flex items-center">
-                                    <Checkbox
-                                        id="remember"
-                                        checked={data.remember}
-                                        onCheckedChange={(checked) => setData('remember', !!checked)}
-                                        className="rounded border-gray-300 h-4 w-4"
-                                    />
-                                    <Label htmlFor="remember" className="ml-2 text-sm text-gray-600 cursor-pointer select-none">
-                                        ចងចាំខ្ញុំ
-                                    </Label>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full h-10 sm:h-11 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-medium rounded-lg mt-2 text-sm sm:text-base"
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={data.password}
+                                    onChange={(e) => setData('password', e.target.value)}
+                                    required
+                                    autoComplete="current-password"
+                                    placeholder="បំពេញពាក្យសម្ងាត់របស់អ្នក"
+                                    className={`pl-10 pr-10 rounded-lg ${
+                                        errors.password
+                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300'
+                                    }`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                 >
-                                    {processing ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <Spinner className="h-4 w-4 sm:h-5 sm:w-5" />
-                                            កំពុងចូល...
-                                        </span>
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                                     ) : (
-                                        'ចូលគណនី'
+                                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                                     )}
-                                </Button>
-
-                                {/* Social login - optional, kept small */}
-                                <div className="pt-3">
-                                    <div className="relative my-3">
-                                        <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-gray-200"></div>
-                                        </div>
-                                        <div className="relative flex justify-center text-xs">
-                                            <span className="px-3 bg-white text-gray-500">ឬចូលដោយប្រើ</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <Button variant="outline" className="h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                                            <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-4 h-4 mr-1.5" />
-                                            Google
-                                        </Button>
-                                        <Button variant="outline" className="h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                                            <img src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" className="w-4 h-4 mr-1.5" />
-                                            Facebook
-                                        </Button>
-                                    </div>
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <div className="mt-2 flex items-start gap-2 bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm text-red-600 font-medium">{errors.password}</p>
                                 </div>
-
-                                {canRegister && (
-                                    <div className="text-center pt-3 text-sm">
-                                        មិនទាន់មានគណនី?{' '}
-                                        <TextLink href={register()} className="text-emerald-600 font-semibold hover:text-emerald-700">
-                                            ចុះឈ្មោះឥឡូវនេះ <ChevronRight className="inline w-3 h-3" />
-                                        </TextLink>
-                                    </div>
+                            )}
+                            <div className="flex justify-between items-center mt-2">
+                                <Label htmlFor="remember" className="text-sm text-gray-700 font-medium">
+                                </Label>
+                                {canResetPassword && (
+                                    <TextLink
+                                        href={request()}
+                                        className="text-xs text-emerald-600 hover:underline"
+                                    >
+                                        ភ្លេចពាក្យសម្ងាត់?
+                                    </TextLink>
                                 )}
-                            </form>
+                            </div>
                         </div>
 
-                        {/* Right - Benefits (desktop only) */}
-                        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 xl:p-10 flex-col justify-between">
-                            <div>
-                                <h2 className="text-xl xl:text-2xl font-bold mb-6">ទិញផ្ទាល់ពីកសិករបាត់ដំបង</h2>
+                        {/* Remember Me */}
+                        <div className="flex items-center">
+                            <Checkbox
+                                id="remember"
+                                name="remember"
+                                checked={data.remember}
+                                onCheckedChange={(checked) => setData('remember', checked as boolean)}
+                                className="rounded"
+                            />
+                            <Label
+                                htmlFor="remember"
+                                className="ml-2 text-sm text-gray-600 cursor-pointer"
+                            >
+                                ចងចាំខ្ញុំ
+                            </Label>
+                        </div>
 
-                                <div className="space-y-5 xl:space-y-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                                            <Leaf className="w-5 h-5 sm:w-6 sm:h-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-base sm:text-lg mb-1">ផលិតផលសរីរាង្គ 100%</h3>
-                                            <p className="text-white/85 text-xs sm:text-sm">គ្មានថ្នាំគីមី គ្មានសារធាតុរក្សាទុក</p>
-                                        </div>
-                                    </div>
+                        {/* Sign in Button */}
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-lg py-2.5 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {processing ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <Spinner className="h-4 w-4" />
+                                    កំពុងចូលគណនី...
+                                </span>
+                            ) : (
+                                'ចូលគណនី'
+                            )}
+                        </Button>
 
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-base sm:text-lg mb-1">ទិញផ្ទាល់ពីកសិករ</h3>
-                                            <p className="text-white/85 text-xs sm:text-sm">គ្មានឈ្មួញកណ្ដាល តម្លៃសមរម្យ</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-base sm:text-lg mb-1">ការបង់ប្រាក់មានសុវត្ថិភាព</h3>
-                                            <p className="text-white/85 text-xs sm:text-sm">ប្រព័ន្ធទូទាត់ឆ្លាតវៃ រហ័ស</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 bg-white/10 p-4 rounded-lg">
-                                <p className="text-xs sm:text-sm text-white/90">
-                                    <strong>ចំណាំ៖</strong> ចូលគណនីដើម្បីទទួលបានការបញ្ចុះតម្លៃ 50% លើការបញ្ជាទិញដំបូង
+                        <div className="text-center mb-6">
+                            {canRegister && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                    មិនទាន់បានចុះឈ្មោះ?{' '}
+                                    <TextLink
+                                        href={register()}
+                                        className="text-emerald-600 font-medium hover:underline"
+                                    >
+                                        ចុះឈ្មោះទីនេះ
+                                    </TextLink>
                                 </p>
-                            </div>
+                            )}
                         </div>
-                    </div>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 text-gray-400 text-sm">
+                            <div className="flex-1 h-px bg-gray-200" />
+                            ឬចូលគណនីដោយប្រើ
+                            <div className="flex-1 h-px bg-gray-200" />
+                        </div>
+
+                        {/* Social Buttons */}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-lg flex gap-2 items-center justify-center hover:bg-gray-50 transition-colors"
+                        >
+                            <img
+                                src="https://www.svgrepo.com/show/355037/google.svg"
+                                alt="Google"
+                                className="w-5 h-5"
+                            />
+                            Google
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-lg flex gap-2 items-center justify-center hover:bg-gray-50 transition-colors"
+                        >
+                            <img
+                                src="https://www.svgrepo.com/show/448224/facebook.svg"
+                                alt="Facebook"
+                                className="w-5 h-5"
+                            />
+                            Facebook
+                        </Button>
+                    </form>
                 </div>
             </div>
         </>

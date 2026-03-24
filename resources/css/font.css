@@ -1,13 +1,17 @@
 /* resources/css/font.css */
 
 /* Google Fonts - Khmer Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Moul&family=Siemreap&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kdam+Thmor+Pro&family=Moul&family=Siemreap&display=swap');
 
 /* Font Classes */
 .font-moul {
-    font-family: 'Moul', serif;
+    font-family: 'Moul', cursive;
 }
 
 .font-siemreap {
     font-family: 'Siemreap', sans-serif;
+}
+
+.font-kdamthmor {
+    font-family: 'Kdam Thmor Pro', sans-serif;
 }

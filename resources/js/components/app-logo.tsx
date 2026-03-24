@@ -1,5 +1,7 @@
 // import AppLogoIcon from './app-logo-icon';
-import Logo from '@/assets/logo_transparent.png';
+import logo from '@/assets/logo_transparent.png';
+import Logo from '@/assets/logo.png';
+import { Link } from '@inertiajs/react';
 
 
 export default function AppLogo() {
@@ -19,9 +21,10 @@ export default function AppLogo() {
         //         </span>
         //     </div> */}
         // </>
+        <>
          <div className="flex items-center justify-center w-full">
             <img
-                src={Logo}
+                src={logo}
                 alt="App Logo"
                 className="
                     w-32
@@ -34,5 +37,15 @@ export default function AppLogo() {
                 "
             />
         </div>
+        <Link href="/">
+            <div className="flex items-center justify-center">
+                <img
+                    src={Logo}
+                    alt="App Logo"
+                    className="w-[100px] h-[100px] "
+                />
+            </div>
+        </Link>
+        </>
     );
 }

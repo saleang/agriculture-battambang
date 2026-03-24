@@ -32,7 +32,8 @@ import { cn, isSameUrl, resolveUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { BookOpen, Folder, Heart, LayoutGrid, Menu, Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -68,6 +69,37 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();
+    const [wishlistCount, setWishlistCount] = useState(0);
+    const [animateWishlist, setAnimateWishlist] = useState(false);
+    const isInitialMount = useRef(true);
+
+    useEffect(() => {
+        fetchWishlistCount();
+    }, []);
+
+    // Effect to animate the wishlist icon when the count changes
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        setAnimateWishlist(true);
+        const timer = setTimeout(() => setAnimateWishlist(false), 750); // Animation duration
+        return () => clearTimeout(timer);
+    }, [wishlistCount]);
+
+    const fetchWishlistCount = async () => {
+        try {
+            const response = await fetch('/api/wishlist/count');
+            const data = await response.json();
+            setWishlistCount(data.count);
+        } catch (error) {
+            console.error('Failed to fetch wishlist count:', error);
+        }
+    };
+
+    window.updateWishlistCount = fetchWishlistCount;
+
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -226,6 +258,34 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Wishlist Icon */}
+                        <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Link
+                                        href={'/wishlist'}
+                                        className="group relative ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium text-accent-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                    >
+                                        <Heart
+                                            className={`size-5 opacity-80 group-hover:opacity-100 ${
+                                                animateWishlist ? 'animate-bounce' : ''
+                                            }`}
+                                        />
+                                        {wishlistCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                                {wishlistCount}
+                                            </span>
+                                        )}
+                                        <span className="sr-only">Wishlist</span>
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Wishlist</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

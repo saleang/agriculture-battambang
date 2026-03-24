@@ -25,73 +25,84 @@ export function NavMain({ items = [] }: NavMainProps) {
     setOpenMenu((prev) => (prev === title ? null : title));
   };
 
-  const isActive = (href?: any) =>
-    href ? currentPath.startsWith(resolveUrl(href)) : false;
+  const isActive = (href?: any) => {
+    if (!href) return false;
 
-  // Automatically open dropdowns if URL matches a child
+    const resolved = resolveUrl(href).replace(/\/$/, "");
+    const path = currentPath.split("?")[0].replace(/\/$/, "");
+
+    return path === resolved || path.startsWith(resolved + "/");
+  };
   useEffect(() => {
-    items.forEach(item => {
-      if (item.children?.some(c => c.href && currentPath.startsWith(resolveUrl(c.href)))) {
+    items.forEach((item) => {
+      if (
+        item.children?.some(
+          (c) => c.href && isActive(c.href)
+        )
+      ) {
         setOpenMenu(item.title);
       }
     });
   }, [currentPath, items]);
 
   return (
-    <SidebarGroup className="px-2 py-0">
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => {
-          const hasChildren = !!item.children?.length;
-          const open = openMenu === item.title;
+  <SidebarGroup className="px-2 py-0">
+  <SidebarMenu>
+    {items.map((item) => {
+      const hasChildren = !!item.children?.length;
+      const open = openMenu === item.title;
 
-          return (
-            <Fragment key={item.title}>
-              <SidebarMenuItem>
-                {hasChildren ? (
-                  <SidebarMenuButton
-                    onClick={() => toggleMenu(item.title)}
-                    className="h-10 justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      {item.icon && <item.icon className="h-4 w-4" />}
-                      <span>{item.title}</span>
-                    </div>
-                    {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </SidebarMenuButton>
-                  ) : (
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.href)}
-                    className={isActive(item.href) ? "bg-green-500 text-white h-10" : "hover:bg-green-100 h-10"}
-                  >
-                    <Link href={resolveUrl(item.href!)} prefetch>
-                      {item.icon && <item.icon className="h-4 w-4" />}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+      return (
+        <Fragment key={item.title}>
+          <SidebarMenuItem>
+            {hasChildren ? (
+              <SidebarMenuButton
+                onClick={() => toggleMenu(item.title)}
+                className="h-10 justify-between hover:bg-[#46953D]/30 active:bg-[#46953D]/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  <span>{item.title}</span>
+                </div>
+                {open ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
                 )}
-              </SidebarMenuItem>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                asChild
+                isActive={isActive(item.href)}
+                className="h-10 transition-colors hover:bg-[#46953D]/30 data-[active=true]:bg-[#46953D] data-[active=true]:text-white data-[active=true]:shadow-sm"
+              >
+                <Link href={resolveUrl(item.href!)} prefetch>
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
+          </SidebarMenuItem>
 
-              {open &&
-                item.children?.map((child) => (
-                  <SidebarMenuItem key={child.title} className="ml-6">
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(child.href)}
-                      className={isActive(child.href) ? "bg-green-400 text-white h-9" : "hover:bg-green-100 h-9"}
-                    >
-                      <Link href={resolveUrl(child.href!)} prefetch>
-                        {child.icon && <child.icon className="h-3.5 w-3.5" />}
-                        <span>{child.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-            </Fragment>
-          );
-        })}
-      </SidebarMenu>
-    </SidebarGroup>
+          {open &&
+            item.children?.map((child) => (
+              <SidebarMenuItem key={child.title} className="ml-6">
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(child.href)}
+                  className="h-9 transition-colors hover:bg-[#46953D]/25 data-[active=true]:bg-[#46953D]/90 data-[active=true]:text-white"
+                >
+                  <Link href={resolveUrl(child.href!)} prefetch>
+                    {child.icon && <child.icon className="h-3.5 w-3.5" />}
+                    <span>{child.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+        </Fragment>
+      );
+    })}
+  </SidebarMenu>
+</SidebarGroup>
   );
 }

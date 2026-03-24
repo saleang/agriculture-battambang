@@ -11,6 +11,26 @@ const sidebarNavItems: NavItem[] = [
   { title: "ការកំណត់ការបង់ប្រាក់", href: "/seller/payment_info", icon: CreditCard },
   { title: "ពាក្យសម្ងាត់", href: "/seller/password", icon: Lock },
   { title: "ការកំណត់ការជូនដំណឹង", href: "/seller/telegram_settings", icon: Bell },
+//   {
+//     title: "ប្រវត្តិរូបរបស់ខ្ញុំ",
+//     href: "/seller/profile",
+//     icon: User,
+//   },
+//   {
+//     title: "ព័ត៌មានកសិដ្ឋាន",
+//     href: "/seller/farm_info",
+//     icon: Sprout,
+//   },
+//   {
+//     title: "ការកំណត់ការបង់ប្រាក់",
+//     href: "/seller/payment_info",
+//     icon: CreditCard,
+//   },
+//   {
+//     title: "ពាក្យសម្ងាត់",
+//     href: "/seller/password",
+//     icon: Lock,
+//   },
 ];
 
 export default function SellerLayout({ children }: PropsWithChildren) {

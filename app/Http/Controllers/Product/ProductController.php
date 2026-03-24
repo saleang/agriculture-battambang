@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Wishlist;
+use Inertia\Inertia;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -60,7 +63,6 @@ class ProductController extends Controller
                 'seller_id' => $user->seller->seller_id,
                 'seller_product_id' => $nextId,
                 'unit' => $request->unit ?? 'kg',
-                'views_count' => 0,
                 'is_active' => $request->boolean('is_active', true),
             ]));
 
@@ -198,8 +200,60 @@ class ProductController extends Controller
             ->where('is_active', true) // only show active products
             ->get();
 
+        // Append the primary image URL and category name to each product
+        $products->each(function ($product) {
+            $primaryImage = $product->images->firstWhere('is_primary', true);
+            $product->image = $primaryImage ? Storage::url($primaryImage->image_url) : null;
+            $product->category_name = $product->category ? $product->category->categoryname : null;
+        });
+
+        $categories = \App\Models\Category::where('is_active', true)
+            ->get()
+            ->unique('categoryname')
+            ->values();
+
         return response()->json([
-            'data' => $products
+            'products' => $products,
+            'categories' => $categories,
+        ]);
+    }
+
+    /** Show product details */
+    public function show(Request $request, $id)
+    {
+        $product = Product::with([
+            'images',
+            'category',
+            'seller.user',
+            'comments.user'
+        ])->findOrFail($id);
+
+        $isInWishlist = false;
+        $isFollowing = false;
+        $followersCount = 0;
+        $user = $request->user();
+
+        if ($product->seller) {
+            $followersCount = $product->seller->followers()->count();
+        }
+
+        if ($user) {
+            $isInWishlist = Wishlist::where('user_id', $user->user_id)
+                ->where('product_id', $product->product_id)
+                ->exists();
+
+            if ($product->seller) {
+                $isFollowing = $user->following()->where('sellers.seller_id', $product->seller->seller_id)->exists();
+            }
+        }
+
+        return Inertia::render('ProductDetail', [
+            'product' => $product,
+            'is_in_wishlist' => $isInWishlist,
+            'is_following' => $isFollowing,
+            'followers_count' => $followersCount,
+        ])->withViewData([
+            'title' => $product->productname,
         ]);
     }
 }

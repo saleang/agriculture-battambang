@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Seller;
 use App\Services\TelegramService;
@@ -32,7 +33,7 @@ class OrderController extends Controller
 
         return $request->wantsJson()
             ? response()->json($orders)
-            : inertia('customer/orders/index', ['orders' => $orders]);
+            : inertia('customer/orders/order-list', ['orders' => $orders]);
     }
 
     public function show(Order $order)
@@ -357,6 +358,85 @@ class OrderController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('Failed to send payment notification', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Add a product to the user's shopping cart.
+     * This implementation uses a dedicated Order record with an 'in_cart' status.
+     */
+    public function addToCart(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:product,product_id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $user = Auth::user();
+        $product = Product::with(['seller', 'images'])->findOrFail($validated['product_id']);
+
+        if (!$product->seller?->user_id) {
+            return response()->json(['message' => 'Product seller is not configured correctly.'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Find an existing cart or create a new one.
+            // We'll use a custom status 'in_cart' to represent the cart.
+            $cart = Order::firstOrCreate(
+                [
+                    'user_id' => $user->user_id,
+                    'status' => 'in_cart',
+                ],
+                [
+                    'total_amount' => 0, // Initial total
+                    'payment_method' => 'KHQR', // A default value
+                    'payment_status' => Order::PAYMENT_UNPAID,
+                ]
+            );
+
+            // Check if the item is already in the cart
+            $orderItem = $cart->items()->where('product_id', $product->product_id)->first();
+
+            if ($orderItem) {
+                // If it exists, update the quantity
+                $orderItem->quantity += $validated['quantity'];
+                $orderItem->price_per_unit = $product->price; // Update price in case it changed
+                $orderItem->save();
+            } else {
+                // If not, create a new order item, mirroring fields from the `store` method
+                $orderItem = new OrderItem([
+                    'product_id' => $product->product_id,
+                    'seller_id' => $product->seller->user_id,
+                    'product_name' => $product->productname,
+                    'product_image' => $product->images->first()?->image_url,
+                    'unit' => $product->unit,
+                    'quantity' => $validated['quantity'],
+                    'price_per_unit' => $product->price,
+                ]);
+                $cart->items()->save($orderItem);
+            }
+
+            // Recalculate the total amount for the cart
+            $cart->load('items');
+            $cart->total_amount = $cart->items->sum(function ($item) {
+                return $item->quantity * $item->price_per_unit;
+            });
+            $cart->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Product added to cart successfully!',
+                'data' => $cart->load('items.product.images')
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add product to cart', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->user_id,
+            ]);
+            return response()->json(['message' => 'Failed to add product to cart.', 'error' => $e->getMessage()], 500);
         }
     }
 }
