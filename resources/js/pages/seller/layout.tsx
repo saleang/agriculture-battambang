@@ -1,52 +1,23 @@
-// resources/js/pages/seller/layout.tsx
-
 import { PropsWithChildren } from "react";
 import { Link, usePage, useRemember } from "@inertiajs/react";
-import { User, Sprout, CreditCard, Lock, Box } from "lucide-react";
-
+import { User, Sprout, CreditCard, Lock, Bell } from "lucide-react";
 import { NavItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import Heading from "@/components/heading";
 import { cn, resolveUrl } from "@/lib/utils";
 
-// Sidebar items
 const sidebarNavItems: NavItem[] = [
-  {
-    title: "ប្រវត្តិរូបរបស់ខ្ញុំ",
-    href: "/seller/profile",
-    icon: User,
-  },
-  {
-    title: "ព័ត៌មានកសិដ្ឋាន",
-    href: "/seller/farm_info",
-    icon: Sprout,
-  },
-  {
-    title: "ការកំណត់ការបង់ប្រាក់",
-    href: "/seller/payment_info",
-    icon: CreditCard,
-  },
-  {
-    title: "ពាក្យសម្ងាត់",
-    href: "/seller/password",
-    icon: Lock,
-  },
-  {
-    title: "ការកំណត់ការជូនដំណឹង",
-    href: "/seller/telegram_settings",
-    icon: Box,
-  }
+  { title: "ប្រវត្តិរូបរបស់ខ្ញុំ", href: "/seller/profile", icon: User },
+  { title: "ព័ត៌មានកសិដ្ឋាន", href: "/seller/farm_info", icon: Sprout },
+  { title: "ការកំណត់ការបង់ប្រាក់", href: "/seller/payment_info", icon: CreditCard },
+  { title: "ពាក្យសម្ងាត់", href: "/seller/password", icon: Lock },
+  { title: "ការកំណត់ការជូនដំណឹង", href: "/seller/telegram_settings", icon: Bell },
 ];
 
 export default function SellerLayout({ children }: PropsWithChildren) {
   const page = usePage();
   const currentPath = page.url;
 
-  // Persist open menu
-  const [openMenu, setOpenMenu] = useRemember<string | null>(
-    null,
-    "sidebar-open-menu"
-  );
+  const [openMenu, setOpenMenu] = useRemember<string | null>(null, "sidebar-open-menu");
 
   const toggleMenu = (title: string) => {
     setOpenMenu((prev) => (prev === title ? null : title));
@@ -58,89 +29,92 @@ export default function SellerLayout({ children }: PropsWithChildren) {
   };
 
   return (
-    <div className="min-h-screen bg-green-300 px-4 py-6">
-      <Heading
-        title="ការកំណត់អ្នកលក់"
-        description="គ្រប់គ្រងប្រវត្តិរូប និងការកំណត់គណនីរបស់អ្នក"
-      />
+    <div className="min-h-screen bg-[#F5F6F8]">
+      {/* Page Header */}
+      <div className="border-b border-gray-200 bg-white px-6 py-5">
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">ការកំណត់គណនី</h1>
+        <p className="mt-0.5 text-sm text-gray-500">គ្រប់គ្រងប្រវត្តិរូប និងការកំណត់គណនីរបស់អ្នក</p>
+      </div>
 
-      <div className="mt-6 flex flex-col lg:flex-row lg:space-x-12">
-        {/* Sidebar */}
-        <aside className="w-full max-w-xl lg:w-64">
-          <nav className="flex flex-col space-y-1">
-            {sidebarNavItems.map((item) => {
-              const hasChildren = !!item.children?.length;
-              const open = openMenu === item.title;
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
 
-              return (
-                <div key={item.title}>
-                  {/* Parent */}
-                  {hasChildren ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-between text-left",
-                        open && "bg-green-100 text-green-700"
-                      )}
-                      onClick={() => toggleMenu(item.title)}
-                    >
-                      <div className="flex items-center gap-2">
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        <span>{item.title}</span>
-                      </div>
-                      <span>{open ? "▼" : "▶"}</span>
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      asChild
-                      className={cn(
-                        "w-full justify-start text-left",
-                        isActive(item.href) &&
-                          "bg-green-100 text-green-700"
-                      )}
-                    >
-                      <Link href={item.href!}>
-                        {item.icon && (
-                          <item.icon className="mr-2 h-4 w-4" />
-                        )}
-                        {item.title}
-                      </Link>
-                    </Button>
-                  )}
+          {/* Sidebar */}
+          <aside className="w-full shrink-0 lg:w-56">
+            <nav className="flex flex-col gap-0.5">
+              {sidebarNavItems.map((item) => {
+                const active = isActive(item.href);
+                const hasChildren = !!item.children?.length;
+                const open = openMenu === item.title;
 
-                  {/* Children */}
-                  {open &&
-                    item.children?.map((child) => (
-                      <Button
-                        key={child.title}
-                        size="sm"
-                        variant="ghost"
-                        asChild
+                return (
+                  <div key={item.title}>
+                    {hasChildren ? (
+                      <button
+                        onClick={() => toggleMenu(item.title)}
                         className={cn(
-                          "ml-4 w-full justify-start text-left",
-                          isActive(child.href) &&
-                            "bg-green-200 text-green-800"
+                          "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          open
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                         )}
                       >
-                        <Link href={child.href!}>
-                          {child.icon && (
-                            <child.icon className="mr-2 h-3.5 w-3.5" />
+                        <div className="flex items-center gap-2.5">
+                          {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
+                          <span>{item.title}</span>
+                        </div>
+                        <span className="text-xs opacity-60">{open ? "▾" : "▸"}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={resolveUrl(item.href!)}
+                        className={cn(
+                          "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          active
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        )}
+                      >
+                        {item.icon && (
+                          <item.icon
+                            className={cn(
+                              "h-4 w-4 shrink-0",
+                              active ? "text-emerald-600" : "text-gray-400"
+                            )}
+                          />
+                        )}
+                        {item.title}
+                        {active && (
+                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        )}
+                      </Link>
+                    )}
+
+                    {open &&
+                      item.children?.map((child) => (
+                        <Link
+                          key={child.title}
+                          href={resolveUrl(child.href!)}
+                          className={cn(
+                            "ml-6 flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+                            isActive(child.href)
+                              ? "bg-emerald-50 text-emerald-700 font-medium"
+                              : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
                           )}
+                        >
+                          {child.icon && <child.icon className="h-3.5 w-3.5 shrink-0" />}
                           {child.title}
                         </Link>
-                      </Button>
-                    ))}
-                </div>
-              );
-            })}
-          </nav>
-        </aside>
+                      ))}
+                  </div>
+                );
+              })}
+            </nav>
+          </aside>
 
-        {/* Main content */}
-        <main className="mt-6 flex-1 lg:mt-0">{children}</main>
+          {/* Main Content */}
+          <main className="min-w-0 flex-1">{children}</main>
+        </div>
       </div>
     </div>
   );

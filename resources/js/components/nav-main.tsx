@@ -25,7 +25,7 @@ export function NavMain({ items = [] }: NavMainProps) {
     setOpenMenu((prev) => (prev === title ? null : title));
   };
 
-  const isActive = (href?: string) =>
+  const isActive = (href?: any) =>
     href ? currentPath.startsWith(resolveUrl(href)) : false;
 
   // Automatically open dropdowns if URL matches a child
@@ -59,13 +59,13 @@ export function NavMain({ items = [] }: NavMainProps) {
                     </div>
                     {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </SidebarMenuButton>
-                ) : (
+                  ) : (
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.href)}
                     className={isActive(item.href) ? "bg-green-500 text-white h-10" : "hover:bg-green-100 h-10"}
                   >
-                    <Link href={item.href!} prefetch>
+                    <Link href={resolveUrl(item.href!)} prefetch>
                       {item.icon && <item.icon className="h-4 w-4" />}
                       <span>{item.title}</span>
                     </Link>
@@ -81,7 +81,7 @@ export function NavMain({ items = [] }: NavMainProps) {
                       isActive={isActive(child.href)}
                       className={isActive(child.href) ? "bg-green-400 text-white h-9" : "hover:bg-green-100 h-9"}
                     >
-                      <Link href={child.href!} prefetch>
+                      <Link href={resolveUrl(child.href!)} prefetch>
                         {child.icon && <child.icon className="h-3.5 w-3.5" />}
                         <span>{child.title}</span>
                       </Link>

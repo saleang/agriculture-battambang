@@ -1,6 +1,7 @@
 import { InertiaLinkProps } from '@inertiajs/react';
 import { ForwardRefExoticComponent, RefAttributes } from 'react'
-import { LucideIcon } from 'lucide-react';
+import { LucideProps } from 'lucide-react';
+import type { RouteDefinition } from '../wayfinder';
 
 export interface Auth {
     user: User;
@@ -8,7 +9,7 @@ export interface Auth {
 
 export interface BreadcrumbItem {
     title: string;
-    href: string;
+    href: string | RouteDefinition<any>;
 }
 
 export interface NavGroup {
@@ -18,10 +19,10 @@ export interface NavGroup {
 
 export interface NavItem {
     title: string
-    href?: string
-    icon: ForwardRefExoticComponent<
+    href?: string | RouteDefinition<any>
+    icon?: ForwardRefExoticComponent<
         Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>
-    >
+    > | null
     children?: NavItem[]
 }
 
@@ -37,6 +38,7 @@ export interface User {
     user_id: number;
     username: string;
     email: string;
+    photo_url?: string | null;
     avatar?: string;
     email_verified_at: string | null;
     role:'admin'| 'seller' | 'customer';

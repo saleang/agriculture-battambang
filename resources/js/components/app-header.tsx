@@ -100,7 +100,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             {mainNavItems.map((item) => (
                                                 <Link
                                                     key={item.title}
-                                                    href={item.href}
+                                                    href={resolveUrl(item.href)}
                                                     className="flex items-center space-x-2 font-medium"
                                                 >
                                                     {item.icon && (
@@ -140,7 +140,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                     </div>
 
                     <Link
-                        href={dashboard()}
+                        href={resolveUrl(dashboard())}
                         prefetch
                         className="flex items-center space-x-2"
                     >
@@ -157,12 +157,12 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                         className="relative flex h-full items-center"
                                     >
                                         <Link
-                                            href={item.href}
+                                            href={resolveUrl(item.href)}
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
                                                 isSameUrl(
                                                     page.url,
-                                                    item.href,
+                                                    resolveUrl(item.href),
                                                 ) && activeItemStyles,
                                                 'h-9 cursor-pointer px-3',
                                             )}
@@ -175,7 +175,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             )}
                                             {item.title}
                                         </Link>
-                                        {isSameUrl(page.url, item.href) && (
+                                        {isSameUrl(page.url, resolveUrl(item.href)) && (
                                             <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                         )}
                                     </NavigationMenuItem>

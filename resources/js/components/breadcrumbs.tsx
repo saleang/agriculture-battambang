@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { type BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import { Link } from '@inertiajs/react';
+import { resolveUrl } from '@/lib/utils';
 import { Fragment } from 'react';
 
 export function Breadcrumbs({
@@ -31,7 +32,7 @@ export function Breadcrumbs({
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={item.href}>
+                                                <Link href={resolveUrl(item.href)}>
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>
