@@ -81,7 +81,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ cartItems, user, onSuccess 
 
     const calculateTotal = (): string => {
         return cartItems.reduce((sum, item) => {
-            return sum + (item.price * item.quantity);
+            return sum + (parseFloat(item.price as any) * item.quantity);
         }, 0).toFixed(2);
     };
 
@@ -293,12 +293,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ cartItems, user, onSuccess 
                                     <div>
                                         <p className="font-medium">{item.productname}</p>
                                         <p className="text-sm text-gray-600">
-                                            {item.quantity} {item.unit} × ៛{item.price.toFixed(2)}
+                                            {item.quantity} {item.unit} × ៛{parseFloat(item.price as any).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
                                 <p className="font-semibold">
-                                    ៛{(item.quantity * item.price).toFixed(2)}
+                                    ៛{(item.quantity * parseFloat(item.price as any)).toFixed(2)}
                                 </p>
                             </div>
                         ))}

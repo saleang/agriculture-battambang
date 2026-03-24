@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -36,58 +37,55 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required|string',
         ]);
 
-        $input = trim($request->email);
+        // Determine if the input is email or phone
+        $loginField = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        // កំណត់ว่า input ជា email ឬ phone
-        $loginField = filter_var($input, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+        // Find user by email or phone
+        $user = User::where($loginField, $request->email)->first();
 
-        // រក User
-        $user = User::where($loginField, $input)->first();
-
-        // User មិនមាន
-        if (! $user) {
+        // Check if user exists
+        if (!$user) {
             throw ValidationException::withMessages([
                 'email' => $loginField === 'email'
-                    ? 'អ៊ីមែលនេះមិនត្រូវបានចុះឈ្មោះទេ។'
-                    : 'លេខទូរស័ព្ទនេះមិនត្រូវបានចុះឈ្មោះទេ។',
+                    ? 'This email address is not registered.'
+                    : 'This phone number is not registered.',
             ]);
         }
 
-        // ⚠️ ត្រូវវាស់ hash ផ្ទាល់ពី DB ដោយ getRawOriginal
-        // ព្រោះ User model មាន cast 'hashed' ដូច្នេះ $user->password បាន decode ហើយ
-        // Hash::check() ត្រូវប្រើ raw hash ពី DB
-        $hashedPassword = $user->getRawOriginal('password');
-
-        if (! Hash::check($request->password, $hashedPassword)) {
+        // Check if password is correct
+        if (!Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => 'អ៊ីមែល/លេខទូរស័ព្ទ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។',
+                'password' => 'The password is incorrect.',
             ]);
         }
 
-        // ពិនិត្យ status
+        // Check if user is active
         if ($user->status !== 'active') {
-            $msg = match ($user->status) {
-                'inactive' => 'គណនីរបស់អ្នកមិនទាន់ active ទេ។ សូមទាក់ទង support។',
-                'banned'   => 'គណនីរបស់អ្នកត្រូវបាន banned។ សូមទាក់ទង support។',
-                default    => 'គណនីរបស់អ្នកមិនអាចចូលបាន។ សូមទាក់ទង support។',
+            $statusMessage = match ($user->status) {
+                'inactive' => 'Your account is inactive. Please contact support.',
+                'banned' => 'Your account has been banned. Please contact support.',
+                default => 'Your account status does not allow login. Please contact support.'
             };
 
-            throw ValidationException::withMessages(['email' => $msg]);
+            throw ValidationException::withMessages(['email' => $statusMessage]);
         }
 
-        // Login ជោគជ័យ
+        // Log the user in
         Auth::login($user, $request->boolean('remember'));
 
+        // Update last login
         $user->updateLastLogin();
 
         $request->session()->regenerate();
 
-        // Redirect តាម role
-        return match ($user->role) {
-            'admin'  => redirect()->intended('/admin/dashboard'),
-            'seller' => redirect()->intended('/seller/dashboard'),
-            default  => redirect()->intended('/'),
-        };
+        // Redirect based on role
+        if ($user->role === 'seller') {
+            return redirect()->intended('/seller/dashboard');
+        } elseif ($user->role === 'admin') {
+            return redirect()->intended('/admin/dashboard');
+        } else {
+            return redirect()->intended('/customer/dashboard');
+        }
     }
 
     /**

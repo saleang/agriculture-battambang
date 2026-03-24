@@ -1,37 +1,38 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
+import { DollarSign, Package, Star, ShoppingCart } from 'lucide-react';
 
 export default function SellerDashboard({ seller }: PageProps<{ seller: any }>) {
     // Mock data - replace with real data from your backend
     const stats = [
         {
             name: 'Total Sales',
-            value: seller?.total_sales ? `$${parseFloat(seller.total_sales).toFixed(2)}` : '$0.00',
+            value: seller?.total_sales ? `${parseFloat(seller.total_sales).toFixed(2)}` : '$0.00',
             change: '+12.5%',
             changeType: 'positive',
-            icon: '💰',
+            icon: DollarSign,
         },
         {
             name: 'Active Products',
-            value: '24',
-            change: '+3',
-            changeType: 'positive',
-            icon: '📦',
+            value: seller?.active_products_count ?? '0',
+            change: '',
+            changeType: 'neutral',
+            icon: Package,
         },
         {
             name: 'Average Rating',
             value: seller?.rating_average ? `${seller.rating_average}⭐` : 'No ratings',
             change: seller?.rating_count ? `${seller.rating_count} reviews` : '',
             changeType: 'neutral',
-            icon: '⭐',
+            icon: Star,
         },
         {
             name: 'Pending Orders',
             value: '8',
             change: '2 urgent',
             changeType: 'warning',
-            icon: '🛒',
+            icon: ShoppingCart,
         },
     ];
 
@@ -74,7 +75,7 @@ export default function SellerDashboard({ seller }: PageProps<{ seller: any }>) 
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">
-                            Welcome back, {seller?.farm_name || 'Seller'}! 👋
+                            សួរស្ដី, {seller?.farm_name || 'Seller'}! 👋
                         </h1>
                         <p className="mt-1 text-gray-600">
                             📍 {seller?.location_district || 'Location not set'}
@@ -120,7 +121,7 @@ export default function SellerDashboard({ seller }: PageProps<{ seller: any }>) 
                                         </p>
                                     )}
                                 </div>
-                                <div className="text-4xl">{stat.icon}</div>
+                                <stat.icon className="h-8 w-8 text-gray-400" />
                             </div>
                         </div>
                     ))}
@@ -217,7 +218,7 @@ export default function SellerDashboard({ seller }: PageProps<{ seller: any }>) 
                         </div>
 
                         {/* Shop Info */}
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6">
+                        <div className="bg-gradient-to-br from-green-70 to-green-100 rounded-xl shadow-sm border border-green-200 p-6">
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Shop Information</h2>
                             <div className="space-y-3">
                                 <div className="flex items-start gap-3">

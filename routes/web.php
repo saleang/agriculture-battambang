@@ -4,14 +4,20 @@ use App\Http\Controllers\Admin\SellerManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\Customer\CustomerPasswordController;
+use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Order\PaymentController;
+use App\Http\Controllers\Product\WishlistController;
+use App\Models\Wishlist;
+use App\Http\Controllers\Order\SellerOrderController;
 
 use App\Http\Controllers\Seller\SellerPasswordController;
 use App\Http\Controllers\Seller\SellerProfileController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\CategoryController;
-use App\Http\Controllers\Order\OrderController;
-use App\Http\Controllers\Order\PaymentController;
-use App\Http\Controllers\Order\SellerOrderController;
+use App\Http\Controllers\Product\CommentController;
+use App\Http\Controllers\FarmController;
+use App\Http\Controllers\FarmRatingController;
+use App\Http\Controllers\CartController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -19,9 +25,20 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Illuminate\Http\Request;
 
+Route::get('farm/{id}', [FarmController::class, 'show'])->name('farm.show');
+Route::get('farmers', [FarmController::class, 'index'])->name('farmers.index');
+
 Route::get('/', function () {
+    $wishlistProductIds = [];
+    if (Auth::check()) {
+        $wishlistProductIds = Wishlist::where('user_id', Auth::id())
+            ->pluck('product_id')
+            ->all();
+    }
+
     return Inertia::render('home', [
         'canRegister' => Features::enabled(Features::registration()),
+        'wishlistProductIds' => $wishlistProductIds,
     ]);
 })->name('home');
 
@@ -55,8 +72,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
         Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
         Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
-        Route::post('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
-        Route::get('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+        Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
 
         Route::prefix('sellers')->name('sellers.')->group(function () {
             Route::get('/', [SellerManagementController::class, 'index'])->name('index');
@@ -123,8 +140,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
             Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
             Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
-
-    });
+        });
 
         // Seller Order Management Routes
         Route::prefix('orders')->name('orders.')->group(function () {
@@ -167,51 +183,68 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('home');
         })->name('dashboard');
 
-        // Profile routes - IMPORTANT: Use POST for file uploads with _method spoofing
         Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('profile.edit');
         Route::match(['post', 'patch'], '/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
 
         // Password routes
         Route::post('/password', [CustomerPasswordController::class, 'update'])->name('password.update');
+    });
 
-        // Cart Page - ✅ FIXED: Changed 'CartPage' to 'customer/orders/cart-page'
-        Route::get('/cart', function () {
-            return Inertia::render('customer/orders/cart-page');
-        })->name('cart');
+    // Customer Order Routes (Moved outside role:customer so sellers can also buy)
+    Route::prefix('customer/orders')->name('customer.orders.')->group(function () {
+        Route::get('/checkout', function () {
+            return Inertia::render('customer/orders/checkout-page');
+        })->name('checkout');
 
-        // Customer Order Routes
-        Route::prefix('orders')->name('orders.')->group(function () {
-            // Checkout Page - ✅ FIXED: Changed 'checkout-page' to proper path
-            Route::get('/checkout', function () {
-                return Inertia::render('customer/orders/checkout-page');
-            })->name('checkout');
+        // Order List
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::post('/', [OrderController::class, 'store'])->name('store');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        Route::post('/{order}/payment', [OrderController::class, 'makePayment'])->name('payment');
 
-            // Order List
-            Route::get('/', [OrderController::class, 'index'])->name('index');
-            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-            Route::post('/', [OrderController::class, 'store'])->name('store');
-            Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-            Route::post('/{order}/payment', [OrderController::class, 'makePayment'])->name('payment');
-
-            Route::post('/{order}/khqr/generate', [PaymentController::class, 'generateKHQR']);
-            Route::post('/{order}/khqr/verify', [PaymentController::class, 'verifyPayment']);
-        });
+        Route::post('/{order}/khqr/generate', [PaymentController::class, 'generateKHQR']);
+        Route::post('/{order}/khqr/verify', [PaymentController::class, 'verifyPayment']);
     });
 });
 
-// Public products endpoint
-Route::get('/products/public', [ProductController::class, 'publicProducts']);
-
-// Public seller info (farm name only)
-Route::get('/seller/{id}/info', function ($id) {
-    $seller = \App\Models\Seller::select('seller_id', 'farm_name')->find($id);
-    if (!$seller) {
-        return response()->json(['error' => 'Not found'], 404);
-    }
-    return response()->json($seller);
+// Cart routes
+Route::middleware(['auth'])->name('cart.')->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('index');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('add');
 });
 
-// Public categories endpoint returning active categories for frontend
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/wishlist/count', [WishlistController::class, 'getCount'])->name('wishlist.count');
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/{product:product_id}', [WishlistController::class, 'store'])->name('wishlist.store');
+    Route::delete('/wishlist/{product_id}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
+    Route::post('/wishlist/toggle/{productId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
+    // Comment Routes
+    Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::patch('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Farm Routes
+    Route::post('farms/{id}/toggle-follow', [FarmController::class, 'toggleFollow'])->name('farms.toggle-follow');
+    Route::post('farms/{id}/ratings', [FarmRatingController::class, 'store'])->name('farms.ratings.store');
+});
+
+Route::get('/products/public', [ProductController::class, 'publicProducts']);
+
+// Public product detail endpoint
+Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
+
+// Public farm detail endpoint
+Route::get('/farm/{id}', [FarmController::class, 'show'])->name('farm.show');
+
+// Public seller farm name endpoint
+Route::get('/seller/{id}/farm-name', function ($id) {
+    $seller = \App\Models\Seller::find($id);
+    return response()->json(['farm_name' => $seller?->farm_name ?? 'Farm']);
+});
+
 Route::get('/categories', function () {
     $categories = \App\Models\Category::where('is_active', true)
         ->orderBy('categoryname')

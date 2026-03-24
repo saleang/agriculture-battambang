@@ -13,6 +13,7 @@ interface CartItem {
 
 interface CartContextType {
     cartItems: CartItem[];
+    setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
     addToCart: (product: Omit<CartItem, 'quantity'>, quantity?: number) => void;
     removeFromCart: (productId: number) => void;
     updateQuantity: (productId: number, quantity: number) => void;
@@ -21,11 +22,12 @@ interface CartContextType {
     getTotalPrice: () => number;
     getSellerCount: () => number; // ✅ NEW: Get number of unique sellers
     setFarmNameForSeller: (sellerId: number, name: string) => void;
+    onRemoveFromCart?: (productId: number) => void; // Add this line
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children, onRemoveFromCart }: { children: React.ReactNode, onRemoveFromCart?: (productId: number) => void }) {
     const [cartItems, setCartItems] = useState<CartItem[]>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('agriconnect_cart');
@@ -76,6 +78,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const removeFromCart = (productId: number) => {
         setCartItems(prevItems => prevItems.filter(item => item.product_id !== productId));
+        if (onRemoveFromCart) {
+            onRemoveFromCart(productId);
+        }
     };
 
     const updateQuantity = (productId: number, quantity: number) => {
@@ -115,6 +120,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         <CartContext.Provider
             value={{
                 cartItems,
+                setCartItems,
                 addToCart,
                 removeFromCart,
                 updateQuantity,

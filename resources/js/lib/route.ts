@@ -24,6 +24,10 @@ function fallbackRoute(name: string, params?: any): string {
             return `/${resource}/create`;
         case 'store':
             return `/${resource}`;
+        case 'add':
+            return id ? `/${resource}/add/${id}` : `/${resource}/add`;
+        case 'remove':
+            return id ? `/${resource}/remove/${id}` : `/${resource}/remove`;
         case 'edit':
             return id ? `/${resource}/${id}/edit` : `/${resource}`;
         case 'show':
@@ -39,6 +43,8 @@ function extractId(params: any) {
     if (params === undefined || params === null) return '';
     if (typeof params === 'number' || typeof params === 'string') return String(params);
     if (typeof params === 'object') {
+        if ('product' in params) return String((params as any).product);
+        if ('productId' in params) return String((params as any).productId);
         if ('id' in params) return String((params as any).id);
         if ('user' in params) return String((params as any).user);
         if ('user_id' in params) return String((params as any).user_id);

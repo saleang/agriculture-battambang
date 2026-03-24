@@ -15,8 +15,6 @@ return new class extends Migration
             $table->string('location_district', 100);
             $table->string('certification', 255)->nullable();
             $table->text('description')->nullable();
-            $table->decimal('rating_average', 3, 2)->default(0.00);
-            $table->integer('rating_count')->default(0);
             $table->decimal('total_sales', 10, 2)->default(0.00);
             $table->string('bank_account_name', 100)->nullable();
             $table->string('bank_account_number', 50)->nullable();

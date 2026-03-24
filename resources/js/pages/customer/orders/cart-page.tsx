@@ -24,6 +24,8 @@ export default function CartPage({ auth }: CartPageProps) {
     const user = auth?.user ?? null;
     const { cartItems, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, setFarmNameForSeller } = useCart();
 
+    const placeholderImage = `data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='%23e5e7eb'%3e%3cpath d='M0 0h200v200H0z'/%3e%3ctext x='50%25' y='50%25' font-family='sans-serif' font-size='16px' fill='%239ca3af' dominant-baseline='middle' text-anchor='middle'%3eគ្មានរូបភាព%3c/text%3e%3c/svg%3e`;
+
     // ✅ GROUP ITEMS BY SELLER
     const itemsBySeller = useMemo(() => {
         const grouped: Record<string, typeof cartItems> = {};
@@ -49,7 +51,7 @@ export default function CartPage({ auth }: CartPageProps) {
             const sellerId = items[0]?.seller_id;
             const farmName = items[0]?.farm_name;
             if (sellerId && (!farmName || farmName === 'Unknown Farm')) {
-                axios.get(`/seller/${sellerId}/info`)
+                axios.get(`/seller/${sellerId}/farm-name`)
                     .then(res => {
                         const name = res.data?.farm_name;
                         if (name) setFarmNameForSeller(sellerId, name);
@@ -97,10 +99,8 @@ export default function CartPage({ auth }: CartPageProps) {
         return (
             <>
                 <Head title="រទេះទិញទំនិញ - កសិផលខេត្តបាត់ដំបង" />
-                <div className="min-h-screen bg-gray-50 font-siemreap">
+                <div className="min-h-screen bg-gray-50">
                     <Header
-                        cartCount={0}
-                        wishlistCount={0}
                         searchQuery=""
                         onSearchChange={() => {}}
                         isAuthenticated={!!user}
@@ -118,7 +118,7 @@ export default function CartPage({ auth }: CartPageProps) {
                                     សូមបន្ថែមផលិតផលទៅក្នុងរទេះទិញទំនិញ ដើម្បីបន្តការទិញ
                                 </p>
                                 <Link
-                                    href="/"
+                                    href="/#products"
                                     className="inline-flex items-center gap-2 bg-green-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition"
                                 >
                                     <ArrowLeft className="w-5 h-5" />
@@ -137,20 +137,18 @@ export default function CartPage({ auth }: CartPageProps) {
     return (
         <>
             <Head title="រទេះទិញទំនិញ - កសិផលខេត្តបាត់ដំបង" />
-            <div className="min-h-screen bg-gray-50 font-siemreap">
+            <div className="min-h-screen bg-gray-50">
                 <Header
-                    cartCount={getTotalItems()}
-                    wishlistCount={0}
                     searchQuery=""
                     onSearchChange={() => {}}
                     isAuthenticated={!!user}
                     userName={user?.username ?? ''}
                 />
 
-                <div className="pt-32 pb-16">
+                <div className="pt-32 pb-16 md:py-46">
                     <div className="container mx-auto px-4">
                         <div className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2 font-moul">
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2 font-moul">
                                 រទេះទិញទំនិញ ({getTotalItems()} ផលិតផល)
                             </h1>
 
@@ -165,7 +163,7 @@ export default function CartPage({ auth }: CartPageProps) {
                             )}
 
                             <Link
-                                href="/"
+                                href="/#products"
                                 className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium mt-4"
                             >
                                 <ArrowLeft className="w-4 h-4" />
@@ -218,11 +216,11 @@ export default function CartPage({ auth }: CartPageProps) {
                                                         {/* Product Image */}
                                                         <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                                                             <img
-                                                                src={item.image || 'https://via.placeholder.com/200?text=គ្មានរូបភាព'}
+                                                                src={item.image ? `/storage/${item.image.split('/').slice(-2).join('/')}` : placeholderImage}
                                                                 alt={item.productname}
                                                                 className="w-full h-full object-cover"
                                                                 onError={(e) => {
-                                                                    e.currentTarget.src = 'https://via.placeholder.com/200?text=គ្មានរូបភាព';
+                                                                    e.currentTarget.src = placeholderImage;
                                                                 }}
                                                             />
                                                         </div>
@@ -244,7 +242,8 @@ export default function CartPage({ auth }: CartPageProps) {
                                                                 <div className="flex items-center gap-2">
                                                                     <button
                                                                         onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                                                                        className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition"
+                                                                        disabled={item.quantity <= 1}
+                                                                        className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                                                     >
                                                                         <Minus className="w-4 h-4" />
                                                                     </button>

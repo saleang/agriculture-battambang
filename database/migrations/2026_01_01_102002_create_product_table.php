@@ -7,9 +7,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('product', function (Blueprint $table) {
-            $table->bigIncrements('product_id'); // global PK
-            $table->unsignedBigInteger('seller_id'); // matches sellers table
-            $table->unsignedInteger('seller_product_id'); // unique per seller
+            $table->bigIncrements('product_id'); 
+            $table->unsignedBigInteger('seller_id'); 
+            $table->unsignedInteger('seller_product_id'); 
 
             $table->string('productname', 100);
             $table->text('description')->nullable();
@@ -18,7 +18,6 @@ return new class extends Migration {
             $table->enum('stock', ['available','out_of_stock'])->default('available');
             $table->unsignedBigInteger('category_id'); 
             $table->boolean('is_active')->default(true);
-            $table->integer('views_count')->default(0);
             $table->timestamps();
             $table->unique(['seller_id', 'seller_product_id']);
 

@@ -13,7 +13,6 @@ interface Product {
     category_id: number;
     is_active: boolean;
     stock: 'available' | 'out_of_stock';
-    views_count: number;
     created_at: string;
     updated_at: string;
     images?: { image_url: string; is_primary: boolean }[];
@@ -143,7 +142,12 @@ const ProductPage: React.FC = () => {
             const list = Array.isArray(res.data)
                 ? res.data
                 : res.data?.data || [];
-            setProducts(list);
+            setProducts(
+                list.map((p: any) => ({
+                    ...p,
+                    price: p.price != null ? Number(p.price) : 0,
+                })),
+            );
         } catch (err) {
             console.error('កំហុសក្នុងការទាញយកផលិតផល៖', err);
             Swal.fire({
@@ -846,9 +850,6 @@ const ProductPage: React.FC = () => {
                                         រូបភាព
                                     </th>
                                     <th className="px-6 py-4 text-left">
-                                        ចំនួនអ្នកមើល
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
                                         ស្ថានភាព
                                     </th>
                                     <th className="px-6 py-4 text-left">
@@ -880,40 +881,42 @@ const ProductPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div
-                                                className={`flex flex-wrap gap-2 ${p.images?.length ? 'cursor-pointer hover:opacity-90' : 'text-gray-400'}`}
+                                                className={`flex items-center gap-2 ${p.images?.length ? 'cursor-pointer hover:opacity-90' : 'text-gray-400'}`}
                                                 onClick={() =>
+                                                    p.images?.length &&
                                                     openImageModal(p)
                                                 }
                                             >
-                                                {p.images
-                                                    ?.slice(0, 3)
-                                                    .map((img, idx) => (
+                                                {p.images &&
+                                                p.images.length > 0 ? (
+                                                    <>
+                                                        {/* Show only the first image */}
                                                         <img
-                                                            key={idx}
-                                                            src={img.image_url}
-                                                            alt={`${p.productname} - ${idx + 1}`}
+                                                            src={
+                                                                p.images[0]
+                                                                    .image_url
+                                                            }
+                                                            alt={`${p.productname} - 1`}
                                                             className="h-14 w-14 rounded-lg border object-cover shadow-sm transition hover:scale-105"
                                                         />
-                                                    ))}
-                                                {p.images &&
-                                                    p.images.length > 3 && (
-                                                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border bg-gray-100 text-sm font-medium">
-                                                            +
-                                                            {p.images.length -
-                                                                3}
-                                                        </div>
-                                                    )}
-                                                {(!p.images ||
-                                                    p.images.length === 0) && (
+
+                                                        {/* Show +N if there are more than 1 image */}
+                                                        {p.images.length >
+                                                            1 && (
+                                                            <div className="flex h-14 w-14 items-center justify-center rounded-lg border bg-gray-100 text-sm font-medium text-gray-700">
+                                                                +
+                                                                {p.images
+                                                                    .length - 1}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
                                                     <span className="text-gray-400 italic">
                                                         គ្មានរូបភាព
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <th className="px-6 py-4">
-                                            {p.views_count}
-                                        </th>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() =>
@@ -959,48 +962,40 @@ const ProductPage: React.FC = () => {
                 {/* Image Modal */}
                 {showImageModal && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
                         onClick={() => setShowImageModal(false)}
                     >
                         <div
-                            className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white"
+                            className="relative max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-5 shadow-sm">
-                                <h3 className="text-2xl font-bold">
-                                    {selectedProductName} — រូបភាព (
-                                    {selectedImages.length})
-                                </h3>
+                            {/* Minimal header - only close button */}
+                            <div className="absolute top-4 right-4 z-20">
                                 <button
+                                    type="button"
                                     onClick={() => setShowImageModal(false)}
-                                    className="text-4xl text-gray-500 hover:text-gray-800"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 focus:ring-2 focus:ring-white/50 focus:outline-none"
+                                    aria-label="Close"
                                 >
-                                    ×
+                                    <span className="text-2xl leading-none">
+                                        ×
+                                    </span>
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-8 p-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {/* Pure image grid - images fit perfectly */}
+                            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-6">
                                 {selectedImages.map((img, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex flex-col items-center"
+                                        className="group relative aspect-square overflow-hidden rounded-xl bg-gray-900"
                                     >
-                                        <div className="relative w-full overflow-hidden rounded-xl border shadow-md">
-                                            <img
-                                                src={img.image_url}
-                                                alt={`រូបភាពទី ${idx + 1}`}
-                                                className="h-auto max-h-[60vh] w-full object-contain"
-                                            />
-                                            {img.is_primary && (
-                                                <span className="absolute top-3 left-3 rounded-full bg-yellow-500 px-3 py-1 text-xs font-medium text-white shadow">
-                                                    រូបភាពគោល
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="mt-3 text-sm text-gray-600">
-                                            រូបទី {idx + 1}{' '}
-                                            {img.is_primary ? 'គោល' : ''}
-                                        </p>
+                                        <img
+                                            src={img.image_url}
+                                            alt=""
+                                            className="absolute inset-0 h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                            loading={idx < 6 ? 'eager' : 'lazy'} // faster load for first few
+                                        />
                                     </div>
                                 ))}
                             </div>
