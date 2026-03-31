@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -77,7 +77,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(Seller::class, 'user_id', 'user_id');
     }
-
+     public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'user_id', 'user_id');
+    }
     /**
      * The products that the user has added to their wishlist.
      */
@@ -86,7 +89,7 @@ class User extends Authenticatable
         return $this->belongsToMany(Product::class, 'wishlist')
             ->withTimestamps();
     }
-    
+
 
     /**
      * Get full URL for the user's photo (storage disk `public`).

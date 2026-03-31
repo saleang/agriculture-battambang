@@ -60,15 +60,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //admin route
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/dashboard', function () {
-            return Inertia::render('admin/dashboard', [
-                'stats' => [
-                    'total_users' => User::count(),
-                    'total_sellers' => User::where('role', 'seller')->count(),
-                    'total_customers' => User::where('role', 'customer')->count(),
-                ]
-            ]);
-        })->name('dashboard');
+        // Route::get('/dashboard', function () {
+        //     return Inertia::render('admin/dashboard', [
+        //         'stats' => [
+        //             'total_users' => User::count(),
+        //             'total_sellers' => User::where('role', 'seller')->count(),
+        //             'total_customers' => User::where('role', 'customer')->count(),
+        //         ]
+        //     ]);
+        // })->name('dashboard');
 
         // User Management Routes
         Route::get('users', [UserManagementController::class, 'index'])->name('users.index');

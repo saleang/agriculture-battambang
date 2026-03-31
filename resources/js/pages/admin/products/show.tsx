@@ -22,7 +22,7 @@ interface Product {
     views_count: number;
     created_at: string;
     updated_at: string;
-    category: { categoryname: string };
+    category: { category_name: string };
     seller: {
         farm_name: string;
         location_province: string;
@@ -190,7 +190,7 @@ export default function ProductShow() {
                                     </div>
                                 )}
                             </Card>
- 
+
 
                             {/* Description */}
                             <Card title="បរិយាយ">
@@ -223,7 +223,7 @@ export default function ProductShow() {
                                 <InfoRow label="តម្លៃ">
                                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">៛{product.price} <span className="text-gray-400 font-normal text-xs">/ {product.unit}</span></span>
                                 </InfoRow>
-                                <InfoRow label="ប្រភេទ">{product.category.categoryname}</InfoRow>
+                                <InfoRow label="ប្រភេទ">{product.category.category_name}</InfoRow>
                                 {/* <InfoRow label={<><Eye className="w-3.5 h-3.5" /> ចំនួនមើល</>}>{product.views_count.toLocaleString()}</InfoRow> */}
                                 <InfoRow label="បានបង្កើត">
                                     <span className="text-xs">{new Date(product.created_at).toLocaleDateString("km-KH")}</span>

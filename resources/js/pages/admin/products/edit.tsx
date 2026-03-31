@@ -10,11 +10,11 @@ import { ArrowLeft, Upload, X, Check, AlertTriangle } from "lucide-react";
 interface Product {
     product_id: number; productname: string; price: number; unit: string; stock: string;
     description: string; is_active: boolean; category_id: number; seller_id: number;
-    category: { categoryname: string };
+    category: { category_name: string };
     seller: { farm_name: string; user: { username: string } };
-    images: Array<{ image_id: number; image_url: string; is_primary: boolean; display_order: number }>;
+    images: Array<{ image_id: number; image_url: string; is_primary: boolean; display_order: number }>;x
 }
-interface Category { category_id: number; categoryname: string }
+interface Category { category_id: number; category_name: string }
 interface Seller { seller_id: number; farm_name: string; user: { username: string } }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ export default function ProductEdit({ product, categories, sellers }: PageProps<
                                             <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">ប្រភេទ <span className="text-red-500">*</span></label>
                                             <select value={data.category_id} onChange={e => setData("category_id", e.target.value)} required className={inputCls(errors.category_id)}>
                                                 <option value="">— ជ្រើសរើស —</option>
-                                                {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.categoryname}</option>)}
+                                                {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
                                             </select>
                                             {errors.category_id && <p className="text-xs text-red-500">{errors.category_id}</p>}
                                         </div>
@@ -179,7 +179,7 @@ export default function ProductEdit({ product, categories, sellers }: PageProps<
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">តម្លៃ <span className="text-red-500">*</span></label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">៛ </span>
                                                 <input type="number" step="0.01" min="0" value={data.price} onChange={e => setData("price", e.target.value)} required className={`${inputCls(errors.price)} pl-7`} />
                                             </div>
                                             {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}

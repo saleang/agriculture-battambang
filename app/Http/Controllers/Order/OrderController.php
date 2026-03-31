@@ -33,7 +33,7 @@ class OrderController extends Controller
 
         return $request->wantsJson()
             ? response()->json($orders)
-            : inertia('customer/orders/order-list', ['orders' => $orders]);
+            : inertia('customer/orders/index', ['orders' => $orders]);
     }
 
     public function show(Order $order)

@@ -177,7 +177,7 @@ class Seller extends Model
         // return implode(', ', $parts);
         return !empty($parts) ? implode(', ', $parts) : '-';
     }
-    public function categories()
+    public function category()
     {
         return $this->belongsToMany(
             Category::class,

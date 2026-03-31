@@ -18,12 +18,12 @@ interface Product {
     unit: string;
     stock: string;
     is_active: boolean;
-    category: { categoryname: string };
+    category: { category_name: string };
     seller: { farm_name: string; user: { username: string } };
     images: Array<{ image_url: string; is_primary: boolean }>;
 }
 
-interface Category { category_id: number; categoryname: string }
+interface Category { category_id: number; category_name: string }
 
 interface PaginatedProducts {
     data: Product[];
@@ -199,7 +199,7 @@ export default function ProductIndex() {
                             <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}
                                 className="px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
                                 <option value="">ប្រភេទទាំងអស់</option>
-                                {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.categoryname}</option>)}
+                                {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
                             </select>
                             <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}
                                 className="px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
@@ -308,7 +308,7 @@ export default function ProductIndex() {
                                                     <div className="text-gray-700 dark:text-gray-300 text-sm">{product.seller.farm_name}</div>
                                                     <div className="text-xs text-gray-400">@{product.seller.user.username}</div>
                                                 </td>
-                                                <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400">{product.category.categoryname}</td>
+                                                <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400">{product.category.category_name}</td>
                                                 <td className="px-5 py-4 font-semibold text-gray-800 dark:text-gray-200">៛ {product.price}</td>
                                                 <td className="px-5 py-4 text-center">
                                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -336,13 +336,13 @@ export default function ProductIndex() {
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center justify-center gap-1">
                                                         <Link href={route("admin.products.show", product.product_id)}>
-                                                            <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors" title="មើល"><Eye className="w-4 h-4" /></button>
+                                                            <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors w-24" title="មើល"><Eye className="w-4 h-4" />ព័ត៌មានលម្អិត</button>
                                                         </Link>
                                                         <Link href={route("admin.products.edit", product.product_id)}>
-                                                            <button className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors" title="កែសម្រួល"><Edit2 className="w-4 h-4" /></button>
+                                                            <button className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors" title="កែសម្រួល"><Edit2 className="w-4 h-4" />កែប្រែ</button>
                                                         </Link>
                                                         <button onClick={() => handleDelete(product)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors" title="លុប">
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4" />លុប
                                                         </button>
                                                     </div>
                                                 </td>
@@ -371,7 +371,7 @@ export default function ProductIndex() {
                                         </div>
                                         <div className="p-3">
                                             <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">{product.productname}</div>
-                                            <div className="text-xs text-gray-400 mt-0.5 mb-2">{product.category.categoryname}</div>
+                                            <div className="text-xs text-gray-400 mt-0.5 mb-2">{product.category.category_name}</div>
                                             <div className="flex items-center justify-between mb-3">
                                                 <span className="font-bold text-sm text-gray-800 dark:text-white">${product.price}</span>
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.stock === "available" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>

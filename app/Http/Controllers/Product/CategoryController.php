@@ -61,7 +61,7 @@ class CategoryController extends Controller
 
         $category = Category::findOrFail($request->category_id);
 
-        Auth::user()->seller->categories()->syncWithoutDetaching($category->category_id);
+        Auth::user()->seller->category()->syncWithoutDetaching($category->category_id);
 
         return response()->json([
             'message' => 'បានបន្ថែមប្រភេទទៅក្នុងហាងរបស់អ្នក។',
@@ -89,7 +89,7 @@ class CategoryController extends Controller
             ], 409);
         }
 
-        $seller->categories()->detach($categoryId);
+        $seller->category()->detach($categoryId);
 
         return response()->json([
             'message' => 'បានលុបប្រភេទចេញពីហាងរបស់អ្នក។',

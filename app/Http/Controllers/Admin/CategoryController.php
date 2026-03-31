@@ -27,7 +27,8 @@ class CategoryController extends Controller
         }
 
         $categories = $query
-            ->withCount('sellers')
+            // ->withCount('sellers')
+            ->withCount(['sellers as sellers_count'])
             ->orderBy('category_name')
             ->paginate(15)
             ->withQueryString();

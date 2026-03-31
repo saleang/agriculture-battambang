@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\Seller;
 use App\Models\OrderItem;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -42,7 +43,10 @@ class DashboardController extends Controller
             ->sum('total_amount');
 
         // ── Monthly revenue & orders (last 7 months) ──────────────────
-        $monthlyData = collect(range(6, 0))->map(function ($i) {
+        $khmerMonths = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
+
+        // ── Monthly revenue & orders (last 7 months) ──────────────────
+        $monthlyData = collect(range(6, 0))->map(function ($i) use ($khmerMonths) {
             $month = Carbon::now()->subMonths($i);
             $revenue = Order::where('payment_status', Order::PAYMENT_PAID)
                 ->whereYear('created_at', $month->year)
@@ -55,25 +59,45 @@ class DashboardController extends Controller
                 ->whereMonth('created_at', $month->month)
                 ->count();
             return [
-                'm'   => $month->locale('km')->isoFormat('MMM'),
+                // 'm'   => $month->locale('km')->isoFormat('MMM'),
+
+                'm' => $khmerMonths[$month->month - 1],
                 'rev' => round($revenue / 1_000_000, 2), // in millions
                 'ord' => $orders,
                 'usr' => $users,
             ];
         })->values()->toArray();
 
-        // ── Product category breakdown ────────────────────────────────
-        $categoryData = \App\Models\Category::withCount(['sellers as product_count' => function ($q) {
-            // count products linked through sellers in this category
-        }])
-            ->with(['sellers.user'])
-            ->get()
+        // // ── Product category breakdown ────────────────────────────────
+        // $categoryData = Category::withCount(['sellers as product_count' => function ($q) {
+        //     // count products linked through sellers in this category
+        // }])
+        //     ->with(['sellers.user'])
+        //     ->get()
+        //     ->map(function ($cat) {
+        //         // Count products belonging to sellers in this category
+        //         $count = Product::whereHas(
+        //             'seller.categories',
+        //             fn($q) =>
+        //             $q->where('category.category_id', $cat->category_id)
+        //         )->count();
+        //         return [
+        //             'name' => $cat->category_name,
+        //             'v'    => $count,
+        //         ];
+        //     })
+        //     ->filter(fn($c) => $c['v'] > 0)
+        //     ->sortByDesc('v')
+        //     ->take(5)
+        //     ->values()
+        //     ->toArray();
+
+        // ✅ FIXED
+        $categoryData = Category::all()
             ->map(function ($cat) {
-                // Count products belonging to sellers in this category
                 $count = Product::whereHas(
-                    'seller.categories',
-                    fn($q) =>
-                    $q->where('category.category_id', $cat->category_id)
+                    'seller.category',
+                    fn($q) => $q->where('category.category_id', $cat->category_id)
                 )->count();
                 return [
                     'name' => $cat->category_name,
@@ -85,7 +109,6 @@ class DashboardController extends Controller
             ->take(5)
             ->values()
             ->toArray();
-
         // Normalize to percentages
         $totalCatProducts = collect($categoryData)->sum('v');
         if ($totalCatProducts > 0) {
@@ -128,7 +151,8 @@ class DashboardController extends Controller
                 'customer' => $order->user?->username ?? $order->recipient_name ?? 'Unknown',
                 'amount'   => number_format($order->total_amount, 0) . ' ៛',
                 'status'   => $order->status,
-                'date'     => $order->created_at->locale('km')->isoFormat('D MMM'),
+                // 'date'     => $order->created_at->locale('km')->isoFormat('D MMM'),
+                'date' => $order->created_at->format('d/m'),
             ])->toArray();
 
         // ── Pending sellers (awaiting approval) ───────────────────────
