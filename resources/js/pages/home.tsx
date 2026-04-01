@@ -33,6 +33,12 @@ interface Product {
     images?: ProductImage[];
 }
 
+interface Category {
+    category_id: number;
+    category_name: string;
+    category_image: string;
+}
+
 export default function Home({
     auth,
     wishlistProductIds,
@@ -80,24 +86,30 @@ export default function Home({
             })
             .then((data) => {
                 const rawProducts = data.products ?? [];
-                setProducts(
-                    rawProducts.map((p: any) => ({
-                        product_id: p.product_id,
-                        productname: p.productname || 'គ្មានឈ្មោះ',
-                        price: Number(p.price) || 0,
-                        unit: p.unit || 'kg',
-                        category_name: p.category_name || 'ផ្សេងៗ',
-                        images: (p.images || []).map((img: any) => ({
-                            image_url:
-                                img.image_url ||
-                                'https://via.placeholder.com/400?text=គ្មានរូបភាព',
-                            is_primary: !!img.is_primary,
-                        })),
+                const mappedProducts: Product[] = rawProducts.map((p: Product) => ({
+                    product_id: p.product_id,
+                    productname: p.productname || 'គ្មានឈ្មោះ',
+                    price: Number(p.price) || 0,
+                    unit: p.unit || 'kg',
+                    category_name: p.category_name || 'ផ្សេងៗ',
+                    images: (p.images || []).map((img: ProductImage) => ({
+                        image_url:
+                            img.image_url ||
+                            'https://via.placeholder.com/400?text=គ្មានរូបភាព',
+                        is_primary: !!img.is_primary,
                     })),
-                );
+                }));
+                setProducts(mappedProducts);
 
+                // Filter categories to only show those present in the product list
+                const productCategoryNames = new Set(
+                    mappedProducts.map((p) => normalizeKhmer(p.category_name)),
+                );
                 const rawCategories = data.categories ?? [];
-                setCategories(rawCategories);
+                const filteredCategories = rawCategories.filter((c: Category) =>
+                    productCategoryNames.has(normalizeKhmer(c.category_name)),
+                );
+                setCategories(filteredCategories);
             })
             .catch((err) => {
                 console.error('Fetch products failed:', err);
@@ -231,36 +243,6 @@ export default function Home({
             .toLocaleString('en-US')
             .replace(/\d/g, (d) => '០១២៣៤៥៦៧៨៩'[Number(d)]);
 
-    const getCategoryImage = (categoryName: string) => {
-        const name = (categoryName || '').trim();
-        switch (name) {
-            case 'ផ្លែឈើ':
-                return 'https://i.pinimg.com/1200x/77/97/ba/7797ba60e5bf2e69ad299c5ccc303f0a.jpg';
-            case 'បន្លែ':
-                return 'https://i.pinimg.com/1200x/57/e8/d3/57e8d34dccb9149a36e33ae90644db53.jpg';
-            case 'សាច់':
-                return 'https://i.pinimg.com/1200x/8b/bf/60/8bbf60a0da4737b9eb4418be536ee851.jpg';
-            case 'ត្រី':
-                return 'https://i.pinimg.com/1200x/8c/49/09/8c4909205002d9c851e560df608c6187.jpg';
-            case 'គ្រាប់ធញ្ញជាតិ':
-                return 'https://i.pinimg.com/736x/a0/b0/56/a0b05698b37f25b1d32ae62d4fbeaed7.jpg';
-            case 'គ្រឿងទេស':
-                return 'https://i.pinimg.com/1200x/ca/c1/73/cac173d073c8d629c0dfb82a5b362cfc.jpg';
-            case 'ផលិតផលសត្វ':
-                return 'https://i.pinimg.com/1200x/7b/16/e3/7b16e3021bab44bc5291cfddd2c7141e.jpg';
-            case 'កសិផលកែច្នៃ':
-                return 'https://i.pinimg.com/736x/4d/59/8b/4d598b3c0f8e5b5b695f9a2536e0a284.jpg';
-            case 'ដំណាំឧស្សាហកម្ម':
-                return 'https://i.pinimg.com/1200x/16/06/c7/1606c7dc000bf7050ad4eb11fedb602f.jpg';
-            case 'គ្រាប់ពូជ':
-                return 'https://i.pinimg.com/1200x/21/a0/dc/21a0dcf6f6573aff92e163c6ead6405a.jpg';
-            case 'ផ្សិត':
-                return 'https://i.pinimg.com/736x/6f/2a/08/6f2a08560400998fc09f3441fd8b45f2.jpg';
-            case 'ផ្សេងៗ':
-                return 'https://i.pinimg.com/1200x/57/e8/d3/57e8d34dccb9149a36e33ae90644db53.jpg';
-        }
-    };
-
     // Static data
     const advantages = [
         {
@@ -317,88 +299,85 @@ export default function Home({
             />
 
             {/* Hero */}
+            {/* Hero */}
             <section
                 id="hero"
-                className="relative overflow-hidden bg-gradient-to-r from-green-600 via-green-700 to-green-800 pt-20 pb-40 text-white md:py-45"
+                className="relative flex min-h-[100vh] items-center overflow-hidden bg-gray-900 py-24 md:min-h-[700px] md:py-0"
             >
-                {/* Background Rays */}
-                <div
-                    className="absolute inset-0 opacity-10"
-                    style={{
-                        backgroundImage:
-                            'repeating-radial-gradient(circle at 50% 100%, white 0, white 2px, transparent 2px, transparent 10px)',
-                    }}
-                />
-
-        <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            {/* Left - Text content */}
-            <div className="text-center lg:text-left">
-                <p className="inline-block mb-4 px-4 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-semibold uppercase tracking-wide">
-                បញ្ចុះតម្លៃរហូតដល់ 50%
-                </p>
-
-                <h1 className="mb-6 text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                ស្រស់ៗពីកសិដ្ឋាន <br className="hidden sm:block" />
-                <span className="text-green-600">សរីរាង្គ</span>
-                </h1>
-
-                <p className="mb-8 text-lg sm:text-xl text-gray-700 max-w-xl mx-auto lg:mx-0">
-                ទិញកសិផលស្រស់ៗ គ្មានគីមី ដឹកជញ្ជូនរហ័ស ដល់ផ្ទះអ្នក។ សុខភាពល្អ ចាប់ផ្តើមពីឥឡូវនេះ!
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-                <Link
-                    href={user ? '/shop' : '/login'}
-                    className="inline-flex items-center justify-center rounded-full bg-green-600 px-8 py-4 text-base sm:text-lg font-semibold text-white shadow-lg hover:bg-green-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                    {user ? 'ទិញឥឡូវនេះ →' : 'ចូលគណនីដើម្បីទិញ →'}
-                </Link>
-
-                <p className="text-sm text-gray-600">
-                    ដឹកជញ្ជូនឥតគិតថ្លៃ សម្រាប់ការបញ្ជាទិញលើសពី ៥០,០០០រៀល
-                </p>
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                    <img
+                        src="https://i.pinimg.com/1200x/e9/84/1d/e9841d68947aeb053a88108b5541b895.jpg"
+                        alt="Tractor in field"
+                        className="h-full w-full object-cover opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
                 </div>
-            </div>
 
-            {/* Right - Image */}
-            <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
-                <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-green-200/50">
-                <img
-                    src="https://c8.alamy.com/comp/2B3HE74/colorful-fruit-and-vegetables-on-market-in-cambodia-2B3HE74.jpg"
-                    alt="កសិផលស្រស់ៗពីទីផ្សារកម្ពុជា"
-                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                    loading="lazy"
-                />
-                </div>
-            </div>
-            </div>
-        </div>
-
-                {/* Bottom Bar */}
-                <div
-                    className="absolute right-0 bottom-0 left-0 h-28 bg-gray-900/90 backdrop-blur-sm"
-                    style={{ clipPath: 'ellipse(80% 100% at 50% 100%)' }}
-                >
-                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6 text-white sm:px-8 lg:px-12">
-                        <div className="flex items-center gap-3">
-                            <Truck className="h-8 w-8 text-yellow-400" />
-                            <div>
-                                <p className="text-sm font-semibold text-gray-300">
-                                    សម្រាប់ការដឹកជញ្ជូន
-                                </p>
-                                <p className="text-lg font-bold">
-                                    +855 123 456 789
-                                </p>
-                            </div>
+                {/* Content */}
+                <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-2xl">
+                        {/* Badge */}
+                        <div className="mb-6 inline-flex items-center rounded-full border border-yellow-500/50 bg-black/30 px-4 py-1.5 text-sm font-medium text-yellow-500 backdrop-blur-sm">
+                            ថ្មី! កសិផលពីកសិដ្ឋាននៅបាត់ដំបង
                         </div>
-                        <div className="flex items-center gap-4">
+
+                        {/* Heading */}
+                        <h1 className="mb-6 text-4xl leading-tight font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
+                            ស្រស់ៗពីកសិដ្ឋាន <br />
+                            <span className="text-green-400">សរីរាង្គ</span>
+                        </h1>
+
+                        {/* Description */}
+                        <p className="mb-10 text-base text-gray-200 sm:text-lg md:text-xl">
+                            ទិញកសិផលស្រស់ៗ គ្មានគីមី ដឹកជញ្ជូនរហ័ស ដល់ផ្ទះអ្នក។
+                            សុខភាពល្អ ចាប់ផ្តើមពីឥឡូវនេះ!
+                        </p>
+
+                        {/* Buttons */}
+                        <div className="flex flex-wrap items-center gap-4">
                             <Link
                                 href={user ? '/shop' : '/login'}
-                                className="inline-flex items-center justify-center rounded-lg bg-green-500 px-6 py-3 text-base font-bold text-black shadow-lg transition-transform hover:scale-105 hover:bg-green-400 focus:ring-2 focus:ring-green-300 focus:ring-offset-2 focus:ring-offset-gray-900"
+                                className="group inline-flex items-center justify-center rounded-full bg-[#4a7c2b] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#3a6222]"
                             >
-                                {user ? 'ទិញឥឡូវនេះ' : 'ចូលគណនី'}
+                                {user ? 'ទិញឥឡូវនេះ' : 'ចូលគណនីដើម្បីទិញ'}
+                                <span className="ml-3 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-black transition-transform group-hover:translate-x-1">
+                                    <svg
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M9 5l7 7-7 7"
+                                        />
+                                    </svg>
+                                </span>
                             </Link>
+                            <a
+                                href="#about"
+                                className="group inline-flex items-center justify-center rounded-full border border-yellow-500 px-8 py-3.5 text-base font-semibold text-yellow-500 transition-all hover:bg-yellow-500/10"
+                            >
+                                ស្វែងយល់បន្ថែម
+                                <span className="ml-3 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-black transition-transform group-hover:translate-x-1">
+                                    <svg
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M9 5l7 7-7 7"
+                                        />
+                                    </svg>
+                                </span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -521,14 +500,14 @@ export default function Home({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-7">
-                    {categories.map((cat) => {
+                    {categories.map((cat: Category) => {
                         const isSelected =
-                            selectedCategory === cat.categoryname;
+                            selectedCategory === cat.category_name;
                         return (
                             <div
                                 key={cat.category_id}
                                 onClick={() =>
-                                    handleCategoryClick(cat.categoryname)
+                                    handleCategoryClick(cat.category_name)
                                 }
                                 className={`group cursor-pointer overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
                                     isSelected
@@ -538,8 +517,8 @@ export default function Home({
                             >
                                 <div className="aspect-w-1 aspect-h-1">
                                     <img
-                                        src={getCategoryImage(cat.categoryname)}
-                                        alt={cat.categoryname}
+                                        src={`/storage/${cat.category_image}`}
+                                        alt={cat.category_name}
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         loading="lazy"
                                     />
@@ -548,7 +527,7 @@ export default function Home({
                                     <h3
                                         className={`truncate text-sm font-semibold ${isSelected ? 'text-green-700' : 'text-gray-800'}`}
                                     >
-                                        {cat.categoryname}
+                                        {cat.category_name}
                                     </h3>
                                 </div>
                             </div>
