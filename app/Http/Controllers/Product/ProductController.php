@@ -204,12 +204,12 @@ class ProductController extends Controller
         $products->each(function ($product) {
             $primaryImage = $product->images->firstWhere('is_primary', true);
             $product->image = $primaryImage ? Storage::url($primaryImage->image_url) : null;
-            $product->category_name = $product->category ? $product->category->categoryname : null;
+            $product->category_name = $product->category ? $product->category->category_name : null;
         });
 
         $categories = \App\Models\Category::where('is_active', true)
             ->get()
-            ->unique('categoryname')
+            ->unique('category_name')
             ->values();
 
         return response()->json([

@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import type { PageProps } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     ChevronLeft,
     Facebook,
@@ -13,10 +13,11 @@ import {
     Star,
     User,
 } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import { route } from '@/lib/route';
 import axios from 'axios';
+import { Toaster, toast } from 'sonner';
 import { useCart } from './customer/orders/cart-context'; // <-- Import useCart
 import { Footer } from './customer/footer-customer';
 import { Header } from './header';
@@ -67,6 +68,7 @@ interface Props extends PageProps {
     ratings: Rating[];
     isFollowing: boolean;
     followersCount: number;
+    wishlistedProductIds?: number[];
 }
 
 // ────────────────────────────────────────────────
@@ -79,14 +81,49 @@ export default function FarmDetail({
     ratings,
     isFollowing: initialIsFollowing,
     followersCount: initialFollowersCount,
+    wishlistedProductIds = [],
 }: Props) {
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(initialFollowersCount);
     const [activeTab, setActiveTab] = useState<
         'products' | 'reviews' | 'contact'
     >('products');
-    const { addToCart } = useCart(); // <-- Add useCart hook
-    const [wishlist, setWishlist] = useState<Set<number>>(new Set()); // <-- Add wishlist state
+    const { addToCart } = useCart();
+    const [wishlist, setWishlist] = useState<Set<number>>(
+        new Set(wishlistedProductIds),
+    );
+
+    // This is the crucial fix.
+    // This effect will run every time the `wishlistedProductIds` prop changes,
+    // which happens when you navigate from one farm page to another.
+    // It ensures the `wishlist` state is always in sync with the current farm's data.
+    useEffect(() => {
+        setWishlist(new Set(wishlistedProductIds));
+    }, [wishlistedProductIds]);
+
+
+    useEffect(() => {
+        const handleFollowChange = (event: CustomEvent) => {
+            const { farmId, isFollowing, followersCount } = event.detail;
+            if (farm.id === farmId) {
+                setIsFollowing(isFollowing);
+                setFollowersCount(followersCount);
+            }
+        };
+
+        window.addEventListener(
+            'follow-status-changed',
+            handleFollowChange as EventListener,
+        );
+
+        return () => {
+            window.removeEventListener(
+                'follow-status-changed',
+                handleFollowChange as EventListener,
+            );
+        };
+    }, [farm.id]);
+
 
         const {
         data,
@@ -114,7 +151,8 @@ export default function FarmDetail({
 
     const handleRatingSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route('farms.ratings.store', { id: farm.id }), {
+        // Manually construct the URL to bypass any potential Ziggy caching issues.
+        post(`/farms/${farm.id}/ratings`, {
             preserveScroll: true,
             onSuccess: () => {
                 reset('rating', 'comment');
@@ -125,15 +163,16 @@ export default function FarmDetail({
         });
     };
 
-    const handleFollow = async () => {
+    const handleFollowToggle = async () => {
         if (!auth.user) {
-            window.location.href = route('login');
+            router.get(route('login'));
             return;
         }
 
-        // Optimistic update for a responsive UI
         const originalIsFollowing = isFollowing;
         const originalFollowersCount = followersCount;
+
+        // Optimistic UI update
         setIsFollowing(!originalIsFollowing);
         setFollowersCount(
             originalIsFollowing
@@ -142,20 +181,35 @@ export default function FarmDetail({
         );
 
         try {
-            const response = await axios.post(
-                route('farms.toggle-follow', { id: farm.id }),
-            );
+            const response = await axios.post(`/farms/toggle-follow/${farm.id}`);
 
-            // Sync with the actual state from the server
-            if (response.data) {
-                setIsFollowing(response.data.isFollowing);
-                setFollowersCount(response.data.followersCount);
-            }
+            const {
+                isFollowing: newIsFollowing,
+                followersCount: newFollowersCount,
+            } = response.data;
+
+            // Update state with authoritative data from server
+            setIsFollowing(newIsFollowing);
+            setFollowersCount(newFollowersCount);
+
+            // Broadcast the change to other open pages
+            window.dispatchEvent(
+                new CustomEvent('follow-status-changed', {
+                    detail: {
+                        farmId: farm.id,
+                        isFollowing: newIsFollowing,
+                        followersCount: newFollowersCount,
+                    },
+                }),
+            );
         } catch (error) {
-            console.error('Follow error:', error);
-            // Revert the changes if the request fails
+            // Revert on error
             setIsFollowing(originalIsFollowing);
             setFollowersCount(originalFollowersCount);
+            console.error('Follow toggle failed:', error);
+            alert(
+                'An error occurred while trying to follow. Please try again.',
+            );
         }
     };
 
@@ -217,24 +271,53 @@ export default function FarmDetail({
     };
 
     // --- Handlers for Cart and Wishlist ---
-    const handleAddToCart = (product: Product) => {
+    const handleAddToCart = (
+        product: Farm['products'][number],
+        quantity: number = 1,
+    ) => {
+        if (auth.user?.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចបញ្ជាទិញបាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
+            return;
+        }
+
         addToCart(
             {
                 product_id: product.product_id,
                 productname: product.productname,
                 price: product.price,
                 unit: product.unit,
-                image: product.images[0]?.image_url,
-                seller_id: farm.id, // Assuming farm.id is the seller_id
-                farm_name: farm.farm_name,
+                image: product.images?.[0]?.image_url, // Use the first image
+                seller_id: farm.id, // Get seller_id from the main farm object
+                farm_name: farm.farm_name, // Get farm_name from the main farm object
             },
-            1, // Default quantity to 1
+            quantity,
         );
+
+        toast.success(`${product.productname} បានបញ្ចូលក្នុងកន្ត្រក`);
     };
 
     const handleWishlistToggle = async (productId: number) => {
         if (!auth.user) {
-            window.location.href = route('login');
+            router.get(route('login'));
+            return;
+        }
+
+        if (auth.user.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចប្រើ Wishlist បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
             return;
         }
 
@@ -249,33 +332,40 @@ export default function FarmDetail({
         setWishlist(newWishlist); // Optimistic update
 
         try {
-            const response = await axios.post(
-                route('wishlist.toggle', { productId }),
-            );
+            // Use RESTful endpoint. Crucially, check against the *original* wishlist state
+            // to determine the correct action (POST to add, DELETE to remove).
+            const method = originalWishlist.has(productId) ? 'DELETE' : 'POST';
+            const url = `/wishlist/${productId}`;
+
+            const response = await axios({
+                method,
+                url,
+            });
 
             if (response.data.success) {
-                // Dispatch event to update header wishlist count
+                // Dispatch a global event so other parts of the app can update, like the header count
                 window.dispatchEvent(
                     new CustomEvent('wishlist-updated', {
                         detail: { count: response.data.wishlist_count },
                     }),
                 );
             } else {
-                // Revert on failure if the API indicates it
+                // If the server indicates failure, revert to the original state
                 setWishlist(originalWishlist);
-                alert('Error updating wishlist. Please try again.');
+                toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
             }
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
-            // Revert on any error
+            // If the API call itself fails, revert to the original state
             setWishlist(originalWishlist);
-            alert('Error updating wishlist. Please try again.');
+            toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
         }
     };
     
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster richColors position="top-right" />
             <Head title={`${farm.farm_name} - កសិផលខេត្តបាត់ដំបង`} />
 
             <Header
@@ -325,7 +415,7 @@ export default function FarmDetail({
                                     </span>
                                 </div>
                                 <button
-                                    onClick={handleFollow}
+                                    onClick={handleFollowToggle}
                                     className={`rounded-full px-6 py-2.5 font-semibold text-white shadow-sm transition ${
                                         isFollowing
                                             ? 'bg-gray-500 hover:bg-gray-600'

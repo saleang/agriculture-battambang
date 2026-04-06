@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
 interface CartItem {
     product_id: number;
@@ -28,24 +29,28 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children, onRemoveFromCart }: { children: React.ReactNode, onRemoveFromCart?: (productId: number) => void }) {
-    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+    // Load cart from localStorage on initial client-side render
+    useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('agriconnect_cart');
             if (saved) {
                 try {
                     const parsed: any[] = JSON.parse(saved);
-                    return parsed.map(i => ({
+                    // Ensure farm_name is present
+                    const sanitized = parsed.map(i => ({
                         ...i,
                         farm_name: i.farm_name || 'Unknown Farm',
                     }));
+                    setCartItems(sanitized);
                 } catch {
-                    return [];
+                    // If parsing fails, start with an empty cart
+                    setCartItems([]);
                 }
             }
-            return [];
         }
-        return [];
-    });
+    }, []); // Empty dependency array ensures this runs only once on mount
 
     // allow external components to patch farm_name for sellers already in cart
     const setFarmNameForSeller = (sellerId: number, name: string) => {
@@ -54,26 +59,53 @@ export function CartProvider({ children, onRemoveFromCart }: { children: React.R
         ));
     };
 
+    // Persist cart to localStorage whenever it changes
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('agriconnect_cart', JSON.stringify(cartItems));
+        if (cartItems.length > 0 || localStorage.getItem('agriconnect_cart')) {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('agriconnect_cart', JSON.stringify(cartItems));
+            }
         }
     }, [cartItems]);
 
-    const addToCart = (product: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
-        setCartItems(prevItems => {
-            const existingItem = prevItems.find(item => item.product_id === product.product_id);
+    const addToCart = async (product: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
+        const existingItem = cartItems.find(item => item.product_id === product.product_id);
 
-            if (existingItem) {
-                return prevItems.map(item =>
-                    item.product_id === product.product_id
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                );
-            } else {
-                return [...prevItems, { ...product, quantity }];
+        if (existingItem) {
+            // If item already exists, just update its quantity
+            updateQuantity(product.product_id, existingItem.quantity + quantity);
+            return;
+        }
+
+        // If it's a new item, prepare the complete item object before setting state.
+        let newItem: CartItem;
+
+        // Check if the incoming product object is incomplete.
+        if (!product.farm_name || !product.image) {
+            try {
+                // Fetch the full product details from the server.
+                const response = await axios.post('/api/cart-products', { product_ids: [product.product_id] });
+                
+                if (response.data && response.data.length > 0) {
+                    const fullProductDetails = response.data[0];
+                    // Create the new cart item with full details and the desired quantity.
+                    newItem = { ...fullProductDetails, quantity };
+                } else {
+                    // If API fails to find the product, create a fallback item.
+                    newItem = { ...product, quantity, farm_name: product.farm_name || 'Unknown Farm' };
+                }
+            } catch (error) {
+                console.error("Failed to fetch product details for new cart item:", error);
+                // On API error, create a fallback item.
+                newItem = { ...product, quantity, farm_name: product.farm_name || 'Unknown Farm' };
             }
-        });
+        } else {
+            // If the provided product object is already complete.
+            newItem = { ...product, quantity };
+        }
+
+        // Add the new, fully-detailed item to the cart.
+        setCartItems(prevItems => [...prevItems, newItem]);
     };
 
     const removeFromCart = (productId: number) => {

@@ -291,8 +291,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     // Farm Routes
-    Route::post('farms/{id}/toggle-follow', [FarmController::class, 'toggleFollow'])->name('farms.toggle-follow');
-    Route::post('farms/{id}/ratings', [FarmRatingController::class, 'store'])->name('farms.ratings.store');
+    Route::post('/farms/toggle-follow/{farm}', [FarmController::class, 'toggleFollow'])->name('farms.toggle-follow');
+    Route::post('farms/{farm}/ratings', [FarmRatingController::class, 'store'])->name('farms.ratings.store');
 });
 
 Route::get('/products/public', [ProductController::class, 'publicProducts']);

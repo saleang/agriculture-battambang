@@ -32,10 +32,23 @@ class FarmController extends Controller
 
     $isFollowing = false;
     $user = $request->user();
+    $wishlistedProductIds = [];
+
     if ($user) {
         $isFollowing = $user->following()
             ->where('sellers.seller_id', $id)
             ->exists();
+
+        // Get the product IDs for the current farm
+        $productIds = $farm->products->pluck('product_id');
+
+        // Find which of those products are in the user's wishlist
+        // The fix is here: use `user_id` which is the correct primary key for the User model.
+        $wishlistedProductIds = DB::table('wishlists')
+            ->where('user_id', $user->user_id)
+            ->whereIn('product_id', $productIds)
+            ->pluck('product_id')
+            ->toArray();
     }
 
     return Inertia::render('FarmDetail', [
@@ -82,6 +95,7 @@ class FarmController extends Controller
 
         'isFollowing'    => $isFollowing,
         'followersCount' => $followersCount,
+        'wishlistedProductIds' => $wishlistedProductIds,
     ]);
 }
 

@@ -40,4 +40,32 @@ class CartController extends Controller
         $cartCount = array_sum(array_column($cart, 'quantity'));
         return response()->json(['cart_count' => $cartCount]);
     }
+
+    public function getCartProducts(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:product,product_id',
+        ]);
+
+        $productIds = $request->input('product_ids');
+
+        $products = Product::with(['seller', 'media'])
+            ->whereIn('product_id', $productIds)
+            ->get();
+
+        $formattedProducts = $products->map(function ($product) {
+            return [
+                'product_id' => $product->product_id,
+                'productname' => $product->productname,
+                'price' => $product->price,
+                'unit' => $product->unit,
+                'seller_id' => $product->seller_id,
+                'farm_name' => $product->seller->farm_name ?? 'Unknown Farm',
+                'image' => $product->getFirstMediaUrl('images') ?: null,
+            ];
+        });
+
+        return response()->json($formattedProducts);
+    }
 }

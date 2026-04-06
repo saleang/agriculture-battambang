@@ -123,7 +123,24 @@ export default function Home({
             window.location.href = '/login';
             return;
         }
-        addToCart(product);
+
+        const mainImageUrl = getMainImage(
+            product.images,
+            currentImages[product.product_id] ?? 0,
+        );
+
+        // Construct the object for addToCart, matching the CartItem structure.
+        const cartProduct = {
+            product_id: product.product_id,
+            productname: product.productname,
+            price: product.price,
+            unit: product.unit,
+            image: mainImageUrl, // Pass the single image URL string
+            // seller_id and farm_name are intentionally omitted to trigger the fetch.
+        };
+
+        addToCart(cartProduct);
+
         setOrderedProducts((prev) => [
             ...new Set([...prev, product.product_id]),
         ]);
@@ -298,7 +315,6 @@ export default function Home({
                 userName={user?.username ?? ''}
             />
 
-            {/* Hero */}
             {/* Hero */}
             <section
                 id="hero"
@@ -642,10 +658,23 @@ export default function Home({
 
                                         <div className="flex gap-3">
                                             <Button
-                                                onClick={() => handleOrder(p)}
-                                                disabled={orderedProducts.includes(
-                                                    p.product_id,
-                                                )}
+                                                onClick={() => {
+                                                    if (user?.role === 'seller') {
+                                                        toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                                                            description: 'ដើម្បីអាចបញ្ជាទិញបាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                                                            action: {
+                                                                label: 'ចុះឈ្មោះ',
+                                                                onClick: () => window.location.href = '/register',
+                                                            },
+                                                        });
+                                                    } else {
+                                                        handleOrder(p);
+                                                    }
+                                                }}
+                                                disabled={
+                                                    orderedProducts.includes(p.product_id) ||
+                                                    user?.role === 'seller'
+                                                }
                                                 className="flex-1 rounded-xl bg-green-600 py-3 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                                             >
                                                 {orderedProducts.includes(
@@ -659,9 +688,20 @@ export default function Home({
                                                 variant="outline"
                                                 size="icon"
                                                 className="rounded-xl"
-                                                onClick={() =>
-                                                    handleAddToWishlist(p)
-                                                }
+                                                disabled={user?.role === 'seller'}
+                                                onClick={() => {
+                                                    if (user?.role === 'seller') {
+                                                        toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                                                            description: 'ដើម្បីអាចប្រើ Wishlist បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                                                            action: {
+                                                                label: 'ចុះឈ្មោះ',
+                                                                onClick: () => window.location.href = '/register',
+                                                            },
+                                                        });
+                                                    } else {
+                                                        handleAddToWishlist(p);
+                                                    }
+                                                }}
                                             >
                                                 <Heart
                                                     className={`h-5 w-5 ${
