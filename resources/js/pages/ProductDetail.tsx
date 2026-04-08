@@ -209,6 +209,10 @@ export default function ProductDetail({
     };
 
     const handleAddToCart = () => {
+        if (!auth.user) {
+            router.get(route('login'));
+            return;
+        }
         if (auth.user?.role === 'seller') {
             toast.info('មុខងារសម្រាប់តែអតិថិជន', {
                 description:

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Category;
 use App\Models\Wishlist;
 use Inertia\Inertia;
 use App\Models\ProductImage;
@@ -254,6 +255,54 @@ class ProductController extends Controller
             'followers_count' => $followersCount,
         ])->withViewData([
             'title' => $product->productname,
+        ]);
+    }
+
+    public function allProducts(Request $request)
+    {
+        $filters = $request->only(['max_price', 'tags']);
+
+        $baseQuery = Product::where('is_active', true);
+
+        // Get min and max price from all active products
+        $minPrice = $baseQuery->min('price') ?? 0;
+        $maxPrice = $baseQuery->max('price') ?? 50000;
+
+        $productsQuery = Product::with(['images' => function ($query) {
+            $query->where('is_primary', true);
+        }, 'seller:seller_id,farm_name', 'category'])
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('max_price')) {
+            $productsQuery->where('price', '<=', $request->input('max_price'));
+        }
+
+        // Apply tags (category) filter
+        if ($request->filled('tags')) {
+            $tagIds = $request->input('tags');
+            $productsQuery->whereIn('category_id', $tagIds);
+        }
+
+        $products = $productsQuery->paginate(18)->withQueryString();
+
+
+        $wishlistProductIds = [];
+        if (Auth::check()) {
+            $wishlistProductIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
+        }
+
+        $categories = Category::whereHas('products', function ($query) {
+            $query->where('is_active', true);
+        })->select('category_id', 'category_name as name')->get();
+
+        return Inertia::render('AllProducts', [
+            'products' => $products,
+            'wishlistProductIds' => $wishlistProductIds,
+            'categories' => $categories,
+            'minPrice' => (int)$minPrice,
+            'maxPrice' => (int)$maxPrice,
+            'filters' => $filters,
         ]);
     }
 }

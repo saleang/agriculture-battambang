@@ -87,11 +87,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route::get('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
         // ── User Management ──────────────────────────────────────────
         Route::prefix('users')->name('users.')->group(function () {
-            Route::get('/',            [UserManagementController::class, 'index']  )->name('index');
-            Route::get('/create',      [UserManagementController::class, 'create'] )->name('create');
-            Route::post('/',           [UserManagementController::class, 'store']  )->name('store');
-            Route::get('/{user}/edit', [UserManagementController::class, 'edit']   )->name('edit');
-            Route::post(  '/{user}',   [UserManagementController::class, 'update'] )->name('update');
+            Route::get('/',            [UserManagementController::class, 'index'])->name('index');
+            Route::get('/create',      [UserManagementController::class, 'create'])->name('create');
+            Route::post('/',           [UserManagementController::class, 'store'])->name('store');
+            Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
+            Route::post('/{user}',   [UserManagementController::class, 'update'])->name('update');
             Route::post('/{user}/destroy', [UserManagementController::class, 'destroy'])->name('destroy');
         });
         Route::prefix('sellers')->name('sellers.')->group(function () {
@@ -121,10 +121,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Inside: Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(...)
 
         Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/',                           [AdminCategoryController::class, 'index'])        ->name('index');
-            Route::post('/',                          [AdminCategoryController::class, 'store'])        ->name('store');
-            Route::put('/{category}',                 [AdminCategoryController::class, 'update'])       ->name('update');
-            Route::delete('/{category}',              [AdminCategoryController::class, 'destroy'])      ->name('destroy');
+            Route::get('/',                           [AdminCategoryController::class, 'index'])->name('index');
+            Route::post('/',                          [AdminCategoryController::class, 'store'])->name('store');
+            Route::put('/{category}',                 [AdminCategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}',              [AdminCategoryController::class, 'destroy'])->name('destroy');
             Route::patch('/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('toggle-status');
         });
     });
@@ -215,21 +215,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
         });
 
-         // Seller Order Management Routes
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', [SellerOrderController::class, 'index'])->name('index');
-        Route::get('/{order}', [SellerOrderController::class, 'show'])->name('show');
-        Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
-        Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
-        Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
-    });
+        // Seller Order Management Routes
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [SellerOrderController::class, 'index'])->name('index');
+            Route::get('/{order}', [SellerOrderController::class, 'show'])->name('show');
+            Route::post('/{order}/complete', [SellerOrderController::class, 'complete'])->name('complete');
+            Route::post('/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('cancel');
+            Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
+        });
 
-     Route::prefix('payments')->name('payments.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Seller\PaymentController::class, 'index'])->name('index');
-        Route::get('/{payment}', [App\Http\Controllers\Seller\PaymentController::class, 'show'])->name('show');
-        Route::post('/{payment}/refund', [App\Http\Controllers\Seller\PaymentController::class, 'refund'])->name('refund');
-        Route::get('/export', [App\Http\Controllers\Seller\PaymentController::class, 'export'])->name('export');
-    });
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Seller\PaymentController::class, 'index'])->name('index');
+            Route::get('/{payment}', [App\Http\Controllers\Seller\PaymentController::class, 'show'])->name('show');
+            Route::post('/{payment}/refund', [App\Http\Controllers\Seller\PaymentController::class, 'refund'])->name('refund');
+            Route::get('/export', [App\Http\Controllers\Seller\PaymentController::class, 'export'])->name('export');
+        });
     });
 
     // Payment Management Routes
@@ -294,6 +294,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/farms/toggle-follow/{farm}', [FarmController::class, 'toggleFollow'])->name('farms.toggle-follow');
     Route::post('farms/{farm}/ratings', [FarmRatingController::class, 'store'])->name('farms.ratings.store');
 });
+
+Route::get('/allproducts', [ProductController::class, 'allProducts'])->name('allproducts');
 
 Route::get('/products/public', [ProductController::class, 'publicProducts']);
 

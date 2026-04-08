@@ -147,7 +147,11 @@ export default function Home({
     };
 
     const handleAddToWishlist = async (product: Product) => {
-        if (!user || !product.product_id) return;
+        if (!user) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!product.product_id) return;
 
         const id = product.product_id;
         const isIn = wishlist.includes(id);
