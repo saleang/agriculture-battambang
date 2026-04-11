@@ -1,10 +1,13 @@
 /** @jsxImportSource react */
 import type { PageProps } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
+    ArrowDown,
+    ArrowUp,
     ChevronLeft,
     Facebook,
     Heart, // <-- Add Heart icon
+    Mail,
     MessageCircle,
     MessageSquare,
     Phone,
@@ -13,10 +16,11 @@ import {
     Star,
     User,
 } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import { route } from '@/lib/route';
 import axios from 'axios';
+import { Toaster, toast } from 'sonner';
 import { useCart } from './customer/orders/cart-context'; // <-- Import useCart
 import { Footer } from './customer/footer-customer';
 import { Header } from './header';
@@ -40,6 +44,8 @@ interface Farm {
     full_location: string;
     user: {
         photo: string;
+        email: string;
+        phone: string;
     };
     products: Product[];
     // Add these if your backend sends them (or make optional)
@@ -67,6 +73,7 @@ interface Props extends PageProps {
     ratings: Rating[];
     isFollowing: boolean;
     followersCount: number;
+    wishlistedProductIds?: number[];
 }
 
 // ────────────────────────────────────────────────
@@ -79,14 +86,56 @@ export default function FarmDetail({
     ratings,
     isFollowing: initialIsFollowing,
     followersCount: initialFollowersCount,
+    wishlistedProductIds = [],
 }: Props) {
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(initialFollowersCount);
     const [activeTab, setActiveTab] = useState<
         'products' | 'reviews' | 'contact'
     >('products');
-    const { addToCart } = useCart(); // <-- Add useCart hook
-    const [wishlist, setWishlist] = useState<Set<number>>(new Set()); // <-- Add wishlist state
+    const { addToCart } = useCart();
+    const [wishlist, setWishlist] = useState<Set<number>>(
+        new Set(wishlistedProductIds),
+    );
+    const [sortOrder, setSortOrder] = useState<
+        'default' | 'price-asc' | 'price-desc'
+    >('default');
+
+    const handleSort = (order: 'price-asc' | 'price-desc') => {
+        setSortOrder(order);
+    };
+
+    // This is the crucial fix.
+    // This effect will run every time the `wishlistedProductIds` prop changes,
+    // which happens when you navigate from one farm page to another.
+    // It ensures the `wishlist` state is always in sync with the current farm's data.
+    useEffect(() => {
+        setWishlist(new Set(wishlistedProductIds));
+    }, [wishlistedProductIds]);
+
+
+    useEffect(() => {
+        const handleFollowChange = (event: CustomEvent) => {
+            const { farmId, isFollowing, followersCount } = event.detail;
+            if (farm.id === farmId) {
+                setIsFollowing(isFollowing);
+                setFollowersCount(followersCount);
+            }
+        };
+
+        window.addEventListener(
+            'follow-status-changed',
+            handleFollowChange as EventListener,
+        );
+
+        return () => {
+            window.removeEventListener(
+                'follow-status-changed',
+                handleFollowChange as EventListener,
+            );
+        };
+    }, [farm.id]);
+
 
         const {
         data,
@@ -114,7 +163,8 @@ export default function FarmDetail({
 
     const handleRatingSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route('farms.ratings.store', { id: farm.id }), {
+        // Manually construct the URL to bypass any potential Ziggy caching issues.
+        post(`/farms/${farm.id}/ratings`, {
             preserveScroll: true,
             onSuccess: () => {
                 reset('rating', 'comment');
@@ -125,15 +175,16 @@ export default function FarmDetail({
         });
     };
 
-    const handleFollow = async () => {
+    const handleFollowToggle = async () => {
         if (!auth.user) {
-            window.location.href = route('login');
+            router.get(route('login'));
             return;
         }
 
-        // Optimistic update for a responsive UI
         const originalIsFollowing = isFollowing;
         const originalFollowersCount = followersCount;
+
+        // Optimistic UI update
         setIsFollowing(!originalIsFollowing);
         setFollowersCount(
             originalIsFollowing
@@ -142,20 +193,35 @@ export default function FarmDetail({
         );
 
         try {
-            const response = await axios.post(
-                route('farms.toggle-follow', { id: farm.id }),
-            );
+            const response = await axios.post(`/farms/toggle-follow/${farm.id}`);
 
-            // Sync with the actual state from the server
-            if (response.data) {
-                setIsFollowing(response.data.isFollowing);
-                setFollowersCount(response.data.followersCount);
-            }
+            const {
+                isFollowing: newIsFollowing,
+                followersCount: newFollowersCount,
+            } = response.data;
+
+            // Update state with authoritative data from server
+            setIsFollowing(newIsFollowing);
+            setFollowersCount(newFollowersCount);
+
+            // Broadcast the change to other open pages
+            window.dispatchEvent(
+                new CustomEvent('follow-status-changed', {
+                    detail: {
+                        farmId: farm.id,
+                        isFollowing: newIsFollowing,
+                        followersCount: newFollowersCount,
+                    },
+                }),
+            );
         } catch (error) {
-            console.error('Follow error:', error);
-            // Revert the changes if the request fails
+            // Revert on error
             setIsFollowing(originalIsFollowing);
             setFollowersCount(originalFollowersCount);
+            console.error('Follow toggle failed:', error);
+            alert(
+                'An error occurred while trying to follow. Please try again.',
+            );
         }
     };
 
@@ -217,24 +283,57 @@ export default function FarmDetail({
     };
 
     // --- Handlers for Cart and Wishlist ---
-    const handleAddToCart = (product: Product) => {
+    const handleAddToCart = (
+        product: Farm['products'][number],
+        quantity: number = 1,
+    ) => {
+        if (!auth.user) {
+            router.get(route('login'));
+            return;
+        }
+        if (auth.user?.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចបញ្ជាទិញបាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
+            return;
+        }
+
         addToCart(
             {
                 product_id: product.product_id,
                 productname: product.productname,
                 price: product.price,
                 unit: product.unit,
-                image: product.images[0]?.image_url,
-                seller_id: farm.id, // Assuming farm.id is the seller_id
-                farm_name: farm.farm_name,
+                image: product.images?.[0]?.image_url, // Use the first image
+                seller_id: farm.id, // Get seller_id from the main farm object
+                farm_name: farm.farm_name, // Get farm_name from the main farm object
             },
-            1, // Default quantity to 1
+            quantity,
         );
+
+        toast.success(`${product.productname} បានបញ្ចូលក្នុងកន្ត្រក`);
     };
 
     const handleWishlistToggle = async (productId: number) => {
         if (!auth.user) {
-            window.location.href = route('login');
+            router.get(route('login'));
+            return;
+        }
+
+        if (auth.user.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចប្រើ Wishlist បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
             return;
         }
 
@@ -249,33 +348,50 @@ export default function FarmDetail({
         setWishlist(newWishlist); // Optimistic update
 
         try {
-            const response = await axios.post(
-                route('wishlist.toggle', { productId }),
-            );
+            // Use RESTful endpoint. Crucially, check against the *original* wishlist state
+            // to determine the correct action (POST to add, DELETE to remove).
+            const method = originalWishlist.has(productId) ? 'DELETE' : 'POST';
+            const url = `/wishlist/${productId}`;
+
+            const response = await axios({
+                method,
+                url,
+            });
 
             if (response.data.success) {
-                // Dispatch event to update header wishlist count
+                // Dispatch a global event so other parts of the app can update, like the header count
                 window.dispatchEvent(
                     new CustomEvent('wishlist-updated', {
                         detail: { count: response.data.wishlist_count },
                     }),
                 );
             } else {
-                // Revert on failure if the API indicates it
+                // If the server indicates failure, revert to the original state
                 setWishlist(originalWishlist);
-                alert('Error updating wishlist. Please try again.');
+                toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
             }
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
-            // Revert on any error
+            // If the API call itself fails, revert to the original state
             setWishlist(originalWishlist);
-            alert('Error updating wishlist. Please try again.');
+            toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
         }
     };
+
+    const sortedProducts = [...farm.products].sort((a, b) => {
+        if (sortOrder === 'price-asc') {
+            return a.price - b.price;
+        }
+        if (sortOrder === 'price-desc') {
+            return b.price - a.price;
+        }
+        return 0; // 'default' order remains as is from the server
+    });
     
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster richColors position="top-right" />
             <Head title={`${farm.farm_name} - កសិផលខេត្តបាត់ដំបង`} />
 
             <Header
@@ -312,8 +428,22 @@ export default function FarmDetail({
                             <p className="mt-2 flex items-center justify-center gap-1.5 text-lg text-gray-600 md:justify-start">
                                 <span>{farm.full_location}</span>
                             </p>
+                            <div className="mt-2 flex items-center justify-center gap-4 text-sm text-gray-500 md:justify-start">
+                                {farm.user.phone && (
+                                    <span className="flex items-center gap-1.5">
+                                        <Phone className="h-4 w-4" />
+                                        {farm.user.phone}
+                                    </span>
+                                )}
+                                {farm.user.email && (
+                                    <span className="flex items-center gap-1.5">
+                                        <Mail className="h-4 w-4" />
+                                        {farm.user.email}
+                                    </span>
+                                )}
+                            </div>
                             <p className="mt-4 max-w-3xl text-base text-gray-700">
-                                {farm.description || 'មិនមានការពិពណ៌នាបន្ថែម។'}
+                                {farm.description}
                             </p>
 
                             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 md:justify-start md:gap-6">
@@ -325,7 +455,7 @@ export default function FarmDetail({
                                     </span>
                                 </div>
                                 <button
-                                    onClick={handleFollow}
+                                    onClick={handleFollowToggle}
                                     className={`rounded-full px-6 py-2.5 font-semibold text-white shadow-sm transition ${
                                         isFollowing
                                             ? 'bg-gray-500 hover:bg-gray-600'
@@ -365,18 +495,6 @@ export default function FarmDetail({
                             <MessageSquare className="mr-2 inline h-5 w-5" />
                             ការវាយតម្លៃ ({ratings.length})
                         </button>
-
-                        <button
-                            onClick={() => setActiveTab('contact')}
-                            className={`border-b-2 px-1 pb-4 text-sm font-medium whitespace-nowrap transition-colors md:text-base ${
-                                activeTab === 'contact'
-                                    ? 'border-green-600 text-green-700'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                            }`}
-                        >
-                            <Phone className="mr-2 inline h-5 w-5" />
-                            ទំនាក់ទំនង
-                        </button>
                     </nav>
                 </div>
 
@@ -384,80 +502,128 @@ export default function FarmDetail({
                 <div className="rounded-xl bg-white p-6 shadow-md md:p-8">
                     {activeTab === 'products' && (
                         <>
-                            <h2 className="mb-6 text-2xl font-bold text-gray-800 md:text-3xl">
-                                ផលិតផលពីកសិដ្ឋាននេះ
-                            </h2>
+                            <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                                <h2 className="text-2xl font-bold text-gray-800 md:text-3xl">
+                                    ផលិតផលពីកសិដ្ឋាននេះ
+                                </h2>
+                                <div className="flex items-center gap-4">
+                                        <span className="text-sm font-medium text-gray-700">តម្រៀបតាមតម្លៃ:</span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleSort('price-desc')}
+                                                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition ${
+                                                    sortOrder === 'price-desc'
+                                                        ? 'bg-green-100 text-green-700 font-semibold'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                                aria-label="Sort by price: high to low"
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                                <span>ខ្ពស់</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleSort('price-asc')}
+                                                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition ${
+                                                    sortOrder === 'price-asc'
+                                                        ? 'bg-green-100 text-green-700 font-semibold'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                                aria-label="Sort by price: low to high"
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                                <span>ទាប</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                            </div>
                             {farm.products?.length > 0 ? (
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                    {farm.products.map((product) => (
-                                        <Link
+                                    {sortedProducts.map((product) => (
+                                        <div
                                             key={product.product_id}
-                                            href={route('product.show', {
-                                                id: product.product_id,
-                                            })}
-                                            className="group relative block"
+                                            className="group relative flex flex-col"
                                         >
-                                            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-green-200 hover:shadow-lg">
-                                                <img
-                                                    src={getImageUrl(
-                                                        product.images[0]
-                                                            ?.image_url,
-                                                    )}
-                                                    alt={product.productname}
-                                                    className="h-48 w-full object-cover transition-transform group-hover:scale-105"
-                                                />
-                                                <div className="p-4">
-                                                    <h3 className="truncate font-semibold text-gray-800">
-                                                        {product.productname}
-                                                    </h3>
-                                                    <p className="mt-2 text-lg font-bold text-green-700">
-                                                        {new Intl.NumberFormat(
-                                                            'km-KH',
+                                            <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-green-200 hover:shadow-lg">
+                                                <Link
+                                                    href={route('product.show', {
+                                                        id: product.product_id,
+                                                    })}
+                                                >
+                                                    <img
+                                                        src={getImageUrl(
+                                                            product.images[0]
+                                                                ?.image_url,
+                                                        )}
+                                                        alt={
+                                                            product.productname
+                                                        }
+                                                        className="h-48 w-full cursor-pointer object-cover transition-transform group-hover:scale-105"
+                                                    />
+                                                </Link>
+                                                <div className="flex flex-1 flex-col p-4">
+                                                    <Link
+                                                        href={route(
+                                                            'product.show',
                                                             {
-                                                                style: 'currency',
-                                                                currency: 'KHR',
-                                                                minimumFractionDigits: 0,
+                                                                id: product.product_id,
                                                             },
-                                                        ).format(
-                                                            product.price,
-                                                        )}{' '}
-                                                        / {product.unit}
-                                                    </p>
-                                                    <div className="mt-4 flex items-center justify-between">
+                                                        )}
+                                                    >
+                                                        <h3 className="cursor-pointer truncate font-semibold text-gray-800 hover:text-green-600">
+                                                            {product.productname}
+                                                        </h3>
+                                                    </Link>
+                                                    <div className="mt-2 flex-1">
+                                                        <p className="text-lg font-bold text-green-600">
+                                                            {new Intl.NumberFormat(
+                                                                'km-KH',
+                                                                {
+                                                                    style: 'decimal',
+                                                                    minimumFractionDigits: 0,
+                                                                },
+                                                            ).format(
+                                                                product.price,
+                                                            )}
+                                                            <span className="text-sm font-normal text-gray-500">
+                                                                {' ៛ / '}
+                                                                {product.unit}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                    <div className="mt-4 flex items-center gap-2">
                                                         <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
+                                                            onClick={() =>
                                                                 handleAddToCart(
                                                                     product,
-                                                                );
-                                                            }}
-                                                            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
                                                         >
-                                                            ដាក់​ក្នុង​កន្ត្រក
+                                                            <ShoppingBag className="mr-2 inline h-4 w-4" />
+                                                            <span>
+                                                                បញ្ចូលកន្ត្រក
+                                                            </span>
                                                         </button>
                                                         <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
+                                                            onClick={() =>
                                                                 handleWishlistToggle(
                                                                     product.product_id,
-                                                                );
-                                                            }}
-                                                            className="text-gray-400 hover:text-red-500"
+                                                                )
+                                                            }
+                                                            className={`rounded-lg p-2 transition ${
+                                                                wishlist.has(
+                                                                    product.product_id,
+                                                                )
+                                                                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                            }`}
                                                         >
-                                                            <Heart
-                                                                className={`h-6 w-6 ${
-                                                                    wishlist.has(
-                                                                        product.product_id,
-                                                                    )
-                                                                        ? 'fill-current text-red-500'
-                                                                        : ''
-                                                                }`}
-                                                            />
+                                                            <Heart className="h-5 w-5" />
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </Link>
+                                        </div>
                                     ))}
                                 </div>
                             ) : (

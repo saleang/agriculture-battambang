@@ -1,3 +1,22 @@
+
+// Fix for libraries that still use the deprecated `addListener` for `matchMedia`
+// This is a known issue with some versions of Ant Design and other libraries.
+if (typeof window.matchMedia('').addListener === 'undefined') {
+    Object.defineProperty(window, 'matchMedia', {
+        value: (query: string) => ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener: () => {}, // Deprecated
+            removeListener: () => {}, // Deprecated
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => false,
+        }),
+    });
+}
+
+
 // import '../css/app.css';
 
 // import { createInertiaApp } from '@inertiajs/react';

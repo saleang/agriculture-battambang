@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Box, ChartColumnIncreasing, Folder, House, LayoutGrid,Package, Star, Truck, User, ShoppingBasket, Tags } from 'lucide-react';
+import { Box, ChartColumnIncreasing, DollarSign, Folder, House, LayoutGrid, Package, Package2, ShoppingBasket, Star, Tags, Truck, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [

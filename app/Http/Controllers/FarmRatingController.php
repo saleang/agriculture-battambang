@@ -9,19 +9,19 @@ use Illuminate\Support\Facades\Auth;
 
 class FarmRatingController extends Controller
 {
-    public function store(Request $request, $farmId)
+    public function store(Request $request, $farm)
     {
         $request->validate([
-            'rating' => ['required', 'integer', 'min:1,max:5'],
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $seller = Seller::findOrFail($farmId);
+        $seller = Seller::findOrFail($farm);
 
         Rating::updateOrCreate(
             [
                 'user_id' => Auth::id(),
-                'seller_id' => $seller->seller_id,
+                'seller_id' => $farm,
             ],
             [
                 'rating' => $request->rating,

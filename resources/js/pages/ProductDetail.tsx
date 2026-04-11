@@ -18,6 +18,8 @@ import {
     Truck,
 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
+import { Toaster, toast } from 'sonner';
+
 import { Footer } from './customer/footer-customer';
 import { useCart } from './customer/orders/cart-context';
 import { Header } from './header';
@@ -155,6 +157,31 @@ export default function ProductDetail({
         setFollowersCount(followers_count || 0); // Default to 0
     }, [is_in_wishlist, is_following, followers_count, product.product_id]);
 
+    useEffect(() => {
+        const handleFollowChange = (event: CustomEvent) => {
+            if (!product.seller) return;
+
+            const { farmId, isFollowing, followersCount } = event.detail;
+
+            if (product.seller.seller_id === farmId) {
+                setIsFollowing(isFollowing);
+                setFollowersCount(followersCount);
+            }
+        };
+
+        window.addEventListener(
+            'follow-status-changed',
+            handleFollowChange as EventListener,
+        );
+
+        return () => {
+            window.removeEventListener(
+                'follow-status-changed',
+                handleFollowChange as EventListener,
+            );
+        };
+    }, [product.seller?.seller_id]);
+
     const images = product.images || [];
     const mainImage =
         images[currentImageIndex] ||
@@ -182,6 +209,21 @@ export default function ProductDetail({
     };
 
     const handleAddToCart = () => {
+        if (!auth.user) {
+            router.get(route('login'));
+            return;
+        }
+        if (auth.user?.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចបញ្ជាទិញបាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
+            return;
+        }
         addToCart(
             {
                 product_id: product.product_id,
@@ -265,19 +307,40 @@ export default function ProductDetail({
             return;
         }
 
-        // Optimistic UI update
         const originalIsFollowing = isFollowing;
         const originalFollowersCount = followersCount;
 
-        setIsFollowing((prev) => !prev);
-        setFollowersCount((prev) => (originalIsFollowing ? prev - 1 : prev + 1));
+        // Optimistic UI update
+        setIsFollowing(!originalIsFollowing);
+        setFollowersCount(
+            originalIsFollowing
+                ? originalFollowersCount - 1
+                : originalFollowersCount + 1,
+        );
 
         try {
-            await axios.post(
-                route('farms.toggle-follow', { id: product.seller.seller_id }),
+            const response = await axios.post(
+                `/farms/toggle-follow/${product.seller.seller_id}`,
             );
-            // On success, visit the current URL to get the latest follow status,
-            // preserving scroll position and component state.
+
+            const {
+                isFollowing: newIsFollowing,
+                followersCount: newFollowersCount,
+            } = response.data;
+
+            // Broadcast the change to other open pages
+            window.dispatchEvent(
+                new CustomEvent('follow-status-changed', {
+                    detail: {
+                        farmId: product.seller.seller_id,
+                        isFollowing: newIsFollowing,
+                        followersCount: newFollowersCount,
+                    },
+                }),
+            );
+
+            // Tell Inertia to refresh its props from the server.
+            // This is crucial for persisting the state when navigating away and back.
             router.visit(window.location.href, {
                 only: ['is_following', 'followers_count'],
                 preserveScroll: true,
@@ -288,7 +351,9 @@ export default function ProductDetail({
             setIsFollowing(originalIsFollowing);
             setFollowersCount(originalFollowersCount);
             console.error('Follow toggle failed:', error);
-            alert('An error occurred while trying to follow. Please try again.');
+            alert(
+                'An error occurred while trying to follow. Please try again.',
+            );
         }
     };
 
@@ -298,15 +363,29 @@ export default function ProductDetail({
             return;
         }
 
+        if (auth.user.role === 'seller') {
+            toast.info('មុខងារសម្រាប់តែអតិថិជន', {
+                description:
+                    'ដើម្បីអាចប្រើ Wishlist បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                action: {
+                    label: 'ចុះឈ្មោះ',
+                    onClick: () => (window.location.href = '/register'),
+                },
+            });
+            return;
+        }
+
         const original = isInWishlist;
         setIsInWishlist(!original);
 
         try {
-            const response = await axios.post(
-                route('wishlist.toggle', { productId: product.product_id }),
-            );
+            // Use RESTful endpoint with POST for adding and DELETE for removing
+            const response = await axios({
+                method: original ? 'DELETE' : 'POST',
+                url: `/wishlist/${product.product_id}`,
+            });
+
             if (response.data.success) {
-                // Dispatch event to update header
                 window.dispatchEvent(
                     new CustomEvent('wishlist-updated', {
                         detail: { count: response.data.wishlist_count },
@@ -318,6 +397,7 @@ export default function ProductDetail({
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
             setIsInWishlist(original);
+            toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
         }
     };
 
@@ -428,6 +508,7 @@ export default function ProductDetail({
     return (
         <div className="min-h-screen bg-gray-50">
             <Head title={`${product.productname} - កសិផលខេត្តបាត់ដំបង`} />
+            <Toaster position="top-right" richColors />
 
             <Header
                 searchQuery=""
@@ -572,9 +653,9 @@ export default function ProductDetail({
 
                                 <button
                                     onClick={handleAddToCart}
-                                    disabled={!isAvailable}
+                                    disabled={!isAvailable || auth.user?.role === 'seller'}
                                     className={`flex-1 rounded-xl py-4 text-lg font-semibold transition ${
-                                        isAvailable
+                                        isAvailable && auth.user?.role !== 'seller'
                                             ? 'bg-green-600 text-white hover:bg-green-700'
                                             : 'cursor-not-allowed bg-gray-400 text-white'
                                     }`}
@@ -660,6 +741,7 @@ export default function ProductDetail({
                         <div className="mt-auto flex flex-wrap gap-4 pt-4">
                             <button
                                 onClick={handleWishlistToggle}
+                                disabled={auth.user?.role === 'seller'}
                                 className={`flex items-center gap-2 rounded-xl border px-6 py-3 transition ${
                                     isInWishlist
                                         ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'

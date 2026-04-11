@@ -13,10 +13,36 @@ class FarmController extends Controller
 {
     public function index()
     {
-        $sellers = Seller::with('user')->latest()->get();
+        $sellers = Seller::with('user', 'province', 'district', 'commune', 'village')
+            ->withCount('followers')
+            ->latest()
+            ->get();
+
+        // Get the IDs of the farms the current user is following
+        $followedSellersIds = [];
+        if (Auth::check()) {
+            $user = User::find(Auth::id());
+            if ($user) {
+                $followedSellersIds = $user->following()->pluck('sellers.seller_id')->toArray();
+            }
+        }
 
         return Inertia::render('Farmers', [
-            'sellers' => $sellers,
+            'sellers' => $sellers->map(function ($seller) use ($followedSellersIds) {
+                return [
+                    'seller_id' => $seller->seller_id,
+                    'farm_name' => $seller->farm_name,
+                    'description' => $seller->description,
+                    'full_location' => $seller->full_location,
+                    'rating_average' => $seller->rating_average,
+                    'rating_count' => $seller->rating_count,
+                    'followers_count' => $seller->followers_count,
+                    'is_followed' => in_array($seller->seller_id, $followedSellersIds), // Check if the seller is followed
+                    'user' => [
+                        'photo' => $seller->user->photo,
+                    ],
+                ];
+            }),
         ]);
     }
     public function show(Request $request, $id)
@@ -25,17 +51,30 @@ class FarmController extends Controller
         'user',
         'products.images',
         'province', 'district', 'commune', 'village',
-        'ratings.user'          // ← add this (assuming relation: ratings → user)
+        'ratings.user'
     ])->findOrFail($id);
 
     $followersCount = $farm->followers()->count();
 
     $isFollowing = false;
     $user = $request->user();
+    $wishlistedProductIds = [];
+
     if ($user) {
         $isFollowing = $user->following()
             ->where('sellers.seller_id', $id)
             ->exists();
+
+        // Get the product IDs for the current farm
+        $productIds = $farm->products->pluck('product_id');
+
+        // Find which of those products are in the user's wishlist
+        // The fix is here: use `user_id` which is the correct primary key for the User model.
+        $wishlistedProductIds = DB::table('wishlists')
+            ->where('user_id', $user->user_id)
+            ->whereIn('product_id', $productIds)
+            ->pluck('product_id')
+            ->toArray();
     }
 
     return Inertia::render('FarmDetail', [
@@ -46,6 +85,8 @@ class FarmController extends Controller
             'full_location' => $farm->full_location,
             'user' => [
                 'photo' => $farm->user->photo ?? null,
+                'email' => $farm->user->email ?? null,
+                'phone' => $farm->user->phone ?? null,
             ],
             'products' => $farm->products->map(function ($product) {
                 return [
@@ -63,7 +104,7 @@ class FarmController extends Controller
             // 'facebook'  => $farm->facebook ?? null,
             // 'telegram'  => $farm->telegram ?? null,
             // 'whatsapp'  => $farm->whatsapp ?? null,
-            // 'phone'     => $farm->phone ?? null,
+            'phone'     => $farm->phone ?? null,
         ],
 
         'ratings' => $farm->ratings->map(function ($rating) {
@@ -82,26 +123,27 @@ class FarmController extends Controller
 
         'isFollowing'    => $isFollowing,
         'followersCount' => $followersCount,
+        'wishlistedProductIds' => $wishlistedProductIds,
     ]);
 }
 
     public function toggleFollow(Request $request, Seller $farm)
     {
-        $user = $request->user();
+        $user = User::find(Auth::id());
 
         if (!$user) {
+            // This case is for API-like usage, which we are doing with axios
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Toggle the follow relationship using the farm's primary key
-        $user->following()->toggle($farm->seller_id);
+        // Toggle the follow relationship
+        $user->following()->toggle($farm);
 
-        // Get updated followers count
+        // After toggling, get the fresh state
+        $isFollowing = $user->following()->where('sellers.seller_id', $farm->seller_id)->exists();
         $followersCount = $farm->followers()->count();
 
-        // Check if user is now following
-        $isFollowing = $user->following()->where('sellers.seller_id', $farm->seller_id)->exists();
-
+        // Return the authoritative state as JSON
         return response()->json([
             'isFollowing' => $isFollowing,
             'followersCount' => $followersCount
