@@ -47,7 +47,7 @@ const adminNavItems: NavItem[] = [
     {
         title: 'គ្រប់គ្រងប្រភេទផលិតផល',
         href: '/admin/categories',
-        icon: Package2,
+        icon: Package,
     },
     {
         title: ' Reviews & Ratings',
@@ -71,7 +71,7 @@ const sellerNavItems: NavItem[] = [
         title: 'គណនីរបស់ខ្ញុំ',
         href: '/seller/profile',
         icon: User,
-        
+
     },
     {
         title: 'ផលិតផលរបស់ខ្ញុំ',
@@ -90,7 +90,7 @@ const sellerNavItems: NavItem[] = [
     {
         title: 'គ្រប់គ្រងការបង់ក្រាក់',
         href: '/seller/payments',
-        icon: DollarSign,
+        icon: Star,
     },
     {
         title: 'ការវាយតម្លៃរបស់ខ្ញុំ',

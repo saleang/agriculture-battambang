@@ -141,7 +141,8 @@ const CustomerOrderList: React.FC = () => {
         return;
       }
 
-      const { qr_string, amount, expires_at, merchant_name } = res.data;
+      const { qr_string, amount, server_time, duration, merchant_name } = res.data;
+      const clientServerTimeDiff = Math.floor(Date.now() / 1000) - server_time;
 
       killAll();
       $.current.orderId = order.order_id; $.current.netErrors = 0; $.current.running = true;
@@ -150,7 +151,9 @@ const CustomerOrderList: React.FC = () => {
       setModalPhase('polling'); setModalMsg(''); setModalOpen(true);
 
       const cdTick = () => {
-        const rem = Math.max(0, expires_at - Math.floor(Date.now() / 1000));
+        const clientNow = Math.floor(Date.now() / 1000);
+        const elapsedOnClient = clientNow - server_time - clientServerTimeDiff;
+        const rem = Math.max(0, duration - elapsedOnClient - 15); // 15-second safety buffer
         setModalCountdown(rem);
         if (rem <= 0) { closeModal(); toast.error('⏱️ QR កូដបានផុតកំណត់ សូមបង្កើតថ្មី'); }
       };

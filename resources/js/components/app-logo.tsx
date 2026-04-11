@@ -22,7 +22,7 @@ export default function AppLogo() {
         //     </div> */}
         // </>
         <>
-         <div className="flex items-center justify-center w-full">
+         {/* <div className="flex items-center justify-center w-full">
             <img
                 src={logo}
                 alt="App Logo"
@@ -36,7 +36,7 @@ export default function AppLogo() {
                     object-contain
                 "
             />
-        </div>
+        </div> */}
         <Link href="/">
             <div className="flex items-center justify-center">
                 <img

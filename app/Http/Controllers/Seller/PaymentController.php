@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Seller/PaymentController.php
 
 namespace App\Http\Controllers\Seller;
 
@@ -13,56 +12,55 @@ use App\Models\Payment;
 class PaymentController extends Controller
 {
     /**
-     * Display a listing of payments for the seller.
+     * បង្ហាញបញ្ជីការទូទាត់សម្រាប់អ្នកលក់
      */
     public function index()
     {
         $seller = Auth::user()->seller;
-        
+
         if (!$seller) {
-            return redirect()->back()->with('error', 'Seller profile not found');
+            return redirect()->back()->with('error', 'រកមិនឃើញព័ត៌មានអ្នកលក់ទេ');
         }
 
-        // Get seller's product IDs
+        // យក product IDs របស់អ្នកលក់
         $productIds = DB::table('product')
             ->where('seller_id', $seller->seller_id)
             ->pluck('product_id');
 
-        // Get payment statistics
+        // ស្ថិតិការទូទាត់
         $statistics = $this->getPaymentStatistics($seller->seller_id, $productIds);
 
-        // Get payments with pagination
+        // ទិន្នន័យការទូទាត់ជាមួយ pagination
         $payments = $this->getPaymentsQuery($seller->seller_id, $productIds)
             ->paginate(10)
             ->through(function ($item) {
                 return [
-                    'payment_id' => 'PAY-' . str_pad($item->order_id, 3, '0', STR_PAD_LEFT),
-                    'order_id' => $item->order_number,
-                    'order_date' => $item->order_date,
-                    'customer_name' => $item->customer_name,
-                    'customer_phone' => $item->customer_phone,
-                    'method' => $this->formatPaymentMethod($item->payment_method),
-                    'amount_received' => (float) ($item->payment_amount ?? $item->seller_subtotal),
-                    'transaction_id' => $item->transaction_id ?? $this->generateTransactionId($item->order_id),
-                    'status' => $this->determinePaymentStatus($item),
-                    'payment_date' => $item->payment_date ?? $item->paid_at,
-                    'refund_amount' => $item->refund_amount ? (float) $item->refund_amount : null
+                    'payment_id'       => 'PAY-' . str_pad($item->order_id, 3, '0', STR_PAD_LEFT),
+                    'order_id'         => $item->order_number,
+                    'order_date'       => $item->order_date,
+                    'customer_name'    => $item->customer_name,
+                    'customer_phone'   => $item->customer_phone,
+                    'method'           => $this->formatPaymentMethod($item->payment_method),
+                    'amount_received'  => (float) ($item->payment_amount ?? $item->seller_subtotal),
+                    'transaction_id'   => $item->transaction_id ?? $this->generateTransactionId($item->order_id),
+                    'status'           => $this->determinePaymentStatus($item),
+                    'payment_date'     => $item->payment_date ?? $item->paid_at,
+                    'refund_amount'    => $item->refund_amount ? (float) $item->refund_amount : null
                 ];
             });
 
         return Inertia::render('seller/payments/index', [
-            'payments' => $payments,
-            'statistics' => $statistics,
-            'filters' => request()->all('search', 'status', 'method', 'date_from', 'date_to')
+            'payments'    => $payments,
+            'statistics'  => $statistics,
+            'filters'     => request()->all('search', 'status', 'method', 'date_from', 'date_to')
         ]);
     }
 
     /**
-     * Get payment statistics
+     * គណនាស្ថិតិការទូទាត់
      */
     private function getPaymentStatistics($sellerId, $productIds)
     {
-        // Total earnings (completed payments from order_items)
         $totalEarnings = DB::table('order_items as oi')
             ->join('orders as o', 'oi.order_id', '=', 'o.order_id')
             ->whereIn('oi.product_id', $productIds)
@@ -71,7 +69,6 @@ class PaymentController extends Controller
             ->select(DB::raw('SUM(oi.quantity * oi.price_per_unit) as total'))
             ->first();
 
-        // Pending payouts (completed orders but payment not received)
         $pendingPayouts = DB::table('order_items as oi')
             ->join('orders as o', 'oi.order_id', '=', 'o.order_id')
             ->whereIn('oi.product_id', $productIds)
@@ -81,7 +78,6 @@ class PaymentController extends Controller
             ->select(DB::raw('SUM(oi.quantity * oi.price_per_unit) as total'))
             ->first();
 
-        // This month earnings
         $thisMonthEarnings = DB::table('order_items as oi')
             ->join('orders as o', 'oi.order_id', '=', 'o.order_id')
             ->whereIn('oi.product_id', $productIds)
@@ -92,7 +88,6 @@ class PaymentController extends Controller
             ->select(DB::raw('SUM(oi.quantity * oi.price_per_unit) as total'))
             ->first();
 
-        // Total refunds - need to join with order_items to filter by seller
         $totalRefunds = DB::table('payments as p')
             ->join('order_items as oi', 'p.order_id', '=', 'oi.order_id')
             ->where('oi.seller_id', $sellerId)
@@ -102,18 +97,18 @@ class PaymentController extends Controller
             ->first();
 
         return [
-            'total_earnings' => (float) ($totalEarnings->total ?? 0),
-            'pending_payouts' => (float) ($pendingPayouts->total ?? 0),
+            'total_earnings'      => (float) ($totalEarnings->total ?? 0),
+            'pending_payouts'     => (float) ($pendingPayouts->total ?? 0),
             'this_month_earnings' => (float) ($thisMonthEarnings->total ?? 0),
-            'total_refunds' => (float) ($totalRefunds->total ?? 0),
-            'completed_count' => $this->getPaymentCountByStatus($sellerId, $productIds, 'completed'),
-            'pending_count' => $this->getPaymentCountByStatus($sellerId, $productIds, 'pending'),
-            'refunded_count' => $this->getPaymentCountByStatus($sellerId, $productIds, 'refunded'),
+            'total_refunds'       => (float) ($totalRefunds->total ?? 0),
+            'completed_count'     => $this->getPaymentCountByStatus($sellerId, $productIds, 'completed'),
+            'pending_count'       => $this->getPaymentCountByStatus($sellerId, $productIds, 'pending'),
+            'refunded_count'      => $this->getPaymentCountByStatus($sellerId, $productIds, 'refunded'),
         ];
     }
 
     /**
-     * Get payments query with filters
+     * ស្វែងរកទិន្នន័យការទូទាត់ជាមួយតម្រង
      */
     private function getPaymentsQuery($sellerId, $productIds)
     {
@@ -163,12 +158,12 @@ class PaymentController extends Controller
                 'u.phone'
             );
 
-        // Apply filters
+        // អនុវត្តតម្រង
         if ($search = request('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('o.order_number', 'like', "%{$search}%")
-                  ->orWhere('u.username', 'like', "%{$search}%")
-                  ->orWhere('p.transaction_id', 'like', "%{$search}%");
+                    ->orWhere('u.username', 'like', "%{$search}%")
+                    ->orWhere('p.transaction_id', 'like', "%{$search}%");
             });
         }
 
@@ -177,15 +172,15 @@ class PaymentController extends Controller
                 if ($status === 'refunded') {
                     $query->where('p.payment_status', 'refunded');
                 } elseif ($status === 'completed') {
-                    $query->where(function($q) {
+                    $query->where(function ($q) {
                         $q->where('p.payment_status', 'completed')
-                          ->orWhere('o.payment_status', 'paid');
+                            ->orWhere('o.payment_status', 'paid');
                     });
                 } elseif ($status === 'pending') {
-                    $query->where(function($q) {
+                    $query->where(function ($q) {
                         $q->whereNull('p.payment_status')
-                          ->where('o.payment_status', 'unpaid')
-                          ->where('o.status', 'completed');
+                            ->where('o.payment_status', 'unpaid')
+                            ->where('o.status', 'completed');
                     });
                 }
             }
@@ -209,15 +204,14 @@ class PaymentController extends Controller
     }
 
     /**
-     * Display the specified payment.
+     * បង្ហាញព័ត៌មានលម្អិតនៃការទូទាត់
      */
     public function show($paymentId)
     {
         $seller = Auth::user()->seller;
-        
-        // Extract order ID from payment ID
+
         $orderId = (int) filter_var($paymentId, FILTER_SANITIZE_NUMBER_INT);
-        
+
         $paymentDetails = DB::table('orders as o')
             ->join('order_items as oi', 'o.order_id', '=', 'oi.order_id')
             ->join('users as u', 'o.user_id', '=', 'u.user_id')
@@ -252,10 +246,10 @@ class PaymentController extends Controller
             ->first();
 
         if (!$paymentDetails) {
-            return redirect()->back()->with('error', 'Payment not found');
+            return redirect()->back()->with('error', 'រកមិនឃើញការទូទាត់ទេ');
         }
 
-        // Get items for this order from this seller
+        // យកផលិតផលក្នុងបញ្ជាទិញនេះរបស់អ្នកលក់
         $items = DB::table('order_items as oi')
             ->join('product as p', 'oi.product_id', '=', 'p.product_id')
             ->where('oi.order_id', $orderId)
@@ -270,45 +264,44 @@ class PaymentController extends Controller
             )
             ->get();
 
-        // Get seller's bank info
         $bankInfo = [
-            'account_name' => $seller->bank_account_name,
+            'account_name'   => $seller->bank_account_name,
             'account_number' => $seller->bank_account_number,
-            'qr_code' => $seller->payment_qr_code
+            'qr_code'        => $seller->payment_qr_code
         ];
 
         return Inertia::render('seller/payments/show', [
             'payment' => [
-                'payment_id' => 'PAY-' . str_pad($paymentDetails->order_id, 3, '0', STR_PAD_LEFT),
-                'order_id' => $paymentDetails->order_number,
-                'order_date' => $paymentDetails->order_date,
+                'payment_id'      => 'PAY-' . str_pad($paymentDetails->order_id, 3, '0', STR_PAD_LEFT),
+                'order_id'        => $paymentDetails->order_number,
+                'order_date'      => $paymentDetails->order_date,
                 'customer' => [
-                    'name' => $paymentDetails->customer_name,
+                    'name'  => $paymentDetails->customer_name,
                     'email' => $paymentDetails->customer_email,
                     'phone' => $paymentDetails->customer_phone,
                 ],
                 'shipping_address' => $paymentDetails->shipping_address,
-                'recipient_name' => $paymentDetails->recipient_name,
-                'recipient_phone' => $paymentDetails->recipient_phone,
-                'customer_notes' => $paymentDetails->customer_notes,
-                'method' => $this->formatPaymentMethod($paymentDetails->payment_method),
-                'amount' => (float) ($paymentDetails->payment_amount ?? $paymentDetails->total_amount),
-                'seller_amount' => (float) $items->sum('subtotal'),
-                'transaction_id' => $paymentDetails->transaction_id ?? $this->generateTransactionId($paymentDetails->order_id),
-                'status' => $this->determinePaymentStatus($paymentDetails),
-                'payment_date' => $paymentDetails->payment_date ?? $paymentDetails->paid_at,
-                'created_at' => $paymentDetails->created_at,
-                'refund_amount' => $paymentDetails->refund_amount ? (float) $paymentDetails->refund_amount : null,
-                'refund_reason' => $paymentDetails->refund_reason,
-                'refunded_at' => $paymentDetails->refunded_at,
-                'items' => $items,
-                'bank_info' => $bankInfo
+                'recipient_name'   => $paymentDetails->recipient_name,
+                'recipient_phone'  => $paymentDetails->recipient_phone,
+                'customer_notes'   => $paymentDetails->customer_notes,
+                'method'           => $this->formatPaymentMethod($paymentDetails->payment_method),
+                'amount'           => (float) ($paymentDetails->payment_amount ?? $paymentDetails->total_amount),
+                'seller_amount'    => (float) $items->sum('subtotal'),
+                'transaction_id'   => $paymentDetails->transaction_id ?? $this->generateTransactionId($paymentDetails->order_id),
+                'status'           => $this->determinePaymentStatus($paymentDetails),
+                'payment_date'     => $paymentDetails->payment_date ?? $paymentDetails->paid_at,
+                'created_at'       => $paymentDetails->created_at,
+                'refund_amount'    => $paymentDetails->refund_amount ? (float) $paymentDetails->refund_amount : null,
+                'refund_reason'    => $paymentDetails->refund_reason,
+                'refunded_at'      => $paymentDetails->refunded_at,
+                'items'            => $items,
+                'bank_info'        => $bankInfo
             ]
         ]);
     }
 
     /**
-     * Update payment status
+     * ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការទូទាត់
      */
     public function updateStatus(Request $request, $paymentId)
     {
@@ -321,19 +314,18 @@ class PaymentController extends Controller
         $orderId = (int) filter_var($paymentId, FILTER_SANITIZE_NUMBER_INT);
 
         DB::beginTransaction();
-        
+
         try {
             $payment = Payment::updateOrCreate(
                 ['order_id' => $orderId],
                 [
                     'payment_status' => $request->status,
                     'transaction_id' => $request->transaction_id,
-                    'notes' => $request->notes,
-                    'payment_date' => $request->status === 'completed' ? now() : null
+                    'notes'          => $request->notes,
+                    'payment_date'   => $request->status === 'completed' ? now() : null
                 ]
             );
 
-            // Update order payment status if payment is completed
             if ($request->status === 'completed') {
                 DB::table('orders')
                     ->where('order_id', $orderId)
@@ -345,15 +337,15 @@ class PaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Payment status updated successfully');
+            return redirect()->back()->with('success', 'ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការទូទាត់បានជោគជ័យ');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to update payment status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាព: ' . $e->getMessage());
         }
     }
 
     /**
-     * Process a refund.
+     * ដំណើរការបង្វិលសង
      */
     public function refund(Request $request, $paymentId)
     {
@@ -363,32 +355,32 @@ class PaymentController extends Controller
         ]);
 
         $orderId = (int) filter_var($paymentId, FILTER_SANITIZE_NUMBER_INT);
-        
+
         DB::beginTransaction();
-        
+
         try {
-            $payment = Payment::updateOrCreate(
+            Payment::updateOrCreate(
                 ['order_id' => $orderId],
                 [
-                    'refund_amount' => $request->amount,
-                    'refund_reason' => $request->reason,
-                    'refunded_at' => now(),
+                    'refund_amount'  => $request->amount,
+                    'refund_reason'  => $request->reason,
+                    'refunded_at'    => now(),
                     'payment_status' => 'refunded',
-                    'updated_at' => now()
+                    'updated_at'     => now()
                 ]
             );
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Refund processed successfully');
+            return redirect()->back()->with('success', 'បានដំណើរការបង្វិលសងជោគជ័យ');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to process refund: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបង្វិលសង: ' . $e->getMessage());
         }
     }
 
     /**
-     * Export payments data.
+     * ទាញយកទិន្នន័យជា CSV
      */
     public function export(Request $request)
     {
@@ -399,26 +391,23 @@ class PaymentController extends Controller
 
         $payments = $this->getPaymentsQuery($seller->seller_id, $productIds)->get();
 
-        // Generate CSV
         $filename = 'payments_export_' . date('Y-m-d_His') . '.csv';
         $handle = fopen('php://temp', 'w+');
-        
-        // Add headers
+
         fputcsv($handle, [
-            'Payment ID',
-            'Order ID',
-            'Order Date',
-            'Customer Name',
-            'Customer Phone',
-            'Payment Method',
-            'Amount',
-            'Transaction ID',
-            'Status',
-            'Payment Date',
-            'Refund Amount'
+            'លេខការទូទាត់',
+            'លេខបញ្ជាទិញ',
+            'កាលបរិច្ឆេទបញ្ជាទិញ',
+            'ឈ្មោះអតិថិជន',
+            'ទូរស័ព្ទអតិថិជន',
+            'វិធីសាស្ត្រទូទាត់',
+            'ទឹកប្រាក់',
+            'លេខប្រតិបត្តិការ',
+            'ស្ថានភាព',
+            'កាលបរិច្ឆេទទូទាត់',
+            'ទឹកប្រាក់បង្វិលសង'
         ]);
 
-        // Add data
         foreach ($payments as $payment) {
             fputcsv($handle, [
                 'PAY-' . str_pad($payment->order_id, 3, '0', STR_PAD_LEFT),
@@ -444,18 +433,17 @@ class PaymentController extends Controller
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
-    /**
-     * Helper functions
-     */
+    // ====================== Helper Functions ======================
+
     private function formatPaymentMethod($method)
     {
-        return match($method) {
-            'KHQR' => 'KHQR',
-            'manual(cash)' => 'Cash on Delivery',
-            'bank_transfer' => 'Bank Transfer',
-            'mobile_banking' => 'Mobile Banking',
-            'cash' => 'Cash',
-            default => ucfirst(str_replace('_', ' ', $method))
+        return match ($method) {
+            'KHQR'          => 'KHQR (ផ្ទេរប្រាក់តាម Bakong)',
+            'manual(cash)'  => 'សាច់ប្រាក់ពេលទទួល',
+            'bank_transfer' => 'ផ្ទេរប្រាក់តាមធនាគារ',
+            'mobile_banking' => 'ទូទាត់តាមកម្មវិធីទូរស័ព្ទ',
+            'cash'          => 'សាច់ប្រាក់',
+            default         => ucfirst(str_replace('_', ' ', $method))
         };
     }
 
@@ -469,19 +457,18 @@ class PaymentController extends Controller
         if (isset($item->payment_status) && $item->payment_status === 'refunded') {
             return 'refunded';
         }
-        
-        if (isset($item->payment_status) && $item->payment_status === 'completed') {
+
+        if (
+            $item->order_payment_status === 'paid' ||
+            (isset($item->payment_status) && $item->payment_status === 'completed')
+        ) {
             return 'completed';
         }
-        
-        if ($item->order_payment_status === 'paid') {
-            return 'completed';
-        }
-        
+
         if ($item->order_status === 'completed' && $item->order_payment_status === 'unpaid') {
             return 'pending';
         }
-        
+
         return 'pending';
     }
 
@@ -504,14 +491,14 @@ class PaymentController extends Controller
             ->whereIn('oi.product_id', $productIds);
 
         if ($status === 'completed') {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('p.payment_status', 'completed')
-                  ->orWhere('o.payment_status', 'paid');
+                    ->orWhere('o.payment_status', 'paid');
             });
         } elseif ($status === 'pending') {
             $query->whereNull('p.payment_status')
-                  ->where('o.payment_status', 'unpaid')
-                  ->where('o.status', 'completed');
+                ->where('o.payment_status', 'unpaid')
+                ->where('o.status', 'completed');
         }
 
         return $query->distinct('o.order_id')->count('o.order_id');

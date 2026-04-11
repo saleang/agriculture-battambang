@@ -43,60 +43,57 @@ class PaymentController extends Controller
             $seller = Seller::where('user_id', $firstItem->seller_id)->first();
 
             if (!$seller || !$seller->hasBakongConfigured()) {
-                return response()->json(['success' => false, 'message' => 'Bakong not configured'], 400);
+                return response()->json(['success' => false, 'message' => 'Bakong not configured for seller'], 400);
             }
 
             $amountKHR = (int) round($order->total_amount);
+            $timeoutMinutes = (int) config('bakong.timeout', 25);
+
+            // គណនា timestamp ជា milliseconds (តាម spec Bakong)
+            $nowMs       = time() * 1000;
+            $expiresMs   = $nowMs + ($timeoutMinutes * 60 * 1000);
+            $expiresAt   = time() + ($timeoutMinutes * 60);   // រក្សាទុកជា seconds សម្រាប់ session + frontend
 
             $khqrString = $this->generateBakongKHQR([
                 'bakong_account_id' => $seller->bank_account_number,
-                'merchant_name'     => $seller->payment_qr_code,
-                // merchant_name must be ASCII (no Khmer characters) for KHQR generation
-                // 'merchant_name'     => preg_replace('/[^A-Za-z0-9 \-\.]/', '', $seller->payment_qr_code ?? ''),
+                'merchant_name'     => $seller->payment_qr_code ?? $seller->farm_name,
                 'merchant_city'     => 'Phnom Penh',
                 'amount'            => $amountKHR,
                 'bill_number'       => $order->order_number,
-                'acquiring_bank'    => $seller->bank_account_name ?? '',
+                'creation_ms'       => $nowMs,
+                'expires_ms'        => $expiresMs,
             ]);
 
             if (!$this->validateKHQR($khqrString)) {
-                throw new \Exception('Invalid KHQR');
+                throw new \Exception('Generated KHQR is invalid');
             }
 
             $md5 = md5($khqrString);
 
-            // Store expected values for verification
+            // Store for verification
             session()->put("khqr_md5_{$order->order_id}",     $md5);
             session()->put("khqr_created_{$order->order_id}", time());
             session()->put("khqr_amount_{$order->order_id}",  $amountKHR);
             session()->put("khqr_account_{$order->order_id}", $seller->bank_account_number);
+            session()->put("khqr_expires_{$order->order_id}", $expiresAt);
 
-            $expiresAt = now()->addMinutes((int) config('bakong.timeout', 15))->timestamp;
-
-            Log::info('====== KHQR GENERATED ======', [
-                'order_id'       => $order->order_id,
-                'order_number'   => $order->order_number,
-                'amount'         => $amountKHR,
-                'md5'            => $md5,
-                'account'        => $seller->bank_account_number,
-                'merchant'       => $seller->payment_qr_code,
-                'acquiring_bank' => $seller->bank_account_name,
-                'expires_at'     => date('Y-m-d H:i:s', $expiresAt),
+            Log::info('✅ KHQR GENERATED (with correct tag 99)', [
+                'order_id'     => $order->order_id,
+                'amount'       => $amountKHR,
+                'expires_ms'   => $expiresMs,
+                'timeout_min'  => $timeoutMinutes,
             ]);
 
             return response()->json([
                 'success'       => true,
                 'qr_string'     => $khqrString,
                 'amount'        => $amountKHR,
-                'expires_at'    => $expiresAt,
-                'merchant_name' => $seller->payment_qr_code,
+                'server_time'   => time(),
+                'duration'      => $expiresAt - time(),
+                'merchant_name' => $seller->payment_qr_code ?? $seller->farm_name,
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ KHQR generation failed', [
-                'order_id' => $order->order_id,
-                'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString(),
-            ]);
+            Log::error('KHQR generation failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -128,12 +125,16 @@ class PaymentController extends Controller
                 return response()->json(['status' => 'pending', 'message' => 'No QR session']);
             }
 
-            if (!$createdAt || (time() - $createdAt) > 900) {
+            // ✅ NEW — use the exact timestamp stored at generate time
+            $expiresAt = session()->get("khqr_expires_{$order->order_id}");
+
+            if (!$expiresAt || time() > $expiresAt) {
                 session()->forget([
                     "khqr_md5_{$order->order_id}",
                     "khqr_created_{$order->order_id}",
                     "khqr_amount_{$order->order_id}",
                     "khqr_account_{$order->order_id}",
+                    "khqr_expires_{$order->order_id}", // ← ADD
                 ]);
                 return response()->json(['status' => 'expired', 'message' => 'QR expired']);
             }
@@ -144,6 +145,7 @@ class PaymentController extends Controller
                     "khqr_created_{$order->order_id}",
                     "khqr_amount_{$order->order_id}",
                     "khqr_account_{$order->order_id}",
+                    "khqr_expires_{$order->order_id}", // ← ADD
                 ]);
                 return response()->json(['status' => 'paid', 'message' => 'Already paid']);
             }
@@ -282,6 +284,7 @@ class PaymentController extends Controller
                 "khqr_created_{$order->order_id}",
                 "khqr_amount_{$order->order_id}",
                 "khqr_account_{$order->order_id}",
+                "khqr_expires_{$order->order_id}", // ← ADD
             ]);
 
             $this->notifySellerPayment($order);
@@ -307,10 +310,9 @@ class PaymentController extends Controller
         }
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // KHQR Generation
-    // ═════════════════════════════════════════════════════════════════════════
-
+    // ─────────────────────────────────────────────────────────────
+    // Updated generateBakongKHQR — NO EXPIRATION IN QR STRING
+    // ─────────────────────────────────────────────────────────────
     protected function generateBakongKHQR(array $data): string
     {
         $bakongAccountID = trim($data['bakong_account_id'] ?? '');
@@ -318,34 +320,46 @@ class PaymentController extends Controller
         $merchantCity    = trim($data['merchant_city']     ?? 'Phnom Penh');
         $amount          = (int) round($data['amount']     ?? 0);
         $billNumber      = trim($data['bill_number']       ?? '');
-        $acquiringBank   = !empty($data['acquiring_bank']) ? strtoupper(trim($data['acquiring_bank'])) : '';
+        $creationMs      = (string) ($data['creation_ms']  ?? (time() * 1000));
+        $expiresMs       = (string) ($data['expires_ms']   ?? 0);
 
         if (empty($bakongAccountID)) throw new \Exception('Bakong account ID required');
         if (empty($merchantName))    throw new \Exception('Merchant name required');
+        if ($expiresMs <= $creationMs) throw new \Exception('Expiration must be in the future');
 
-        $merchantName  = mb_substr($merchantName,  0, 25);
-        $merchantCity  = mb_substr($merchantCity,  0, 15);
-        $acquiringBank = mb_substr($acquiringBank, 0, 15);
+        // Clean merchant fields (ត្រូវតែ ASCII តាម spec)
+        $merchantName = substr(preg_replace('/[^A-Za-z0-9 \-\.]/', '', $merchantName), 0, 25);
+        $merchantCity = substr(preg_replace('/[^A-Za-z0-9 \-\.]/', '', $merchantCity), 0, 15);
+
+        if (!str_contains($bakongAccountID, '@')) {
+            throw new \Exception('Invalid Bakong account ID format (name@bank)');
+        }
 
         $qr  = $this->tlv('00', '01');
-        $qr .= $this->tlv('01', $amount > 0 ? '12' : '11');
+        $qr .= $this->tlv('01', $amount > 0 ? '12' : '11');   // Dynamic QR
 
-        $sub29  = $this->tlv('00', $bakongAccountID);
-        if (!empty($acquiringBank)) $sub29 .= $this->tlv('02', $acquiringBank);
-        $qr .= $this->tlv('29', $sub29);
+        // Merchant account
+        $sub29 = $this->tlv('00', $bakongAccountID);
+        $qr   .= $this->tlv('29', $sub29);
 
-        $qr .= $this->tlv('52', '5999');
-        $qr .= $this->tlv('53', '116');
-        if ($amount > 0) $qr .= $this->tlv('54', (string) $amount);
+        $qr .= $this->tlv('52', '5999');                  // MCC
+        $qr .= $this->tlv('53', '116');                   // KHR
+        if ($amount > 0) {
+            $qr .= $this->tlv('54', (string) $amount);
+        }
         $qr .= $this->tlv('58', 'KH');
         $qr .= $this->tlv('59', $merchantName);
         $qr .= $this->tlv('60', $merchantCity);
 
-        $addData = '';
-        if (!empty($billNumber)) $addData .= $this->tlv('01', mb_substr($billNumber, 0, 25));
-        $timestamp = substr((string)(int)(microtime(true) * 1000), -13);
-        $addData .= $this->tlv('99', $timestamp);
+        // === TAG 99 — នេះជាចំណុចដែលកែថ្មី (តាម spec Bakong) ===
+        $sub99 = $this->tlv('00', $creationMs) . $this->tlv('01', $expiresMs);
+        $qr   .= $this->tlv('99', $sub99);
 
+        // Additional Data (មានតែ bill number)
+        $addData = '';
+        if (!empty($billNumber)) {
+            $addData .= $this->tlv('01', substr($billNumber, 0, 25));
+        }
         if (!empty($addData)) {
             $qr .= $this->tlv('62', $addData);
         }
@@ -355,7 +369,6 @@ class PaymentController extends Controller
 
         return $qr;
     }
-
     protected function validateKHQR(string $khqr): bool
     {
         if (strlen($khqr) < 50 || substr($khqr, -8, 4) !== '6304') return false;
