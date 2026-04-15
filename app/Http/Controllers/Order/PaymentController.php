@@ -24,10 +24,6 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Not a KHQR order'], 400);
         }
 
-        if ($order->status !== 'completed') {
-            return response()->json(['success' => false, 'message' => 'Order not completed'], 400);
-        }
-
         if ($order->payment_status === 'paid') {
             return response()->json(['success' => false, 'message' => 'Already paid'], 400);
         }
@@ -40,7 +36,7 @@ class PaymentController extends Controller
                 return response()->json(['success' => false, 'message' => 'No items'], 400);
             }
 
-            $seller = Seller::where('user_id', $firstItem->seller_id)->first();
+            $seller = Seller::find($firstItem->seller_id);
 
             if (!$seller || !$seller->hasBakongConfigured()) {
                 return response()->json(['success' => false, 'message' => 'Bakong not configured for seller'], 400);

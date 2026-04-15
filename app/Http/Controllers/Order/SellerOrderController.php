@@ -9,6 +9,7 @@ use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class SellerOrderController extends Controller
@@ -18,6 +19,34 @@ class SellerOrderController extends Controller
     public function __construct(TelegramService $telegram)
     {
         $this->telegram = $telegram;
+    }
+
+    /**
+     * Confirm a pending order.
+     *
+     * @param  \App\Models\Order  $order
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function confirm(Order $order)
+    {
+        // Authorization: Ensure the authenticated seller owns this order
+        if (Gate::denies('manage-order', $order)) {
+            return response()->json(['message' => 'You are not authorized to update this order.'], 403);
+        }
+
+        // Logic: Check if the order can be confirmed
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Only pending orders can be confirmed.'], 422);
+        }
+
+        // Action: Update the order status
+        try {
+            $order->update(['status' => Order::STATUS_CONFIRMED]);
+            return response()->json(['message' => 'Order confirmed successfully.', 'order' => $order]);
+        } catch (\Exception $e) {
+            Log::error("Error confirming order #{$order->order_id}: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to confirm the order. Please try again.'], 500);
+        }
     }
 
     /**
@@ -31,14 +60,14 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerUserId = $user->user_id;
+        $sellerId = $user->seller->seller_id;
 
         // Get orders that contain items from this seller
-        $orders = Order::with(['items' => function($query) use ($sellerUserId) {
-                $query->where('seller_id', $sellerUserId);
+        $orders = Order::with(['items' => function($query) use ($sellerId) {
+                $query->where('seller_id', $sellerId);
             }, 'items.product.images', 'user'])
-            ->whereHas('items', function($query) use ($sellerUserId) {
-                $query->where('seller_id', $sellerUserId);
+            ->whereHas('items', function($query) use ($sellerId) {
+                $query->where('seller_id', $sellerId);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -59,20 +88,20 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerUserId = $user->user_id;
+        $sellerId = $user->seller->seller_id;
 
         // Check if seller has items in this order
-        $hasItems = $order->items()->where('seller_id', $sellerUserId)->exists();
+        $hasItems = $order->items()->where('seller_id', $sellerId)->exists();
 
         if (!$hasItems) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $order->load(['items' => function($query) use ($sellerUserId) {
-            $query->where('seller_id', $sellerUserId);
+        $order->load(['items' => function($query) use ($sellerId) {
+            $query->where('seller_id', $sellerId);
         }, 'items.product.images', 'user']);
 
-        return response()->json(['data' => $order]);
+        return inertia('seller/orders/show', ['order' => $order]);
     }
 
     //  Complete order (seller confirms they've prepared the order)
@@ -84,10 +113,10 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerUserId = $user->user_id;
+        $sellerId = $user->seller->seller_id;
 
         // Check if seller has items in this order
-        $hasItems = $order->items()->where('seller_id', $sellerUserId)->exists();
+        $hasItems = $order->items()->where('seller_id', $sellerId)->exists();
 
         if (!$hasItems) {
             return response()->json(['message' => 'Unauthorized - You don\'t have items in this order'], 403);
@@ -132,10 +161,10 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerUserId = $user->user_id;
+        $sellerId = $user->seller->seller_id;
 
         // Check if seller has items in this order
-        $hasItems = $order->items()->where('seller_id', $sellerUserId)->exists();
+        $hasItems = $order->items()->where('seller_id', $sellerId)->exists();
 
         if (!$hasItems) {
             return response()->json(['message' => 'Unauthorized - You don\'t have items in this order'], 403);
@@ -165,7 +194,7 @@ class SellerOrderController extends Controller
             // Log the cancellation
             Log::info('Order cancelled by seller', [
                 'order_id' => $order->order_id,
-                'seller_id' => $sellerUserId,
+                'seller_id' => $sellerId,
                 'reason' => $validated['reason']
             ]);
 
@@ -194,10 +223,10 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerUserId = $user->user_id;
+        $sellerId = $user->seller->seller_id;
 
         // Check if seller has items in this order
-        $hasItems = $order->items()->where('seller_id', $sellerUserId)->exists();
+        $hasItems = $order->items()->where('seller_id', $sellerId)->exists();
 
         if (!$hasItems) {
             return response()->json(['message' => 'Unauthorized'], 403);

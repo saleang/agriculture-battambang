@@ -414,9 +414,6 @@ export function Header({
                                         <a href="/farmers" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">    
                                             <Store className="h-4 w-4" />ហាងកសិផល
                                         </a>
-                                        <a href="/departments" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">    
-                                            <ShoppingBag className="h-4 w-4" />ប្រភេទទំនិញ
-                                        </a>
                                     </>
                                 ) : (
                                     <>
