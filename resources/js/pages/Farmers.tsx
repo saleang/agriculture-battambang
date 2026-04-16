@@ -44,6 +44,11 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
         if (url.startsWith('http')) return url;
         return `/storage/${url.startsWith('/') ? url.substring(1) : url}`;
     };
+    const getInitials = (name: string): string => {
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) return words[0].charAt(0);
+    return words[0].charAt(0) + words[1].charAt(0);
+};
 
     const handleFollowToggle = async (e: React.MouseEvent, sellerId: number) => {
         e.preventDefault();
@@ -121,12 +126,27 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
                             >
                                 <div className="p-6 flex gap-5">
                                     {/* Circular Avatar */}
-                                    <div className="flex-shrink-0">
+                                    {/* <div className="flex-shrink-0">
                                         <img
                                             src={getImageUrl(seller.user.photo)}
                                             alt={seller.farm_name}
                                             className="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-md"
                                         />
+                                    </div> */}
+                                    <div className="flex-shrink-0">
+                                        {seller.user.photo ? (
+                                            <img
+                                                src={getImageUrl(seller.user.photo)}
+                                                alt={seller.farm_name}
+                                                className="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-md "
+                                            />
+                                        ) : (
+                                            <div className="w-20 h-20 rounded-full ring-4 ring-white shadow-md bg-green-100 flex items-center justify-center">
+                                                <span className="text-green-700 font-bold text-xl">
+                                                    {getInitials(seller.farm_name)}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Content */}

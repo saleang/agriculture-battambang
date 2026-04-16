@@ -248,19 +248,50 @@ export default function ProductDetail({
     // Comments helpers
     const getCommentCountText = (count: number) => {
         if (count === 0) return 'មិនទាន់មានមតិយោបល់';
-        if (count === 1) return '១ មតិយោបល់';
+        if (count === 1) return '1 មតិយោបល់';
         return `${count} មតិយោបល់`;
     };
 
+    // const formatCommentDate = (dateStr: string) => {
+    //     return new Date(dateStr).toLocaleString('km-KH', {
+    //         year: 'numeric',
+    //         month: 'short',
+    //         day: 'numeric',
+    //         hour: '2-digit',
+    //         minute: '2-digit',
+    //     });
+    // };
+    
     const formatCommentDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString('km-KH', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
+    const d = new Date(dateStr);
+    const months = [
+        'មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា',
+        'កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'
+    ];
+
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const hours24 = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    // Convert to 12-hour format
+    const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+
+    // Determine Khmer time of day
+    let period: string;
+    if (hours24 < 12) {
+        period = 'ព្រឹក';         // 12 AM – 11 AM
+    } else if (hours24 < 16) {
+        period = 'រសៀល';          // 1 PM – 3 PM
+    } else if (hours24 < 19) {
+        period = 'ល្ងាច';         // 4 PM – 6 PM
+    } else {
+        period = 'យប់';           // 7 PM – 12 AM
+    }
+
+    return `${day} ${month} ${year} ${hours12}:${minutes} ${period}`;
+};
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -366,7 +397,7 @@ export default function ProductDetail({
         if (auth.user.role === 'seller') {
             toast.info('មុខងារសម្រាប់តែអតិថិជន', {
                 description:
-                    'ដើម្បីអាចប្រើ Wishlist បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
+                    'ដើម្បីអាចបញ្ចូលកសិផលជាកសិផលដែលចូលចិត្ត(ប្រើ Wishlist)បាន សូមបង្កើតគណនីថ្មីជាអតិថិជន។',
                 action: {
                     label: 'ចុះឈ្មោះ',
                     onClick: () => (window.location.href = '/register'),
@@ -604,8 +635,9 @@ export default function ProductDetail({
                         </h1>
 
                         <div className="mb-6 flex items-baseline gap-3">
-                            <span className="text-4xl font-bold text-green-700 md:text-5xl">
-                                {toKhmerPrice(product.price)}
+                            <span className="text-4xl font-bold text-green-700 md:text-5xl" style={{ fontSize: '22px' }}>
+                                {/* {toKhmerPrice(product.price)} */}
+                                {product.price}
                             </span>
                             <span className="text-2xl text-gray-600">
                                 ៛ /{product.unit}
@@ -615,7 +647,7 @@ export default function ProductDetail({
                         <div className="mb-8 flex flex-wrap gap-6 text-sm text-gray-700">
                             <div className="flex items-center gap-2">
                                 <Leaf className="h-5 w-5 text-green-600" />
-                                <span>សរីរាង្គ ១០០%</span>
+                                <span>សរីរាង្គ 100%</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Shield className="h-5 w-5 text-green-600" />
@@ -654,14 +686,15 @@ export default function ProductDetail({
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={!isAvailable || auth.user?.role === 'seller'}
-                                    className={`flex-1 rounded-xl py-4 text-lg font-semibold transition ${
+                                     style={{ height: '48px' }}
+                                    className={`flex-1 rounded-xl py-3 text-lg font-semibold transition ${
                                         isAvailable && auth.user?.role !== 'seller'
                                             ? 'bg-green-600 text-white hover:bg-green-700'
                                             : 'cursor-not-allowed bg-gray-400 text-white'
                                     }`}
                                 >
                                     {isAvailable
-                                        ? 'បញ្ចូលទៅកន្ត្រក'
+                                        ? 'បញ្ចូលទៅកន្ត្រកទំនិញ'
                                         : 'អស់ស្តុក'}
                                 </button>
                             </div>
@@ -851,7 +884,7 @@ export default function ProductDetail({
                                                 {/* Header row: name + metadata */}
                                                 <div className="flex flex-wrap items-baseline justify-between gap-4">
                                                     <div className="flex items-baseline gap-3">
-                                                        <span className="text-base font-medium text-gray-900">
+                                                        <span className="text-base font-bold text-gray-900">
                                                             {comment.user
                                                                 ?.username ??
                                                                 'អ្នកប្រើប្រាស់'}
@@ -869,7 +902,7 @@ export default function ProductDetail({
                                                             {comment.updated_at !==
                                                                 comment.created_at && (
                                                                 <span className="ml-1.5 text-xs text-gray-400 italic">
-                                                                    (បានកែ)
+                                                                    (បានកែប្រែ)
                                                                 </span>
                                                             )}
                                                         </span>

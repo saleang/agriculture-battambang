@@ -184,9 +184,12 @@ export default function Wishlist({ auth, wishlists }: Props) {
 
                                         <div className="mt-2 flex items-baseline gap-3">
                                             <span className="text-xl font-semibold text-gray-900">
-                                                {formatPrice(
+                                                {/* {formatPrice(
                                                     item.product.price,
-                                                )}
+                                                )} */}
+                                                {
+                                                    item.product.price
+                                                } ៛
                                             </span>
                                             <span className="text-sm text-gray-500">
                                                 / {item.product.unit}

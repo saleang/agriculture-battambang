@@ -12,6 +12,7 @@ interface User {
     email: string;
     phone?: string;
     address?: string;
+    photo?: string;
 }
 
 interface CartPageProps {
@@ -72,18 +73,18 @@ export default function CartPage({ auth }: CartPageProps) {
         return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     };
 
-    // calculate shipping per seller/farm based on quantity
-    const getShippingCost = (items: typeof cartItems): number => {
-        const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
-        // only calculate for first 50 units; cap quantity
-        const qty = Math.min(totalQty, 50);
-        // 100៛ per 10 items (or portion thereof)
-        const blocks = Math.ceil(qty / 10);
-        return blocks * 100;
-    };
+    // // calculate shipping per seller/farm based on quantity
+    // const getShippingCost = (items: typeof cartItems): number => {
+    //     const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+    //     // only calculate for first 50 units; cap quantity
+    //     const qty = Math.min(totalQty, 50);
+    //     // 100៛ per 10 items (or portion thereof)
+    //     const blocks = Math.ceil(qty / 10);
+    //     return blocks * 100;
+    // };
 
-    // total shipping across all sellers
-    const totalShipping = Object.values(itemsBySeller).reduce((sum, items) => sum + getShippingCost(items), 0);
+    // // total shipping across all sellers
+    // const totalShipping = Object.values(itemsBySeller).reduce((sum, items) => sum + getShippingCost(items), 0);
 
     const handleCheckout = () => {
         if (!user) {
@@ -148,10 +149,9 @@ export default function CartPage({ auth }: CartPageProps) {
                 <div className="pt-32 pb-16 md:py-46">
                     <div className="container mx-auto px-4">
                         <div className="mb-8">
-                            <h1 className="text-2xl font-bold text-gray-900 mb-2 font-moul">
-                                រទេះទិញទំនិញ ({getTotalItems()} ផលិតផល)
-                            </h1>
-
+                            {/* <h1 className="text-2xl text-gray-900 mb-2 font-moul">
+                                រទេះទិញទំនិញ {getTotalItems()} ផលិតផល
+                            </h1> */}
                             {/* ✅ SHOW SELLER COUNT */}
                             {sellerCount > 1 && (
                                 <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-2 rounded-lg inline-flex mt-2">
@@ -177,7 +177,7 @@ export default function CartPage({ auth }: CartPageProps) {
                                 {Object.entries(itemsBySeller).map(([sellerKey, items], sellerIndex) => {
                                     const farmName = items[0]?.farm_name || `ចម្ការ ${sellerIndex + 1}`;
                                     const sellerTotal = getSellerTotal(items);
-                                    const shipping = getShippingCost(items);
+                                    // const shipping = getShippingCost(items);
 
                                     return (
                                         <div key={sellerKey} className="bg-white rounded-xl shadow-md border-2 border-gray-200 overflow-hidden">
@@ -185,22 +185,40 @@ export default function CartPage({ auth }: CartPageProps) {
                                             <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
                                                 <div className="flex items-center justify-between text-white">
                                                     <div className="flex items-center gap-3">
-                                                        <Store className="w-6 h-6" />
+                                                         {items[0]?.seller_photo ? (
+    <img
+        src={items[0].seller_photo.startsWith('http')
+            ? items[0].seller_photo
+            : `/storage/${items[0].seller_photo}`}
+        alt={farmName}
+        className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+    />
+) : (
+    <div className="w-10 h-10 rounded-full border-2 border-white/50 bg-white/20 flex items-center justify-center flex-shrink-0">
+        <span className="text-white font-bold text-sm">
+            {farmName.trim().split(/\s+/).length === 1
+                ? farmName.trim().charAt(0)
+                : farmName.trim().split(/\s+/)[0].charAt(0) + farmName.trim().split(/\s+/)[1].charAt(0)
+            }
+        </span>
+    </div>
+)}
                                                         <div>
                                                             <h3 className="font-bold text-lg">{farmName}</h3>
                                                             <p className="text-sm text-green-100">
                                                                 {items.length} ផលិតផល
                                                             </p>
                                                             {/* shipping line below name */}
-                                                            <p className="text-xs text-green-200">
+                                                            {/* <p className="text-xs text-green-200">
                                                                 ដឹកជញ្ជូន: {toKhmerPrice(shipping)} ៛
-                                                            </p>
+                                                            </p> */}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-sm text-green-100">សរុប</p>
                                                         <p className="font-bold text-xl">
-                                                            {toKhmerPrice(sellerTotal)} ៛
+                                                            {sellerTotal} ៛
                                                         </p>
                                                     </div>
                                                 </div>
@@ -231,7 +249,7 @@ export default function CartPage({ auth }: CartPageProps) {
                                                                 {item.productname}
                                                             </h4>
                                                             <p className="text-green-700 font-bold text-lg mb-3">
-                                                                {toKhmerPrice(item.price)} ៛
+                                                                {item.price} ៛
                                                                 <span className="text-sm text-gray-600 font-normal ml-1">
                                                                     / {item.unit}
                                                                 </span>
@@ -248,7 +266,8 @@ export default function CartPage({ auth }: CartPageProps) {
                                                                         <Minus className="w-4 h-4" />
                                                                     </button>
                                                                     <span className="text-lg font-semibold w-10 text-center">
-                                                                        {toKhmerPrice(item.quantity)}
+                                                                        {/* {toKhmerPrice(item.quantity)} */}
+                                                                         {item.quantity}
                                                                     </span>
                                                                     <button
                                                                         onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
@@ -260,7 +279,7 @@ export default function CartPage({ auth }: CartPageProps) {
 
                                                                 <div className="flex items-center gap-3">
                                                                     <span className="font-bold text-gray-900">
-                                                                        {toKhmerPrice(item.price * item.quantity)} ៛
+                                                                        {item.price * item.quantity} ៛
                                                                     </span>
                                                                     <button
                                                                         onClick={() => removeFromCart(item.product_id)}
@@ -294,22 +313,22 @@ export default function CartPage({ auth }: CartPageProps) {
                                             {Object.entries(itemsBySeller).map(([sellerKey, items], index) => {
                                                 const farmName = items[0]?.farm_name || `ចម្ការ ${index + 1}`;
                                                 const sellerTotal = getSellerTotal(items);
-                                                const shipping = getShippingCost(items);
+                                                // const shipping = getShippingCost(items);
 
                                                 return (
                                                     <div key={sellerKey} className="mb-4">
                                                         <div className="flex justify-between text-sm">
                                                             <span className="text-gray-700">{farmName}</span>
                                                             <span className="font-semibold text-gray-900">
-                                                                {toKhmerPrice(sellerTotal)} ៛
+                                                                {sellerTotal} ៛
                                                             </span>
                                                         </div>
-                                                        <div className="flex justify-between text-sm mt-1">
+                                                        {/* <div className="flex justify-between text-sm mt-1">
                                                             <span className="text-gray-700">ថ្លៃដឹកជញ្ជូន</span>
                                                             <span className="font-semibold text-gray-900">
                                                                  {toKhmerPrice(shipping)} ៛
                                                             </span>
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                 );
                                             })}
@@ -319,19 +338,20 @@ export default function CartPage({ auth }: CartPageProps) {
                                     <div className="space-y-4 mb-6">
                                         <div className="flex justify-between text-gray-700">
                                             <span>សរុបរង ({getTotalItems()} ផលិតផល)</span>
-                                            <span className="font-semibold">{toKhmerPrice(getTotalPrice())} ៛</span>
+                                            <span className="font-semibold">{getTotalPrice()} ៛</span>
                                         </div>
                                         <div className="flex justify-between text-gray-700">
                                             <span>ការដឹកជញ្ជូន</span>
                                             <span className="text-green-600 font-semibold">
-                                                {totalShipping > 0 ? `${toKhmerPrice(totalShipping)} ៛` : 'ឥតគិតថ្លៃ'}
+                                                {/* {totalShipping > 0 ? `${toKhmerPrice(totalShipping)} ៛` : 'ឥតគិតថ្លៃ'} */} 
+                                                មិនទាន់គណនាបាន
                                             </span>
                                         </div>
                                         <hr />
                                         <div className="flex justify-between text-lg font-bold text-gray-900">
                                             <span>សរុប</span>
                                             <span className="text-2xl text-green-700">
-                                                {toKhmerPrice(getTotalPrice() + totalShipping)} ៛
+                                                {getTotalPrice() } ៛
                                             </span>
                                         </div>
                                     </div>
@@ -355,7 +375,7 @@ export default function CartPage({ auth }: CartPageProps) {
 
                                     <div className="mt-6 p-4 bg-green-50 rounded-lg">
                                         <p className="text-sm text-green-800">
-                                            ✓ ការដឹកជញ្ជូនឥតគិតថ្លៃសម្រាប់ការបញ្ជាទិញលើសពី ៥០,០០០៛
+                                             សម្រាប់ថ្លៃដឹកជញ្ជូន អាជីវករនឹងបញ្ជាក់ និងបង្ហាញនៅមុនពេលអ្នកទិញបង់ប្រាក់ សូមពិនិត្យព័ត៌មានលម្អិតនៃថ្លៃដឹកជញ្ជូននៅមុនពេលបង់ប្រាក់។
                                         </p>
                                     </div>
                                 </div>

@@ -10,6 +10,7 @@ interface CartItem {
     image?: string;
     seller_id?: number;  // ✅ Added seller_id
     farm_name?: string;  // ✅ Added farm_name (replace seller_name)
+     seller_photo?: string;
 }
 
 interface CartContextType {

@@ -22,6 +22,7 @@ class Order extends Model
         'recipient_phone',
         'shipping_address',
         'total_amount',
+        'shipping_cost',
         'payment_method',
         'payment_status',
         'paid_at',

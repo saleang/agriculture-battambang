@@ -409,7 +409,7 @@ export default function Home({
                 className="mx-auto max-w-7xl bg-gradient-to-b from-green-50/50 to-white px-4 py-12 sm:px-6 lg:px-8"
             >
                 <div className="mb-10">
-                    <h2 className="font-moul text-3xl font-bold text-green-800 md:text-4xl">
+                    <h2 className="font-moul text-3xl font-bold text-green-800 md:text-4xl" style={{ fontSize: '18px' }}>
                         អត្ថប្រយោជន៍របស់យើង
                     </h2>
                     <p className="mt-3 max-w-2xl text-gray-600">
@@ -511,7 +511,7 @@ export default function Home({
             {/* Categories */}
             <section id="categories" className="mx-auto max-w-7xl px-4 py-3">
                 <div className="mb-12 text-left">
-                    <h2 className="font-moul mb-4 text-2xl font-bold text-green-800 md:text-4xl">
+                    <h2 className="font-moul mb-4 text-2xl font-bold text-green-800 md:text-4xl" style={{ fontSize: '18px' }}>
                         ប្រភេទកសិផលពេញនិយម
                     </h2>
                     <p className="max-w-2xl text-gray-600">
@@ -559,9 +559,9 @@ export default function Home({
             {/* Products */}
             <section id="products" className="mx-auto max-w-7xl px-4 py-12">
                 <div className="mb-12">
-                    <h2 className="font-moul relative inline-block pb-3 text-4xl font-bold text-green-800 md:text-5xl">
+                    <h2 className="font-moul relative inline-block pb-3 text-4xl font-bold text-green-800 md:text-5xl"style={{ fontSize: '18px' }}>
                         កសិផលទាំងអស់
-                        <span className="absolute bottom-0 left-1/2 h-1 w-24 -translate-x-1/2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></span>
+                        <span className="absolstyle={{ fontSize: '18px' }}ute bottom-0 left-1/2 h-1 w-24 -translate-x-1/2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></span>
                     </h2>
                     <p className="mt-4 text-lg text-gray-600">
                         ផលិតផល ពីកសិករក្នុងខេត្តបាត់ដំបង
@@ -654,7 +654,8 @@ export default function Home({
                                         </Link>
 
                                         <p className="mb-3 text-2xl font-bold text-green-700">
-                                            {toKhmerPrice(p.price)} ៛
+                                            {/* {toKhmerPrice(p.price)} ៛ */}
+                                            {p.price} ៛
                                             <span className="ml-1 text-base font-normal text-gray-600">
                                                 / {p.unit}
                                             </span>

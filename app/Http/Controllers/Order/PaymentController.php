@@ -45,8 +45,10 @@ class PaymentController extends Controller
             if (!$seller || !$seller->hasBakongConfigured()) {
                 return response()->json(['success' => false, 'message' => 'Bakong not configured for seller'], 400);
             }
-
-            $amountKHR = (int) round($order->total_amount);
+            // amountKHR = total_amount + shipping_cost
+            // AFTER
+$amountKHR = (int) round((float)$order->total_amount + (float)($order->shipping_cost ?? 0));
+            // $amountKHR = (int) round(order->total_amount);
             $timeoutMinutes = (int) config('bakong.timeout', 25);
 
             // គណនា timestamp ជា milliseconds (តាម spec Bakong)

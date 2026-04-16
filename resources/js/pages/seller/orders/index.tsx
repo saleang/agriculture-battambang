@@ -43,6 +43,7 @@ interface Order {
     recipient_phone: string;
     shipping_address: string;
     total_amount: number;
+    shipping_cost: number | null;
     payment_method: 'KHQR' | 'manual(cash)';
     payment_status: 'unpaid' | 'paid';
     paid_at: string | null;
@@ -118,29 +119,72 @@ const SellerOrderManagement: React.FC = () => {
         }
     };
 
-    const handleCompleteOrder = async (orderId: number): Promise<void> => {
-        const result = await Swal.fire({
-            title: 'បញ្ជាក់ការបញ្ចប់',
-            text: 'តើលោកអ្នកចង់បញ្ជាក់ថាបានបញ្ចប់ការបញ្ជាទិញនេះឬ?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'បាទ, បញ្ជាក់',
-            cancelButtonText: 'ក្នុងលក្ខណៈលុបចោល'
+    // const handleCompleteOrder = async (orderId: number): Promise<void> => {
+    //     const result = await Swal.fire({
+    //         title: 'បញ្ជាក់ការបញ្ចប់',
+    //         text: 'តើលោកអ្នកចង់បញ្ជាក់ថាបានបញ្ចប់ការបញ្ជាទិញនេះឬ?',
+    //         icon: 'question',
+    //         showCancelButton: true,
+    //         confirmButtonText: 'បាទ, បញ្ជាក់',
+    //         cancelButtonText: 'ក្នុងលក្ខណៈលុបចោល'
+    //     });
+
+    //     if (!result.isConfirmed) {
+    //         return;
+    //     }
+
+    //     try {
+    //         await axios.post(`/seller/orders/${orderId}/complete`);
+    //         toast.success('ការបញ្ចប់ការបញ្ជាទិញបានដោះស្រាយដោយជោគជ័យ');
+    //         fetchOrders();
+    //     } catch (error: any) {
+    //         toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការបញ្ចប់ការបញ្ជាទិញ');
+    //     }
+    // };
+    // Add new state
+const [showShippingModal, setShowShippingModal] = useState(false);
+const [pendingCompleteOrderId, setPendingCompleteOrderId] = useState<number | null>(null);
+const [shippingCost, setShippingCost] = useState('');
+const [shippingError, setShippingError] = useState('');
+
+// Replace handleCompleteOrder with a two-step flow:
+const handleRequestComplete = (orderId: number) => {
+    setPendingCompleteOrderId(orderId);
+    setShippingCost('');
+    setShippingError('');
+    setShowShippingModal(true);
+};
+
+const handleConfirmComplete = async () => {
+    const cost = parseFloat(shippingCost);
+    if (!shippingCost.trim() || isNaN(cost) || cost < 0) {
+        setShippingError('សូមបញ្ចូលថ្លៃដឹកជញ្ជូនត្រឹមត្រូវ (0 ឬច្រើនជាងនេះ)');
+        return;
+    }
+
+    const result = await Swal.fire({
+        title: 'បញ្ជាក់ការបញ្ចប់',
+        text: `ថ្លៃដឹកជញ្ជូន: ${cost} ៛ — តើអ្នកចង់បញ្ជាក់ការបញ្ជាទិញនេះឬ?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'បាទ, បញ្ជាក់',
+        cancelButtonText: 'បោះបង់',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        await axios.post(`/seller/orders/${pendingCompleteOrderId}/complete`, {
+            shipping_cost: cost,
         });
-
-        if (!result.isConfirmed) {
-            return;
-        }
-
-        try {
-            await axios.post(`/seller/orders/${orderId}/complete`);
-            toast.success('ការបញ្ចប់ការបញ្ជាទិញបានដោះស្រាយដោយជោគជ័យ');
-            fetchOrders();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការបញ្ចប់ការបញ្ជាទិញ');
-        }
-    };
-
+        toast.success('ការបញ្ចប់ការបញ្ជាទិញបានដោះស្រាយដោយជោគជ័យ');
+        setShowShippingModal(false);
+        setPendingCompleteOrderId(null);
+        fetchOrders();
+    } catch (error: any) {
+        toast.error(error.response?.data?.message || 'បរាជ័យក្នុងការបញ្ចប់ការបញ្ជាទិញ');
+    }
+};
     const handleCancelOrder = async (orderId: number): Promise<void> => {
         if (!cancelReason.trim()) {
             toast.error('សូមផ្តល់នូវលក្ខខណ្ឌក្នុងការលុបចោល');
@@ -299,6 +343,7 @@ const SellerOrderManagement: React.FC = () => {
                                                         {item.quantity} {item.unit} × {Number(item.price_per_unit).toFixed(2)}​ ៛
                                                     </p>
                                                 </div>
+                                                <p className="text-gray-600">តម្លៃផលិតផល:</p>
                                                 <p className="font-semibold">
                                                     {(item.quantity * Number(item.price_per_unit)).toFixed(2)} ៛
                                                 </p>
@@ -308,7 +353,7 @@ const SellerOrderManagement: React.FC = () => {
                                 </div>
 
                                 {/* Customer Details */}
-                                <div className="grid grid-cols-2 gap-4 mb-4 text-sm bg-gray-50 p-4 rounded">
+                                <div className="grid grid-cols-5 gap-5 mb-4 text-sm bg-gray-50 p-4 rounded">
                                     <div>
                                         <p className="text-gray-600">អ្នកទទួល:</p>
                                         <p className="font-medium">{order.recipient_name}</p>
@@ -319,13 +364,38 @@ const SellerOrderManagement: React.FC = () => {
                                         <p className="font-medium">{order.shipping_address}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">វិធីសាស្រ្តទូ        ទាត់ប្រាក់:</p>
+                                        <p className="text-gray-600">វិធីសាស្រ្តទូទាត់ប្រាក់:</p>
                                         <p className="font-medium">{order.payment_method}</p>
                                     </div>
-                                    <div>
+                                    {/* <div>
                                         <p className="text-gray-600">តម្លៃសរុប:</p>
                                         <p className="font-semibold text-lg">{Number(order.total_amount).toFixed(2)} ៛</p>
-                                    </div>
+                                    </div> */}
+                                     <div>
+        <p className="text-gray-600">ថ្លៃដឹកជញ្ជូន:</p>
+        {order.shipping_cost !== null && order.shipping_cost !== undefined ? (
+            <p className="font-medium">{Number(order.shipping_cost).toFixed(2)} ៛</p>
+        ) : (
+            <p className="text-amber-600 italic">មិនទាន់បញ្ចូល</p>
+        )}
+    </div>
+    {/* <div className="col-span-2 border-t pt-3 mt-1"> */}
+        <div className="flex justify-between items-center">
+            {/* <div>
+                <p className="text-gray-600">តម្លៃផលិតផល:</p>
+                <p className="font-medium">{Number(order.total_amount).toFixed(2)} ៛</p>
+            </div> */}
+            <div className="text-right">
+                <p className="text-gray-600">តម្លៃសរុប (រួមដឹកជញ្ជូន):</p>
+                <p className="font-semibold text-lg text-green-700">
+                    {Number(order.shipping_cost)
+                        ? (Number(order.total_amount) + Number(order.shipping_cost)).toFixed(2)
+                        : Number(order.total_amount).toFixed(2)
+                    } ៛
+                </p>
+            </div>
+        </div>
+    {/* </div> */}
                                     {order.customer_notes && (
                                         <div className="col-span-2">
                                             <p className="text-gray-600">កំណត់ចំណាត់:</p>
@@ -362,8 +432,8 @@ const SellerOrderManagement: React.FC = () => {
                                                 លុបចោលការបញ្ជាទិញ
                                             </button>
                                             <button
-                                                onClick={() => handleCompleteOrder(order.order_id)}
-                                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                                // onClick={() => handleCompleteOrder(order.order_id)}
+        onClick={() => handleRequestComplete(order.order_id)}                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                                             >
                                                 បញ្ចប់ការបញ្ជាទិញ
                                             </button>
@@ -451,6 +521,54 @@ const SellerOrderManagement: React.FC = () => {
                         </div>
                     </div>
                 )}
+                {showShippingModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-xl font-bold mb-2">បញ្ចូលថ្លៃដឹកជញ្ជូន</h3>
+            <p className="text-gray-600 mb-4 text-sm">
+                សូមបញ្ចូលថ្លៃដឹកជញ្ជូនសម្រាប់ការបញ្ជាទិញនេះ មុនពេលបញ្ចប់។
+            </p>
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ថ្លៃដឹកជញ្ជូន (៛)
+                </label>
+                <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={shippingCost}
+                    onChange={(e) => {
+                        setShippingCost(e.target.value);
+                        setShippingError('');
+                    }}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="ឧ. 1500"
+                    autoFocus
+                />
+                {shippingError && (
+                    <p className="text-red-600 text-sm mt-1">{shippingError}</p>
+                )}
+            </div>
+            <div className="flex gap-3">
+                <button
+                    onClick={() => {
+                        setShowShippingModal(false);
+                        setPendingCompleteOrderId(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                    បោះបង់
+                </button>
+                <button
+                    onClick={handleConfirmComplete}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                    បន្តបញ្ចប់
+                </button>
+            </div>
+        </div>
+    </div>
+)}
             </div>
         </AppLayout>
     );

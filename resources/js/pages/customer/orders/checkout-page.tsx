@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import { useCart } from './cart-context';
 import CheckoutForm from './checkout-form';
 import Header from '@/pages/header';
@@ -102,7 +103,7 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
             preserveState: false,
         });
 
-        alert(message);
+        toast.success(message);
     };
 
     return (
@@ -122,7 +123,13 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
                             <h1 className="text-3xl font-bold text-gray-900 mb-2 font-moul">
                                 ការទូទាត់
                             </h1>
-                            
+                            <a
+                                href="/cart"
+                                className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                ត្រឡប់ទៅរទេះទិញទំនិញ
+                            </a>
                             {/* ✅ MULTI-SELLER NOTICE */}
                             {sellerCount > 1 && (
                                 <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -139,17 +146,11 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
                                 </div>
                             )}
                             
-                            <a
-                                href="/cart"
-                                className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                ត្រឡប់ទៅរទេះទិញទំនិញ
-                            </a>
+                            
                         </div>
 
                         {/* ✅ SHOW SELLER BREAKDOWN */}
-                        {sellerCount > 1 && (
+                        {/* {sellerCount > 1 && (
                             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {Object.entries(itemsBySeller).map(([sellerKey, items], index) => {
                                     const sellerName = items[0]?.farm_name || `ចម្ការ ${index + 1}`;
@@ -173,7 +174,7 @@ export default function CheckoutPage({ auth }: CheckoutPageProps) {
                                     );
                                 })}
                             </div>
-                        )}
+                        )} */}
 
                         <CheckoutForm
                             cartItems={cartItems}

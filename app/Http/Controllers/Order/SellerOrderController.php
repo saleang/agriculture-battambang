@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
+
 
 class SellerOrderController extends Controller
 {
@@ -52,7 +54,7 @@ class SellerOrderController extends Controller
      * Show single order for seller
      */
     public function show(Order $order)
-    {
+    {        
         $user = Auth::user();
         
         if (!$user || !$user->seller) {
@@ -76,10 +78,10 @@ class SellerOrderController extends Controller
     }
 
     //  Complete order (seller confirms they've prepared the order)
-    public function complete(Order $order)
+    public function complete(Order $order, Request $request)
     {
         $user = Auth::user();
-        
+        $request->validate(['shipping_cost' => 'required|numeric|min:0']);
         if (!$user || !$user->seller) {
             return response()->json(['message' => 'User is not a seller'], 403);
         }
@@ -102,6 +104,10 @@ class SellerOrderController extends Controller
         try {
             $order->update([
                 'status' => Order::STATUS_COMPLETED,
+                // make seller input delivery cost
+                'shipping_cost' => $request->shipping_cost,
+                // should using sub amount and total amount
+                // 'total_amount' => $order->total_amount + $request->shipping_cost,
             ]);
 
             // Notify customer that order has been completed
