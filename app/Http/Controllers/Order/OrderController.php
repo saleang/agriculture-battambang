@@ -87,11 +87,11 @@ class OrderController extends Controller
                     throw new \Exception("Product '{$product->productname}' is no longer available.");
                 }
 
-                // Get seller's user_id (for foreign key reference in order_items)
-                $sellerId = $product->seller->user_id ?? null;
+                // Get the seller's actual seller_id
+                $sellerId = $product->seller->seller_id ?? null;
 
                 if (!$sellerId) {
-                    throw new \Exception("Seller for product '{$product->productname}' does not have a user account.");
+                    throw new \Exception("Seller for product '{$product->productname}' does not have a valid seller ID.");
                 }
 
                 if (!isset($itemsBySeller[$sellerId])) {
@@ -107,7 +107,7 @@ class OrderController extends Controller
                 $itemsBySeller[$sellerId]['items'][] = [
                     'product' => $product,
                     'product_id' => $product->product_id,
-                    'seller_id' => $sellerId, // seller's user_id (foreign key to users.user_id)
+                    'seller_id' => $sellerId, // Correct: Use the seller's actual seller_id
                     'product_name' => $product->productname,
                     'product_image' => $product->images->first()?->image_url,
                     'unit' => $product->unit,

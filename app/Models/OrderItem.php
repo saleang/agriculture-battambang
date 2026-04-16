@@ -42,7 +42,7 @@ class OrderItem extends Model
 
     public function seller()
     {
-        return $this->belongsTo(User::class, 'seller_id', 'user_id');
+        return $this->belongsTo(Seller::class, 'seller_id', 'seller_id');
     }
 
     public function getSubtotalAttribute(): float
