@@ -1,36 +1,67 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
+    CheckCircle,
+    Cog,
+    Eye,
     Landmark,
     Package,
-    ShoppingCart,
     Plus,
     RefreshCw,
-    CheckCircle,
-    Eye,
+    ShoppingCart,
     TrendingUp,
+    Truck,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
-    AreaChart,
     Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
 } from 'recharts';
+
+interface Order {
+    order_id: number;
+    order_number: string;
+    customer_name: string;
+    order_date: string;
+    seller_total: number | string;
+    status: string;
+}
+
+interface Product {
+    name: string;
+    sold: number;
+    revenue: number;
+}
+
+interface Seller {
+    farm_name?: string;
+    full_location?: string;
+    total_sales?: number;
+    active_products_count?: number;
+}
+
+interface Props {
+    seller: Seller;
+    recentOrders: Order[];
+    salesData: Array<{ date: string; orders: number }>;
+    topProducts?: Product[];
+}
 
 export default function SellerDashboard({
     seller,
     recentOrders: initialRecentOrders,
     salesData,
     topProducts = [],
-}: any) {
-    const [orders, setOrders] = useState(initialRecentOrders || []);
+}: Props) {
+    const [orders, setOrders] = useState<Order[]>(initialRecentOrders || []);
     const [loadingId, setLoadingId] = useState<number | null>(null);
     const [refreshing, setRefreshing] = useState(false);
-    const [period, setPeriod] = useState('monthly');
+    const [period, setPeriod] = useState<'monthly' | 'daily'>('monthly');
 
     const confirmOrder = (id: number) => {
         setLoadingId(id);
@@ -39,33 +70,50 @@ export default function SellerDashboard({
             {},
             {
                 onSuccess: () => {
-                    setOrders((prev: any[]) =>
-                        prev.map((o: any) =>
-                            o.order_id === id ? { ...o, status: 'confirmed' } : o
-                        )
+                    setOrders((prev) =>
+                        prev.map((o) =>
+                            o.order_id === id
+                                ? { ...o, status: 'confirmed' }
+                                : o,
+                        ),
                     );
                 },
+                onError: () => {
+                    // Optional: show toast notification
+                },
                 onFinish: () => setLoadingId(null),
-            }
+            },
         );
     };
 
     const refresh = () => {
         setRefreshing(true);
+
         router.get(
             '/seller/dashboard',
-            {},
+            { period }, // Pass current period if backend supports filtering
             {
                 onSuccess: (page: any) => {
-                    setOrders(page.props?.recentOrders || []);
+                    const freshOrders = page.props?.recentOrders;
+
+                    // Safe handling to fix the TypeScript error
+                    if (Array.isArray(freshOrders)) {
+                        setOrders(freshOrders as Order[]);
+                    } else {
+                        setOrders([]);
+                    }
+                },
+                onError: () => {
+                    console.error('Failed to refresh dashboard data');
+                    // You can add a toast notification here later
                 },
                 onFinish: () => setRefreshing(false),
-            }
+            },
         );
     };
 
     const statusStyle = (status: string) => {
-        const map: any = {
+        const map: Record<string, string> = {
             pending: 'bg-amber-100 text-amber-700',
             confirmed: 'bg-blue-100 text-blue-700',
             processing: 'bg-violet-100 text-violet-700',
@@ -76,21 +124,26 @@ export default function SellerDashboard({
         return map[status?.toLowerCase()] || 'bg-gray-100 text-gray-700';
     };
 
-    const pendingCount = orders.filter((o: any) => o.status === 'pending').length;
+    const pendingCount = orders.filter((o) => o.status === 'pending').length;
+    const orderCounts = {
+        processing: orders.filter((o) => o.status === 'processing').length,
+        shipped: orders.filter((o) => o.status === 'delivered').length,
+        completed: orders.filter((o) => o.status === 'completed').length,
+    };
 
     return (
         <AppLayout>
             <Head title="ផ្ទាំងគ្រប់គ្រងអ្នកលក់" />
 
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="mx-auto max-w-7xl px-6 space-y-8">
+            <div className="min-h-screen bg-gray-50 py-6">
+                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-6 rounded-2xl shadow-sm">
+                    <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-white p-6 shadow-sm sm:flex-row sm:items-center">
                         <div>
-                            <h1 className="text-3xl font-moul text-gray-900">
+                            <h1 className="font-moul text-3xl text-gray-900">
                                 សួស្តី {seller?.farm_name || 'អ្នកលក់'} 👋
                             </h1>
-                            <p className="text-gray-600 mt-1">
+                            <p className="mt-1 text-gray-600">
                                 📍 {seller?.full_location || 'មិនមានទីតាំង'}
                             </p>
                         </div>
@@ -99,15 +152,18 @@ export default function SellerDashboard({
                             <button
                                 onClick={refresh}
                                 disabled={refreshing}
-                                className="flex items-center gap-2 px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors"
+                                className="flex items-center gap-2 rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium transition hover:bg-gray-100 disabled:opacity-70"
                             >
-                                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                                ធ្វើឱ្យស្រស់
+                                <RefreshCw
+                                    size={18}
+                                    className={refreshing ? 'animate-spin' : ''}
+                                />
+                                ធ្វើឡើងវិញ
                             </button>
 
                             <Link
                                 href="/seller/product"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-medium transition-colors"
+                                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-emerald-700"
                             >
                                 <Plus size={18} />
                                 បន្ថែមផលិតផល
@@ -115,171 +171,305 @@ export default function SellerDashboard({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* Left Column */}
-                        <div className="lg:col-span-8 space-y-6">
-                            {/* Sales Chart */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                <div className="flex items-center justify-between mb-6">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <StatCard
+                            icon={Landmark}
+                            label="ចំណូលសរុប"
+                            value={`${Math.floor(seller.total_sales || 0).toLocaleString()} ៛`}
+                        />
+                        <StatCard
+                            icon={Package}
+                            label="ផលិតផលកំពុងដាក់លក់"
+                            value={seller.active_products_count || 0}
+                        />
+                        <StatCard
+                            icon={ShoppingCart}
+                            label="ការបញ្ជាទិញកំពុងរង់ចាំ"
+                            value={pendingCount}
+                        />
+                        <StatCard
+                            icon={Cog}
+                            label="កំពុងដំណើរការ"
+                            value={orderCounts.processing}
+                        />
+                        <StatCard
+                            icon={Truck}
+                            label="បានដឹកជញ្ជូន"
+                            value={orderCounts.shipped}
+                        />
+                        <StatCard
+                            icon={CheckCircle}
+                            label="បានបញ្ចប់"
+                            value={orderCounts.completed}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                        {/* Sales Chart */}
+                        <div className="lg:col-span-8">
+                            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
-                                        <TrendingUp className="text-emerald-600" size={28} />
-                                        <h2 className="text-xl font-semibold text-gray-800">តារាងនៃការលក់</h2>
+                                        <TrendingUp
+                                            className="text-emerald-600"
+                                            size={28}
+                                        />
+                                        <h2 className="text-xl font-semibold text-gray-800">
+                                            តារាងនៃការលក់
+                                        </h2>
                                     </div>
-                                    <div className="flex items-center">
+
+                                    <div className="flex rounded-lg border bg-gray-50 p-1">
                                         <button
                                             onClick={() => setPeriod('monthly')}
-                                            className={`px-3 py-1 text-sm font-medium rounded-md ${
+                                            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
                                                 period === 'monthly'
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'text-gray-500 hover:bg-gray-100'
+                                                    ? 'bg-white shadow-sm'
+                                                    : 'text-gray-500 hover:bg-white/70'
                                             }`}
                                         >
                                             30 ថ្ងៃចុងក្រោយ
                                         </button>
+                                        {/* Add more periods if backend supports */}
                                     </div>
                                 </div>
 
-                                <div className="h-80">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={salesData}>
-                                            <defs>
-                                                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                            <XAxis 
-                                                dataKey="date" 
-                                                tick={{ fontSize: 12, fill: '#64748b' }}
-                                            />
-                                            <YAxis 
-                                                tick={{ fontSize: 12, fill: '#64748b' }}
-                                            />
-                                            <Tooltip />
-                                            <Area 
-                                                type="monotone" 
-                                                dataKey="orders" 
-                                                stroke="#10b981" 
-                                                strokeWidth={2} 
-                                                fill="url(#colorOrders)"
-                                                activeDot={{ r: 7 }}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* Recent Orders */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="p-6 border-b flex justify-between items-center">
-                                    <h2 className="font-moul text-2xl text-gray-900">ការបញ្ជាទិញថ្មីៗ</h2>
-                                    <Link href="/seller/orders" className="text-emerald-600 hover:underline">
-                                        មើលទាំងអស់
-                                    </Link>
-                                </div>
-
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="p-4 text-left text-gray-500 font-medium">លេខសម្គាល់</th>
-                                                <th className="p-4 text-left text-gray-500 font-medium">អតិថិជន</th>
-                                                <th className="p-4 text-left text-gray-500 font-medium">កាលបរិច្ឆេទ</th>
-                                                <th className="p-4 text-left text-gray-500 font-medium">សរុប</th>
-                                                <th className="p-4 text-left text-gray-500 font-medium">ស្ថានភាព</th>
-                                                <th className="p-4 w-24"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {orders.length > 0 ? (
-                                                orders.map((o: any) => (
-                                                    <tr key={o.order_id} className="hover:bg-gray-50">
-                                                        <td className="p-4 font-medium">#{o.order_number}</td>
-                                                        <td className="p-4">{o.customer_name}</td>
-                                                        <td className="p-4 text-gray-600">{o.order_date}</td>
-                                                        <td className="p-4 font-semibold">
-                                                            {Number(o.seller_total).toLocaleString()} ៛
-                                                        </td>
-                                                        <td className="p-4">
-                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle(o.status)}`}>
-                                                                {o.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-4">
-                                                            {o.status === 'pending' ? (
-                                                                <button
-                                                                    onClick={() => confirmOrder(o.order_id)}
-                                                                    disabled={loadingId === o.order_id}
-                                                                    className="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-sm flex items-center gap-1 hover:bg-emerald-700 disabled:opacity-70"
-                                                                >
-                                                                    <CheckCircle size={16} />
-                                                                    បញ្ជាក់
-                                                                </button>
-                                                            ) : (
-                                                                <Link
-                                                                    href={`/seller/orders/${o.order_id}`}
-                                                                    className="text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                    មើល
-                                                                </Link>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan={6} className="p-12 text-center text-gray-400">
-                                                        មិនទាន់មានការបញ្ជាទិញនៅឡើយទេ
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
+                                <div className="h-80 w-full">
+                                    {salesData && salesData.length > 0 ? (
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height="100%"
+                                        >
+                                            <AreaChart data={salesData}>
+                                                <defs>
+                                                    <linearGradient
+                                                        id="colorOrders"
+                                                        x1="0"
+                                                        y1="0"
+                                                        x2="0"
+                                                        y2="1"
+                                                    >
+                                                        <stop
+                                                            offset="5%"
+                                                            stopColor="#10b981"
+                                                            stopOpacity={0.8}
+                                                        />
+                                                        <stop
+                                                            offset="95%"
+                                                            stopColor="#10b981"
+                                                            stopOpacity={0}
+                                                        />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
+                                                    stroke="#f1f5f9"
+                                                />
+                                                <XAxis
+                                                    dataKey="date"
+                                                    tick={{
+                                                        fontSize: 12,
+                                                        fill: '#64748b',
+                                                    }}
+                                                />
+                                                <YAxis
+                                                    tick={{
+                                                        fontSize: 12,
+                                                        fill: '#64748b',
+                                                    }}
+                                                />
+                                                <Tooltip />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="orders"
+                                                    stroke="#10b981"
+                                                    strokeWidth={3}
+                                                    fill="url(#colorOrders)"
+                                                    activeDot={{
+                                                        r: 8,
+                                                        stroke: '#10b981',
+                                                        strokeWidth: 2,
+                                                    }}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center text-gray-400">
+                                            មិនមានទិន្នន័យការលក់នៅឡើយទេ
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column */}
-                        <div className="lg:col-span-4 space-y-6">
-                            <StatCard
-                                icon={Landmark}
-                                label="ចំណូលសរុប"
-                                value={`${Math.floor(seller.total_sales || 0).toLocaleString()} ៛`}
-                            />
-                            <StatCard
-                                icon={Package}
-                                label="ផលិតផលកំពុងដាក់លក់"
-                                value={seller.active_products_count || 0}
-                            />
-                            <StatCard
-                                icon={ShoppingCart}
-                                label="ការបញ្ជាទិញកំពុងរង់ចាំ"
-                                value={pendingCount}
-                            />
+                        {/* Top Products */}
+                        <div className="lg:col-span-4">
+                            <div className="rounded-3xl border border-pink-100 bg-gradient-to-br from-pink-50 to-white p-6 shadow-md">
+                                {/* Header */}
+                                <div className="mb-6 flex items-center justify-between">
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        ផលិតផលពេញនិយម
+                                    </h3>
+                                    <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-medium text-pink-700">
+                                        Top Selling
+                                    </span>
+                                </div>
 
-                            {/* Top Products */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                <h3 className="font-semibold text-lg mb-5">ផលិតផលពេញនិយម</h3>
+                                {/* Product List */}
                                 <div className="space-y-4">
                                     {topProducts.length > 0 ? (
-                                        topProducts.map((p: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-medium">{p.name}</p>
-                                                    <p className="text-xs text-gray-500">{p.sold} ការបញ្ជាទិញ</p>
+                                        topProducts.map((p, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 transition-all duration-200 hover:border-pink-200 hover:shadow-md"
+                                            >
+                                                {/* Left */}
+                                                <div className="flex items-center gap-4">
+                                                    {/* Ranking Badge */}
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100 font-bold text-pink-700">
+                                                        #{i + 1}
+                                                    </div>
+
+                                                    {/* Product Info */}
+                                                    <div>
+                                                        <p className="font-semibold text-gray-800">
+                                                            {p.name}
+                                                        </p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {p.sold} ការបញ្ជាទិញ
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="font-semibold text-emerald-600">
-                                                    {Math.floor(p.revenue).toLocaleString()} ៛
+
+                                                {/* Revenue */}
+                                                <p className="text-base font-bold text-emerald-600">
+                                                    {Math.floor(
+                                                        p.revenue,
+                                                    ).toLocaleString()}{' '}
+                                                    ៛
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-gray-400 py-6 text-center">មិនមានទិន្នន័យ</p>
+                                        <div className="rounded-2xl bg-white py-10 text-center text-gray-400 shadow-inner">
+                                            មិនមានទិន្នន័យ
+                                        </div>
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    {/* Recent Orders */}
+                    <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                        <div className="flex items-center justify-between border-b px-6 py-5">
+                            <h2 className="font-moul text-2xl text-gray-900">
+                                ការបញ្ជាទិញថ្មីៗ
+                            </h2>
+                            <Link
+                                href="/seller/orders"
+                                className="text-emerald-600 hover:underline"
+                            >
+                                មើលទាំងអស់ →
+                            </Link>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                                            លេខសម្គាល់
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                                            អតិថិជន
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                                            កាលបរិច្ឆេទ
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                                            សរុប
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">
+                                            ស្ថានភាព
+                                        </th>
+                                        <th className="w-28 px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 bg-white">
+                                    {orders.length > 0 ? (
+                                        orders.map((o) => (
+                                            <tr
+                                                key={o.order_id}
+                                                className="hover:bg-gray-50"
+                                            >
+                                                <td className="px-6 py-4 font-medium">
+                                                    #{o.order_number}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {o.customer_name}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">
+                                                    {o.order_date}
+                                                </td>
+                                                <td className="px-6 py-4 font-semibold text-gray-900">
+                                                    {Number(
+                                                        o.seller_total,
+                                                    ).toLocaleString()}{' '}
+                                                    ៛
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span
+                                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusStyle(
+                                                            o.status,
+                                                        )}`}
+                                                    >
+                                                        {o.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {o.status === 'pending' ? (
+                                                        <button
+                                                            onClick={() =>
+                                                                confirmOrder(
+                                                                    o.order_id,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                loadingId ===
+                                                                o.order_id
+                                                            }
+                                                            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                                        >
+                                                            <CheckCircle
+                                                                size={16}
+                                                            />
+                                                            បញ្ជាក់
+                                                        </button>
+                                                    ) : (
+                                                        <Link
+                                                            href={`/seller/orders/${o.order_id}`}
+                                                            className="flex items-center gap-2 text-gray-500 hover:text-gray-700"
+                                                        >
+                                                            <Eye size={16} />
+                                                            មើល
+                                                        </Link>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="px-6 py-16 text-center text-gray-400"
+                                            >
+                                                មិនទាន់មានការបញ្ជាទិញនៅឡើយទេ
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -290,13 +480,21 @@ export default function SellerDashboard({
 
 function StatCard({ icon: Icon, label, value }: any) {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex justify-between items-start">
+        <div className="group rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-gray-500 text-sm">{label}</p>
-                    <p className="text-3xl font-semibold mt-2 text-gray-900">{value}</p>
+                    <p className="text-sm text-gray-500">{label}</p>
+                    <p className="mt-3 text-3xl font-bold text-gray-900">
+                        {value}
+                    </p>
                 </div>
-                <Icon size={28} className="text-gray-400" />
+
+                <div className="rounded-2xl bg-emerald-100 p-3 transition group-hover:bg-emerald-600">
+                    <Icon
+                        size={26}
+                        className="text-emerald-600 group-hover:text-white"
+                    />
+                </div>
             </div>
         </div>
     );

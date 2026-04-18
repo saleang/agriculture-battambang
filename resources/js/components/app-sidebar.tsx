@@ -94,7 +94,7 @@ const sellerNavItems: NavItem[] = [
     },
     {
         title: 'ការវាយតម្លៃរបស់ខ្ញុំ',
-        href: '/seller/reviews',
+        href: '/Farmdetail',
         icon: Star,
     },
     {

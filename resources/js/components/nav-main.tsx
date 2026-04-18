@@ -58,7 +58,7 @@ export function NavMain({ items = [] }: NavMainProps) {
             {hasChildren ? (
               <SidebarMenuButton
                 onClick={() => toggleMenu(item.title)}
-                className="h-10 justify-between hover:bg-[#46953D]/30 active:bg-[#46953D]/50 transition-colors"
+                className="h-10 justify-between text-emerald-100 hover:bg-[#46953D]/30 active:bg-[#46953D]/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {item.icon && <item.icon className="h-4 w-4" />}
@@ -74,7 +74,7 @@ export function NavMain({ items = [] }: NavMainProps) {
               <SidebarMenuButton
                 asChild
                 isActive={isActive(item.href)}
-                className="h-10 transition-colors hover:bg-[#46953D]/30 data-[active=true]:bg-[#46953D] data-[active=true]:text-white data-[active=true]:shadow-sm"
+                className="h-10 transition-colors text-emerald-100 hover:bg-[#46953D]/30 data-[active=true]:relative data-[active=true]:bg-white data-[active=true]:text-emerald-700 data-[active=true]:hover:bg-white data-[active=true]:hover:text-emerald-800 active-link"
               >
                 <Link href={resolveUrl(item.href!)} prefetch>
                   {item.icon && <item.icon className="h-4 w-4" />}
@@ -84,21 +84,24 @@ export function NavMain({ items = [] }: NavMainProps) {
             )}
           </SidebarMenuItem>
 
-          {open &&
-            item.children?.map((child) => (
-              <SidebarMenuItem key={child.title} className="ml-6">
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive(child.href)}
-                  className="h-9 transition-colors hover:bg-[#46953D]/25 data-[active=true]:bg-[#46953D]/90 data-[active=true]:text-white"
-                >
-                  <Link href={resolveUrl(child.href!)} prefetch>
-                    {child.icon && <child.icon className="h-3.5 w-3.5" />}
-                    <span>{child.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+          {open && (
+            <div className="ml-6 flex flex-col border-l border-emerald-500 py-2 pl-2">
+              {item.children?.map((child) => (
+                <SidebarMenuItem key={child.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(child.href)}
+                    className="h-9 transition-colors text-emerald-100 hover:bg-[#46953D]/25 data-[active=true]:relative data-[active=true]:bg-white data-[active=true]:text-emerald-700 data-[active=true]:hover:bg-white data-[active=true]:hover:text-emerald-800 active-link"
+                  >
+                    <Link href={resolveUrl(child.href!)} prefetch>
+                      {child.icon && <child.icon className="h-3.5 w-3.5" />}
+                      <span>{child.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </div>
+          )}
         </Fragment>
       );
     })}

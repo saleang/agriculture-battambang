@@ -92,8 +92,8 @@ const CategoryPage: React.FC = () => {
 
                     {/* Header */}
                     <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ប្រភេទផលិតផល</h1>
-                        <p className="text-sm text-gray-500 mt-1">ជ្រើសរើសប្រភេទដែលអ្នកចង់លក់ — ប្រភេទដែលបានជ្រើសនឹងបង្ហាញក្នុង dropdown ផលិតផល</p>
+                        <h1 className="text-3xl font-moul text-green-900 dark:text-white">ប្រភេទផលិតផល</h1>
+                        <p className="text-base text-gray-500 mt-3">ជ្រើសរើសប្រភេទដែលអ្នកចង់លក់ — ប្រភេទដែលបានជ្រើសនឹងបង្ហាញក្នុង dropdown ផលិតផល</p>
                     </div>
 
                     {/* Search */}
@@ -104,19 +104,19 @@ const CategoryPage: React.FC = () => {
                             placeholder="ស្វែងរកប្រភេទ..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                            className="w-full pl-9 pr-4 py-2.5 text-base bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                         />
                     </div>
 
                     {/* My chosen categories */}
                     <div className="mb-8">
-                        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        <h2 className="text-lg font-semibold text-gray-500 uppercase tracking-wide mb-3">
                             ប្រភេទរបស់ខ្ញុំ ({chosen.length})
                         </h2>
                         {chosen.length === 0 ? (
                             <div className="text-center py-8 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
                                 <Tag className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                                <p className="text-sm text-gray-400">មិនទាន់មានប្រភេទណាមួយបានជ្រើសទេ</p>
+                                <p className="text-lg text-gray-400">មិនទាន់មានប្រភេទណាមួយបានជ្រើសទេ</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -150,11 +150,11 @@ const CategoryPage: React.FC = () => {
 
                     {/* Available categories */}
                     <div>
-                        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        <h2 className="text-lg font-semibold text-gray-500 uppercase tracking-wide mb-3">
                             ប្រភេទដែលអាចជ្រើសបាន ({available.length})
                         </h2>
                         {available.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-6">បានជ្រើសប្រភេទទាំងអស់ហើយ</p>
+                            <p className="text-lg text-gray-400 text-center py-6">បានជ្រើសប្រភេទទាំងអស់ហើយ</p>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {available.map(cat => (
