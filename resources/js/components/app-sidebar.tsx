@@ -50,8 +50,8 @@ const adminNavItems: NavItem[] = [
         icon: Package,
     },
     {
-        title: ' Reviews & Ratings',
-        href: '/seller/reviews',
+        title: 'ការ​វាយតម្លៃ',
+        href: '/admin/ratings',
         icon: Star,
     },
     {   title: 'របាយការណ៍',

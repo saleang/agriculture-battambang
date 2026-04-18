@@ -569,19 +569,19 @@ const ProductPage: React.FC = () => {
                     fontFamily: "'Khmer OS Battambang', 'Khmer', sans-serif",
                 }}
             >
-                <h1 className="mb-6 text-center text-3xl font-bold md:text-left">
+                <h1 className="mb-6 text-center text-2xl font-moul md:text-left">
                     ការគ្រប់គ្រងផលិតផល
                 </h1>
 
                 {/* Form Section */}
                 <div className="mb-2 rounded-xl border bg-white p-6 shadow-lg">
-                    <h2 className="mb-2 text-2xl font-semibold">
+                    <h2 className="mb-2 text-1xl font-semibold">
                         {formData.product_id
                             ? 'កែសម្រួលផលិតផល'
                             : 'បន្ថែមផលិតផលថ្មី'}
                     </h2>
 
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="grid gap-5 md:grid-cols-2" style={{ fontSize: '14px' }}>
                         <div>
                             <label className="mb-1 block font-medium">
                                 ឈ្មោះផលិតផល *
@@ -774,7 +774,7 @@ const ProductPage: React.FC = () => {
                         បញ្ជីឈ្មោះផលិតផល សរុប: {products.length} ផលិតផល
                     </h2>
 
-                    <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+                    <div className="mb-6 flex flex-col gap-4 sm:flex-row" style={{ fontSize: '14px' }}>
                         <select
                             value={searchBy}
                             onChange={(e) => setSearchBy(e.target.value as any)}
@@ -814,7 +814,7 @@ const ProductPage: React.FC = () => {
                         </p>
                     ) : (
                         <table className="w-full min-w-[1000px] text-base">
-                            <thead className="bg-gray-100">
+                            <thead className="bg-gray-100" >
                                 <tr>
                                     <th className="px-6 py-4 text-left">ល.រ</th>
                                     <th className="px-6 py-4 text-left">
@@ -843,7 +843,7 @@ const ProductPage: React.FC = () => {
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody style={{ fontSize:'14px' }}>
                                 {filteredProducts.map((p) => (
                                     <tr
                                         key={p.product_id}

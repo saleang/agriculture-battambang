@@ -156,6 +156,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{category}',              [AdminCategoryController::class, 'destroy'])->name('destroy');
             Route::patch('/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('toggle-status');
         });
+
+        //Views Rating 
+        Route::prefix('ratings')->name('ratings.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\AdminRatingController::class, 'index'])->name('index');
+    Route::delete('/{rating}', [\App\Http\Controllers\Admin\AdminRatingController::class, 'destroy'])->name('destroy');
+});
     });
 
     /*
@@ -233,6 +239,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{payment}/refund',       [App\Http\Controllers\Seller\PaymentController::class, 'refund'])->name('refund');
             Route::get('/export',                  [App\Http\Controllers\Seller\PaymentController::class, 'export'])->name('export');
         });
+        //View Rating
+        Route::get('/reviews', [\App\Http\Controllers\Seller\SellerReviewsController::class, 'index'])->name('reviews.index');
     });
 
     /*
