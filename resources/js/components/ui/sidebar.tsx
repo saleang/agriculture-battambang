@@ -165,7 +165,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-white flex h-full w-(--sidebar-width) flex-col",
+          "bg-emerald-700 flex h-full w-(--sidebar-width) flex-col",
           className
         )}
         {...props}
@@ -186,7 +186,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-white w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-sidebar w-(--sidebar-width) p-0 [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -236,7 +236,7 @@ function Sidebar({
       >
         <div
           data-sidebar="sidebar"
-          className="bg-white flex h-full w-full flex-col group-data-[variant=floating]:rounded-xl group-data-[variant=floating]:border group-data-[variant=floating]:border-slate-200/80 group-data-[variant=floating]:shadow-lg group-data-[variant=floating]:shadow-slate-500/5"
+          className="bg-emerald-700 flex h-full w-full flex-col group-data-[variant=floating]:rounded-xl group-data-[variant=floating]:border group-data-[variant=floating]:border-slate-200/80 group-data-[variant=floating]:shadow-lg group-data-[variant=floating]:shadow-slate-500/5"
         >
           {children}
         </div>
@@ -462,26 +462,25 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 text-left text-sm font-medium text-slate-700 outline-none transition-colors duration-150 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-50 data-[active=true]:bg-emerald-600 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-emerald-600/20 group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default: "",
-        outline:
-          "border border-slate-200 bg-transparent",
-      },
-      size: {
-        default: "h-8 text-sm",
-        sm: "h-7 text-xs",
-        lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
+    'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 text-left font-medium text-emerald-100 outline-none transition-colors duration-150 hover:bg-emerald-700 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-50 data-[active=true]:bg-white data-[active=true]:text-emerald-700 data-[active=true]:shadow-md data-[active=true]:shadow-emerald-600/20 group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+    {
+        variants: {
+            variant: {
+                default: '',
+                outline: 'border border-slate-200 bg-transparent',
+            },
+            size: {
+                default: 'h-8 text-base',
+                sm: 'h-7 text-xs',
+                lg: 'h-12 text-sm group-data-[collapsible=icon]:p-0!',
+            },
+        },
+        defaultVariants: {
+            variant: 'default',
+            size: 'default',
+        },
+    }
+);
 
 function SidebarMenuButton({
   asChild = false,

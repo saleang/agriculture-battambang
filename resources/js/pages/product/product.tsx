@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import axios from 'axios';
+import { Pencil, Trash2 } from 'lucide-react';
 import React, { KeyboardEvent, useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 
@@ -35,6 +36,10 @@ const ProductPage: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // New: Control form visibility
+    const [showForm, setShowForm] = useState(true);
+
     const [formData, setFormData] = useState<ProductFormData>({
         stock: 'available',
         is_active: true,
@@ -45,12 +50,10 @@ const ProductPage: React.FC = () => {
     });
 
     const [displayPrice, setDisplayPrice] = useState<string>('');
-
     const [searchTerm, setSearchTerm] = useState('');
     const [searchBy, setSearchBy] = useState<
         'seller_product_id' | 'name' | 'category' | 'price'
     >('name');
-
     const [selectedProductName, setSelectedProductName] = useState<string>('');
     const [selectedImages, setSelectedImages] = useState<
         { image_url: string; is_primary: boolean }[]
@@ -86,9 +89,7 @@ const ProductPage: React.FC = () => {
 
     const toKhmerPrice = (price: number | undefined): string => {
         if (price == null || Number.isNaN(price)) return '—';
-        // Always display as whole number (floor to remove any decimal part)
         const whole = Math.floor(price);
-        // Format with thousand separators (using en-US locale), then convert digits to Khmer
         const formatted = whole.toLocaleString('en-US');
         return formatted.replace(/\d/g, (d) => '០១២៣៤៥៦៧៨៩'[Number(d)]);
     };
@@ -102,7 +103,6 @@ const ProductPage: React.FC = () => {
 
     const handlePriceKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         const char = e.key;
-
         if (
             [
                 'Backspace',
@@ -117,18 +117,12 @@ const ProductPage: React.FC = () => {
                 'End',
                 'Escape',
             ].includes(char)
-        ) {
+        )
             return;
-        }
-
-        if (/[0-9]/.test(char)) return;
-        if (/[០-៩]/.test(char)) return;
-
+        if (/[0-9]/.test(char) || /[០-៩]/.test(char)) return;
         e.preventDefault();
     };
 
-    
-    // Data Fetching
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -158,10 +152,6 @@ const ProductPage: React.FC = () => {
         try {
             const res = await axios.get('/seller/category/my-categories');
             const data = res.data?.data || res.data || [];
-            // setCategories(
-            //     Array.isArray(data) ? data.filter((c) => c.is_active) : [],
-            // );
-      
             setCategories(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('កំហុសក្នុងការទាញយកប្រភេទ៖', err);
@@ -173,7 +163,6 @@ const ProductPage: React.FC = () => {
         fetchCategories();
     }, []);
 
-    // Sync displayPrice when formData.price changes (edit/load)
     useEffect(() => {
         if (formData.price != null && !Number.isNaN(formData.price)) {
             setDisplayPrice(westernToKhmer(formData.price));
@@ -182,8 +171,6 @@ const ProductPage: React.FC = () => {
         }
     }, [formData.price]);
 
-    
-    // Form Handlers
     const cleanupNewImages = () => {
         formData.newImagePreviews?.forEach((url) => {
             if (url) URL.revokeObjectURL(url);
@@ -222,12 +209,10 @@ const ProductPage: React.FC = () => {
         if (type === 'checkbox') {
             newValue = checked;
         } else if (name === 'price') {
-            if (value !== displayPrice) {
-                setDisplayPrice(value);
-            }
+            if (value !== displayPrice) setDisplayPrice(value);
             const normalized = khmerToWestern(value);
             newValue = normalized ? Number(normalized) : undefined;
-        } else if (['category_id'].includes(name)) {
+        } else if (name === 'category_id') {
             newValue = value === '' ? undefined : Number(value);
         } else {
             newValue = value;
@@ -294,10 +279,7 @@ const ProductPage: React.FC = () => {
                         skippedCount === newFiles.length
                             ? 'រូបភាពស្ទួន'
                             : 'រូបភាពខ្លះត្រូវបានរំលង',
-                    html: `
-            ${skippedCount} រូបភាពស្ទួន៖<br>
-            <ul>${skippedReasons.map((r) => `<li>${r}</li>`).join('')}</ul>
-          `,
+                    html: `${skippedCount} រូបភាពស្ទួន៖<br><ul>${skippedReasons.map((r) => `<li>${r}</li>`).join('')}</ul>`,
                     icon: 'info',
                 });
             }
@@ -319,7 +301,6 @@ const ProductPage: React.FC = () => {
             if (isNew) {
                 const previewUrl = prev.newImagePreviews?.[index];
                 if (previewUrl) URL.revokeObjectURL(previewUrl);
-
                 newState.newImages =
                     prev.newImages?.filter((_, i) => i !== index) || [];
                 newState.newImagePreviews =
@@ -336,13 +317,10 @@ const ProductPage: React.FC = () => {
                     ];
                 }
             }
-
             return newState;
         });
     };
 
-    
-    // Action Handlers
     const handleSubmit = async () => {
         const isUpdate = !!formData.product_id;
 
@@ -359,20 +337,16 @@ const ProductPage: React.FC = () => {
             return;
         }
 
-        // Prevent duplicate product name when creating new product
         if (!isUpdate) {
             const normalizedNewName = normalizeName(formData.productname);
             const isDuplicate = products.some(
                 (p) => normalizeName(p.productname) === normalizedNewName,
             );
-
             if (isDuplicate) {
                 Swal.fire({
                     title: 'ផលិតផលស្ទួន',
-                    html: `ឈ្មោះផលិតផល <b>"${formData.productname}"</b> មានរួចហើយក្នុងបញ្ជីរបស់អ្នក។<br>
-                 សូមប្រើឈ្មោះផ្សេង ឬកែសម្រួលផលិតផលដែលមានស្រាប់។`,
+                    html: `ឈ្មោះផលិតផល <b>"${formData.productname}"</b> មានរួចហើយក្នុងបញ្ជីរបស់អ្នក។<br>សូមប្រើឈ្មោះផ្សេង ឬកែសម្រួលផលិតផលដែលមានស្រាប់។`,
                     icon: 'warning',
-                    confirmButtonText: 'យល់ព្រម',
                 });
                 return;
             }
@@ -386,15 +360,6 @@ const ProductPage: React.FC = () => {
         });
 
         const dedupedFiles = Array.from(seen.values());
-
-        if (dedupedFiles.length < imagesToSend.length) {
-            Swal.fire({
-                title: 'បានសម្អាតស្ទួន',
-                text: `បានលុប ${imagesToSend.length - dedupedFiles.length} ឯកសារស្ទួន`,
-                icon: 'info',
-                timer: 2200,
-            });
-        }
 
         const fd = new FormData();
 
@@ -426,10 +391,7 @@ const ProductPage: React.FC = () => {
             }
         });
 
-        if (isUpdate) {
-            fd.append('_method', 'PUT');
-        }
-
+        if (isUpdate) fd.append('_method', 'PUT');
         if (isUpdate && formData.deletedImages?.length) {
             formData.deletedImages.forEach((url) =>
                 fd.append('delete_images[]', url),
@@ -460,10 +422,7 @@ const ProductPage: React.FC = () => {
             resetForm();
             fetchProducts();
         } catch (err: any) {
-            const msg =
-                err.response?.data?.message ||
-                err.response?.data?.errors?.join?.(', ') ||
-                'ប្រតិបត្តិការបរាជ័យ';
+            const msg = err.response?.data?.message || 'ប្រតិបត្តិការបរាជ័យ';
             Swal.fire('កំហុស', msg, 'error');
         }
     };
@@ -495,8 +454,6 @@ const ProductPage: React.FC = () => {
             showCancelButton: true,
             confirmButtonText: 'បាទ/ចាស!',
             cancelButtonText: 'បោះបង់',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
@@ -506,7 +463,6 @@ const ProductPage: React.FC = () => {
                         text: 'ផលិតផលត្រូវបានលុបរួចរាល់។',
                         icon: 'success',
                         timer: 1500,
-                        showConfirmButton: false,
                     });
                     fetchProducts();
                 } catch {
@@ -518,7 +474,6 @@ const ProductPage: React.FC = () => {
 
     const handleEdit = (p: Product) => {
         cleanupNewImages();
-
         setFormData({
             ...p,
             unit: p.unit || 'គ.ក្រ',
@@ -534,14 +489,11 @@ const ProductPage: React.FC = () => {
 
     const openImageModal = (product: Product) => {
         if (!product.images?.length) return;
-
         setSelectedProductName(product.productname);
         setSelectedImages(product.images);
         setShowImageModal(true);
     };
 
-    
-    // Computed Values
     const filteredProducts = products.filter((p) => {
         if (!searchTerm.trim()) return true;
         const term = searchTerm.trim().toLowerCase();
@@ -561,426 +513,438 @@ const ProductPage: React.FC = () => {
         }
     });
 
+    const toggleForm = () => setShowForm((prev) => !prev);
+
     return (
         <AppLayout>
-            <div
-                className="min-h-screen bg-gray-50 p-6 font-khmer"
-                style={{
-                    fontFamily: "'Khmer OS Battambang', 'Khmer', sans-serif",
-                }}
-            >
-                <h1 className="mb-6 text-center text-3xl font-bold md:text-left">
-                    ការគ្រប់គ្រងផលិតផល
-                </h1>
-
-                {/* Form Section */}
-                <div className="mb-2 rounded-xl border bg-white p-6 shadow-lg">
-                    <h2 className="mb-2 text-2xl font-semibold">
-                        {formData.product_id
-                            ? 'កែសម្រួលផលិតផល'
-                            : 'បន្ថែមផលិតផលថ្មី'}
-                    </h2>
-
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <div>
-                            <label className="mb-1 block font-medium">
-                                ឈ្មោះផលិតផល *
-                            </label>
-                            <input
-                                name="productname"
-                                placeholder="ឈ្មោះផលិតផល"
-                                value={formData.productname || ''}
-                                onChange={handleChange}
-                                className="w-full rounded border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-medium">
-                                តម្លៃ (រៀល) *
-                            </label>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                name="price"
-                                placeholder="តម្លៃ (ឧ. ១០០០០ ឬ 10000)"
-                                value={displayPrice}
-                                onChange={handleChange}
-                                onKeyDown={handlePriceKeyDown}
-                                className="w-full rounded border p-3 font-khmer focus:ring-2 focus:ring-green-500 focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-medium">
-                                ឯកតា
-                            </label>
-                            <input
-                                name="unit"
-                                placeholder="ឯកតា (ឧ. គ.ក្រ, ដប, កញ្ចប់)"
-                                value={formData.unit || ''}
-                                onChange={handleChange}
-                                className="w-full rounded border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-medium">
-                                ស្ថានភាពស្តុក
-                            </label>
-                            <select
-                                name="stock"
-                                value={formData.stock || 'available'}
-                                onChange={handleChange}
-                                className="w-full rounded border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                            >
-                                <option value="available">មានទំនិញ</option>
-                                <option value="out_of_stock">អស់ទំនិញ</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-medium">
-                                ប្រភេទផលិតផល *
-                            </label>
-                            <select
-                                name="category_id"
-                                value={formData.category_id ?? ''}
-                                onChange={handleChange}
-                                className="w-full rounded border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                            >
-                                <option value="">ជ្រើសរើសប្រភេទ</option>
-                                {categories.map((c) => (
-                                    <option
-                                        key={c.category_id}
-                                        value={c.category_id}
-                                    >
-                                        {c.category_name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="flex items-center gap-4 md:col-span-2">
-                            <label className="font-medium">
-                                ស្ថានភាពផលិតផល៖
-                            </label>
-                            <input
-                                type="checkbox"
-                                name="is_active"
-                                checked={formData.is_active ?? true}
-                                onChange={handleChange}
-                                className="h-5 w-5 text-green-600"
-                            />
-                            <span
-                                className={
-                                    formData.is_active
-                                        ? 'font-medium text-green-600'
-                                        : 'font-medium text-red-600'
-                                }
-                            >
-                                {formData.is_active
-                                    ? 'ដាក់លក់'
-                                    : 'មិនទាន់ដាក់លក់'}
-                            </span>
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="mb-2 block font-medium">
-                                រូបភាពផលិតផល
-                            </label>
-                            <p className="mb-2 text-sm text-gray-600">
-                                អាចបញ្ជូលរូបភាពច្រើនបាន។
-                                មិនអាចបញ្ជូលរូបភាពស្ទួន។
-                            </p>
-                            <input
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                onChange={handleImagesChange}
-                                className="w-full rounded border p-3 file:mr-4 file:rounded file:border-0 file:bg-green-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-green-700 hover:file:bg-green-100"
-                            />
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-4 md:col-span-2">
-                            {formData.existingImages?.map((img, i) => (
-                                <div
-                                    key={`exist-${i}`}
-                                    className="group relative"
-                                >
-                                    <img
-                                        src={img.image_url}
-                                        alt="រូបចាស់"
-                                        className="h-24 w-24 rounded-lg border object-cover shadow-sm transition group-hover:scale-105"
-                                    />
-                                    <button
-                                        onClick={() => removeImage(i, false)}
-                                        className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-lg font-bold text-white shadow-md"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-
-                            {formData.newImagePreviews?.map((previewUrl, i) => (
-                                <div
-                                    key={`new-${i}`}
-                                    className="group relative"
-                                >
-                                    <img
-                                        src={previewUrl}
-                                        alt="រូបថ្មី"
-                                        className="h-24 w-24 rounded-lg border object-cover shadow-sm transition group-hover:scale-105"
-                                    />
-                                    <button
-                                        onClick={() => removeImage(i, true)}
-                                        className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-lg font-bold text-white shadow-md"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="mb-2 block font-medium">
-                                ការពិពណ៌នា
-                            </label>
-                            <textarea
-                                name="description"
-                                placeholder="ពិពណ៌នាអំពីផលិតផលរបស់អ្នក ..."
-                                value={formData.description || ''}
-                                onChange={handleChange}
-                                className="min-h-[100px] w-full rounded border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                                rows={4}
-                            />
-                        </div>
-
+            <div className="min-h-screen bg-gray-50 py-6 font-khmer">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Page Header with Toggle */}
+                    <div className="mb-4 flex items-center justify-between">
+                        <h1 className="text-3xl font-moul text-green-900">
+                            ការគ្រប់គ្រងផលិតផល
+                        </h1>
                         <button
-                            onClick={handleSubmit}
-                            className="mt-8 rounded-xl bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={loading}
+                            onClick={toggleForm}
+                            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-red-500 px-5 py-2.5 text-sm font-medium text-white shadow transition hover:bg-red-600"
                         >
-                            {formData.product_id
-                                ? 'កែប្រែផលិតផល'
-                                : 'បន្ថែមផលិតផល'}
+                            {showForm ? 'លាក់ទម្រង់ ↑' : 'បង្ហាញទម្រង់ ↓'}
                         </button>
                     </div>
-                </div>
 
-                {/* Product List */}
-                <div className="overflow-x-auto rounded-xl bg-white p-6 shadow-lg">
-                    <h2 className="text-1xl mb-6 font-semibold">
-                        បញ្ជីឈ្មោះផលិតផល សរុប: {products.length} ផលិតផល
-                    </h2>
+                    {/* Form Section */}
+                    {showForm && (
+                        <div className="mb-10 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
+                            <h2 className="mb-5 text-2xl font-semibold text-gray-800">
+                                {formData.product_id
+                                    ? 'កែសម្រួលផលិតផល'
+                                    : 'បន្ថែមផលិតផលថ្មី'}
+                            </h2>
 
-                    <div className="mb-6 flex flex-col gap-4 sm:flex-row">
-                        <select
-                            value={searchBy}
-                            onChange={(e) => setSearchBy(e.target.value as any)}
-                            className="min-w-[180px] rounded-lg border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                        >
-                            <option value="seller_product_id">
-                                លេខសម្គាល់ផលិតផល
-                            </option>
-                            <option value="name">ឈ្មោះ</option>
-                            <option value="category">ប្រភេទ</option>
-                            <option value="price">តម្លៃ</option>
-                        </select>
+                            <div className="grid gap-5 md:grid-cols-2">
+                                <div>
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        ឈ្មោះផលិតផល
+                                    </label>
+                                    <input
+                                        name="productname"
+                                        placeholder="ឈ្មោះផលិតផល"
+                                        value={formData.productname || ''}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                    />
+                                </div>
 
-                        <input
-                            type={
-                                searchBy === 'price' ||
-                                searchBy === 'seller_product_id'
-                                    ? 'number'
-                                    : 'text'
-                            }
-                            placeholder={`ស្វែងរកតាម ${searchBy === 'name' ? 'ឈ្មោះ' : searchBy === 'category' ? 'ប្រភេទ' : searchBy === 'price' ? 'តម្លៃ' : 'លេខសម្គាល់'}...`}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="flex-1 rounded-lg border p-3 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                        />
-                    </div>
+                                <div>
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        តម្លៃ (រៀល)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        name="price"
+                                        placeholder="តម្លៃ (ឧ. ១០០០០៛)"
+                                        value={displayPrice}
+                                        onChange={handleChange}
+                                        onKeyDown={handlePriceKeyDown}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 font-khmer text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                    />
+                                </div>
 
-                    {loading ? (
-                        <p className="animate-pulse py-12 text-center text-lg text-gray-500">
-                            កំពុងផ្ទុកទិន្នន័យ...
-                        </p>
-                    ) : filteredProducts.length === 0 ? (
-                        <p className="py-12 text-center text-lg text-gray-500">
-                            {searchTerm
-                                ? 'រកមិនឃើញផលិតផលផ្គូផ្គង'
-                                : 'មិនទាន់មានផលិតផល'}
-                        </p>
-                    ) : (
-                        <table className="w-full min-w-[1000px] text-base">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-left">ល.រ</th>
-                                    <th className="px-6 py-4 text-left">
-                                        ឈ្មោះ
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        តម្លៃ
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
+                                <div>
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
                                         ឯកតា
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        ប្រភេទ
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        ពិពណ៌នា
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        រូបភាព
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        ស្ថានភាព
-                                    </th>
-                                    <th className="px-6 py-4 text-left">
-                                        សកម្មភាព
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredProducts.map((p) => (
-                                    <tr
-                                        key={p.product_id}
-                                        className="border-b transition hover:bg-gray-50"
-                                    >
-                                        <td className="px-6 py-4">
-                                            {p.seller_product_id}
-                                        </td>
-                                        <td className="px-6 py-4 font-medium">
-                                            {p.productname}
-                                        </td>
-                                        <td className="px-6 py-4 font-medium">
-                                            {toKhmerPrice(p.price)} រៀល
-                                        </td>
-                                        <td className="px-6 py-4">{p.unit}</td>
-                                        <td className="px-6 py-4">
-                                            {getCategoryName(p.category_id)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {p.description}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div
-                                                className={`flex items-center gap-2 ${p.images?.length ? 'cursor-pointer hover:opacity-90' : 'text-gray-400'}`}
-                                                onClick={() =>
-                                                    p.images?.length &&
-                                                    openImageModal(p)
-                                                }
-                                            >
-                                                {p.images &&
-                                                p.images.length > 0 ? (
-                                                    <>
-                                                        {/* Show only the first image */}
-                                                        <img
-                                                            src={
-                                                                p.images[0]
-                                                                    .image_url
-                                                            }
-                                                            alt={`${p.productname} - 1`}
-                                                            className="h-14 w-14 rounded-lg border object-cover shadow-sm transition hover:scale-105"
-                                                        />
+                                    </label>
+                                    <input
+                                        name="unit"
+                                        placeholder="ឯកតា (ឧ. គ.ក្រ)"
+                                        value={formData.unit || ''}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                    />
+                                </div>
 
-                                                        {/* Show +N if there are more than 1 image */}
-                                                        {p.images.length >
-                                                            1 && (
-                                                            <div className="flex h-14 w-14 items-center justify-center rounded-lg border bg-gray-100 text-sm font-medium text-gray-700">
-                                                                +
-                                                                {p.images
-                                                                    .length - 1}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <span className="text-gray-400 italic">
-                                                        គ្មានរូបភាព
-                                                    </span>
-                                                )}
+                                <div>
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        ស្ថានភាពស្តុក
+                                    </label>
+                                    <select
+                                        name="stock"
+                                        value={formData.stock || 'available'}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                    >
+                                        <option value="available">
+                                            មានទំនិញ
+                                        </option>
+                                        <option value="out_of_stock">
+                                            អស់ទំនិញ
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        ប្រភេទផលិតផល
+                                    </label>
+                                    <select
+                                        name="category_id"
+                                        value={formData.category_id ?? ''}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                    >
+                                        <option value="">ជ្រើសរើសប្រភេទ</option>
+                                        {categories.map((c) => (
+                                            <option
+                                                key={c.category_id}
+                                                value={c.category_id}
+                                            >
+                                                {c.category_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex items-center gap-3 md:col-span-2">
+                                    <label className="text-lg font-medium text-gray-700">
+                                        ស្ថានភាពផលិតផល៖
+                                    </label>
+                                    <input
+                                        type="checkbox"
+                                        name="is_active"
+                                        checked={formData.is_active ?? true}
+                                        onChange={handleChange}
+                                        className="h-4 w-4 text-emerald-600"
+                                    />
+                                    <span
+                                        className={`text-lg font-medium ${formData.is_active ? 'text-emerald-600' : 'text-red-600'}`}
+                                    >
+                                        {formData.is_active
+                                            ? 'ដាក់លក់'
+                                            : 'មិនទាន់ដាក់លក់'}
+                                    </span>
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        រូបភាពផលិតផល
+                                    </label>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleImagesChange}
+                                        className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-base"
+                                    />
+                                </div>
+
+                                <div className="flex flex-wrap gap-3 md:col-span-2">
+                                    {formData.existingImages?.map((img, i) => (
+                                        <div
+                                            key={`exist-${i}`}
+                                            className="group relative"
+                                        >
+                                            <img
+                                                src={img.image_url}
+                                                alt="existing"
+                                                className="h-20 w-20 rounded-xl border object-cover"
+                                            />
+                                            <button
+                                                onClick={() =>
+                                                    removeImage(i, false)
+                                                }
+                                                className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-red-600 text-lg leading-none text-white shadow hover:bg-red-700"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {formData.newImagePreviews?.map(
+                                        (previewUrl, i) => (
+                                            <div
+                                                key={`new-${i}`}
+                                                className="group relative"
+                                            >
+                                                <img
+                                                    src={previewUrl}
+                                                    alt="new"
+                                                    className="h-20 w-20 rounded-xl border object-cover"
+                                                />
+                                                <button
+                                                    onClick={() =>
+                                                        removeImage(i, true)
+                                                    }
+                                                    className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-red-600 text-lg leading-none text-white shadow hover:bg-red-700"
+                                                >
+                                                    ×
+                                                </button>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={() =>
-                                                    toggleActive(
-                                                        p.product_id,
-                                                        p.is_active,
-                                                    )
-                                                }
-                                                className={`rounded-lg border px-4 py-1.5 text-sm font-medium ${
-                                                    p.is_active
-                                                        ? 'border-green-300 bg-green-100 text-green-700'
-                                                        : 'border-red-300 bg-red-100 text-red-700'
-                                                } transition hover:opacity-90`}
-                                            >
-                                                {p.is_active
-                                                    ? 'សកម្ម'
-                                                    : 'អសកម្ម'}
-                                            </button>
-                                        </td>
-                                        <td className="space-x-4 px-6 py-4">
-                                            <button
-                                                onClick={() => handleEdit(p)}
-                                                className="font-medium text-blue-600 hover:text-blue-800"
-                                            >
-                                                កែប្រែ
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(p.product_id)
-                                                }
-                                                className="font-medium text-red-600 hover:text-red-800"
-                                            >
-                                                លុប
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        ),
+                                    )}
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="mb-1.5 block text-lg font-medium text-gray-700">
+                                        ការពិពណ៌នា
+                                    </label>
+                                    <textarea
+                                        name="description"
+                                        placeholder="ពិពណ៌នាអំពីផលិតផល..."
+                                        value={formData.description || ''}
+                                        onChange={handleChange}
+                                        className="min-h-[80px] w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200"
+                                        rows={3}
+                                    />
+                                </div>
+
+                                <div className="mt-4 md:col-span-2">
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="w-full rounded-xl bg-emerald-600 py-3 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-70"
+                                        disabled={loading}
+                                    >
+                                        {formData.product_id
+                                            ? 'កែប្រែផលិតផល'
+                                            : 'បន្ថែមផលិតផល'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     )}
+
+                    {/* Product List */}
+                    <div className="rounded-2xl bg-white p-6 shadow-lg">
+                        <h2 className="mb-5 text-xl font-semibold text-gray-800">
+                            បញ្ជីផលិតផល (សរុបចំនួន: {products.length})
+                        </h2>
+
+                        <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+                            <select
+                                value={searchBy}
+                                onChange={(e) =>
+                                    setSearchBy(e.target.value as any)
+                                }
+                                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500"
+                            >
+                                <option value="seller_product_id">
+                                    លេខសម្គាល់
+                                </option>
+                                <option value="name">ឈ្មោះ</option>
+                                <option value="category">ប្រភេទ</option>
+                                <option value="price">តម្លៃ</option>
+                            </select>
+                            <input
+                                type={
+                                    searchBy === 'price' ||
+                                    searchBy === 'seller_product_id'
+                                        ? 'number'
+                                        : 'text'
+                                }
+                                placeholder="ស្វែងរក..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:ring-1"
+                            />
+                        </div>
+
+                        {loading ? (
+                            <p className="py-12 text-center text-sm text-gray-500">
+                                កំពុងផ្ទុក...
+                            </p>
+                        ) : filteredProducts.length === 0 ? (
+                            <p className="py-12 text-center text-sm text-gray-500">
+                                {searchTerm
+                                    ? 'រកមិនឃើញផលិតផល'
+                                    : 'មិនទាន់មានផលិតផល'}
+                            </p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-lg">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left">
+                                                ល.រ
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                ឈ្មោះ
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                តម្លៃ
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                ឯកតា
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                ប្រភេទ
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                រូបភាព
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                ស្ថានភាព
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                                សកម្មភាព
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {filteredProducts.map((p) => (
+                                            <tr
+                                                key={p.product_id}
+                                                className="hover:bg-gray-50"
+                                            >
+                                                <td className="px-4 py-4">
+                                                    {p.seller_product_id}
+                                                </td>
+                                                <td className="px-4 py-4 font-medium">
+                                                    {p.productname}
+                                                </td>
+                                                <td className="px-4 py-4 font-medium text-emerald-600">
+                                                    {toKhmerPrice(p.price)} ៛
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    {p.unit}
+                                                </td>
+                                                <td className="px-4 py-4 text-gray-600">
+                                                    {getCategoryName(
+                                                        p.category_id,
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div
+                                                        className="flex cursor-pointer items-center gap-2"
+                                                        onClick={() =>
+                                                            p.images?.length &&
+                                                            openImageModal(p)
+                                                        }
+                                                    >
+                                                        {p.images &&
+                                                        p.images.length > 0 ? (
+                                                            <>
+                                                                <img
+                                                                    src={
+                                                                        p
+                                                                            .images[0]
+                                                                            .image_url
+                                                                    }
+                                                                    alt=""
+                                                                    className="h-12 w-12 rounded-lg border object-cover"
+                                                                />
+                                                                {p.images
+                                                                    .length >
+                                                                    1 && (
+                                                                    <span className="text-xs font-medium text-gray-500">
+                                                                        +
+                                                                        {p
+                                                                            .images
+                                                                            .length -
+                                                                            1}
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400">
+                                                                គ្មាន
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <button
+                                                        onClick={() =>
+                                                            toggleActive(
+                                                                p.product_id,
+                                                                p.is_active,
+                                                            )
+                                                        }
+                                                        className={`cursor-pointer rounded-xl px-4 py-1 text-sm font-medium ${p.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+                                                    >
+                                                        {p.is_active
+                                                            ? 'ដាក់លក់'
+                                                            : 'មិនដាក់លក់'}
+                                                    </button>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                handleEdit(p)
+                                                            }
+                                                            className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100 hover:text-blue-700"
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                            កែប្រែ
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    p.product_id,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 hover:text-red-700"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                            លុប
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Image Modal */}
                 {showImageModal && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
                         onClick={() => setShowImageModal(false)}
                     >
                         <div
-                            className="relative max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+                            className="relative w-full max-w-4xl rounded-2xl bg-white p-4"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {/* Minimal header - only close button */}
-                            <div className="absolute top-4 right-4 z-20">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowImageModal(false)}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 focus:ring-2 focus:ring-white/50 focus:outline-none"
-                                    aria-label="Close"
-                                >
-                                    <span className="text-2xl leading-none">
-                                        ×
-                                    </span>
-                                </button>
-                            </div>
-
-                            {/* Pure image grid - images fit perfectly */}
-                            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-6">
+                            <button
+                                onClick={() => setShowImageModal(false)}
+                                className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
+                            >
+                                ×
+                            </button>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                                 {selectedImages.map((img, idx) => (
                                     <div
                                         key={idx}
-                                        className="group relative aspect-square overflow-hidden rounded-xl bg-gray-900"
+                                        className="overflow-hidden rounded-xl"
                                     >
                                         <img
                                             src={img.image_url}
                                             alt=""
-                                            className="absolute inset-0 h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                                            loading={idx < 6 ? 'eager' : 'lazy'} // faster load for first few
+                                            className="h-full w-full object-contain"
                                         />
                                     </div>
                                 ))}
