@@ -115,10 +115,6 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        if (Gate::denies('manage-order', $order)) {
-            return response()->json(['message' => 'You are not authorized to update this order.'], 403);
-        }
-
         // Logic: Only confirmed orders can have shipping cost set.
         if ($order->status !== Order::STATUS_CONFIRMED) {
             return response()->json([
@@ -128,7 +124,7 @@ class SellerOrderController extends Controller
 
         try {
             $order->update([
-                'status' => Order::STATUS_PROCESSING, // Correctly move to PROCESSING
+                'status' => Order::STATUS_COMPLETED, // Mark as 'completed' as per seller's workflow
                 'shipping_cost' => $request->shipping_cost,
                 'total_amount' => $order->total_amount + $request->shipping_cost,
             ]);

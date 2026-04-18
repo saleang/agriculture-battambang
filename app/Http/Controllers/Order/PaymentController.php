@@ -43,7 +43,10 @@ class PaymentController extends Controller
             }
             // amountKHR = total_amount + shipping_cost
             // AFTER
-$amountKHR = (int) round((float)$order->total_amount + (float)($order->shipping_cost ?? 0));
+            $subtotal = $order->items->sum(function ($item) {
+                return $item->quantity * $item->price_per_unit;
+            });
+            $amountKHR = (int) round((float)$subtotal + (float)($order->shipping_cost ?? 0));
             // $amountKHR = (int) round(order->total_amount);
             $timeoutMinutes = (int) config('bakong.timeout', 25);
 

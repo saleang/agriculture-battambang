@@ -70,7 +70,7 @@ interface PaginatedOrders {
     total: number;
 }
 
-type FilterTab = 'all' | 'confirmed' | 'completed' | 'cancelled';
+type FilterTab = 'all' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
 
 const CustomerOrderList: React.FC = () => {
     const page = usePage<any>();
@@ -211,7 +211,7 @@ const CustomerOrderList: React.FC = () => {
             $.current.netErrors = 0;
             $.current.running = true;
             setModalMerchant(merchant_name);
-            setModalAmount(amount);
+            setModalAmount(amount); // Use the amount from the backend
             setModalQrString(qr_string);
             setModalPhase('polling');
             setModalMsg('');
@@ -305,7 +305,7 @@ const CustomerOrderList: React.FC = () => {
             dot: 'bg-amber-500',
         },
         completed: {
-            label: 'បានទូទាត់រួច',
+            label: 'បានបញ្ចប់',
             Icon: CheckCircle,
             color: 'text-emerald-600',
             bg: 'bg-emerald-50',
@@ -325,14 +325,39 @@ const CustomerOrderList: React.FC = () => {
     const TABS: { key: FilterTab; label: string }[] = [
         { key: 'all', label: 'ទាំងអស់' },
         { key: 'confirmed', label: 'រងចាំការបញ្ជាក់តម្លៃដឹកជញ្ជូន' },
-        { key: 'completed', label: 'បានទូទាត់រួច' },
+        { key: 'processing', label: 'កំពុងដំណើរការ' },
+        { key: 'completed', label: 'បានបញ្ចប់' },
         { key: 'cancelled', label: 'បានលុបចោល' },
     ];
 
-    const filtered =
-        activeTab === 'all'
-            ? orders
-            : orders.filter((o) => o.status === activeTab);
+    const getFilteredOrders = (filterKey: FilterTab) => {
+        if (filterKey === 'all') {
+            return orders;
+        }
+        return orders.filter(order => {
+            switch (filterKey) {
+                case 'confirmed':
+                    return order.status === 'confirmed';
+                case 'processing':
+                    return (
+                        order.payment_status === 'unpaid' &&
+                        order.status !== 'cancelled' &&
+                        order.status !== 'confirmed'
+                    );
+                case 'completed':
+                    return (
+                        order.status === 'completed' &&
+                        order.payment_status === 'paid'
+                    );
+                case 'cancelled':
+                    return order.status === 'cancelled';
+                default:
+                    return false;
+            }
+        });
+    };
+
+    const filtered = getFilteredOrders(activeTab);
     const cdMins = Math.floor(modalCountdown / 60);
     const cdSecs = (modalCountdown % 60).toString().padStart(2, '0');
     const nearExpiry = modalCountdown > 0 && modalCountdown <= 60;
@@ -359,8 +384,6 @@ const CustomerOrderList: React.FC = () => {
         <>
             <Head title="ការបញ្ជាទិញរបស់ខ្ញុំ" />
             <Header
-                cartCount={0}
-                wishlistCount={0}
                 searchQuery=""
                 onSearchChange={() => {}}
                 isAuthenticated={!!user}
@@ -381,11 +404,7 @@ const CustomerOrderList: React.FC = () => {
                     {/* Filter Tabs */}
                     <div className="mb-4 flex overflow-x-auto rounded-xl bg-white shadow-sm">
                         {TABS.map((tab) => {
-                            const count =
-                                tab.key === 'all'
-                                    ? orders.length
-                                    : orders.filter((o) => o.status === tab.key)
-                                          .length;
+                            const count = getFilteredOrders(tab.key).length;
                             return (
                                 <button
                                     key={tab.key}
@@ -446,9 +465,8 @@ const CustomerOrderList: React.FC = () => {
                                 const isExpanded = expandedOrders.has(
                                     order.order_id,
                                 );
-                                const grandTotal =
-                                    Number(order.total_amount) +
-                                    Number(order.shipping_cost ?? 0);
+                                const subTotal = order.items?.reduce((acc, item) => acc + (item.quantity * item.price_per_unit), 0) ?? 0;
+                                const grandTotal = subTotal + Number(order.shipping_cost ?? 0);
                                 const hasShipping =
                                     order.shipping_cost !== null &&
                                     order.shipping_cost !== undefined;
@@ -620,11 +638,7 @@ const CustomerOrderList: React.FC = () => {
                                             <div className="flex justify-between text-sm text-gray-500">
                                                 <span>សរុបរង</span>
                                                 <span>
-                                                    {fmt$(
-                                                        Number(
-                                                            order.total_amount,
-                                                        ),
-                                                    )}
+                                                    {fmt$(subTotal)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between text-sm text-gray-500">
@@ -1116,10 +1130,9 @@ const CustomerOrderList: React.FC = () => {
                                         <div style={{ position: 'relative' }}>
                                             <QRCodeSVG
                                                 value={modalQrString}
-                                                size={220}
+                                                size={256}
                                                 level="H"
                                                 includeMargin={false}
-                                                style={{ display: 'block' }}
                                             />
                                             <div
                                                 style={{

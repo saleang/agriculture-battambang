@@ -208,17 +208,6 @@ const SellerOrderManagement: React.FC = () => {
     };
 
     const handleFinishOrder = async (orderId: number) => {
-        const result = await Swal.fire({
-            title: 'បញ្ជាក់ការបញ្ចប់ការបញ្ជាទិញ',
-            text: 'តើអ្នកប្រាកដឬទេថាអ្នកចង់សម្គាល់ការបញ្ជាទិញនេះថាបានបញ្ចប់? Action នេះមិនអាចត្រឡប់វិញបានទេ។',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'បាទ, បញ្ចប់វា',
-            cancelButtonText: 'បោះបង់',
-        });
-
-        if (!result.isConfirmed) return;
-
         try {
             await axios.post(`/seller/orders/${orderId}/finish`);
             toast.success('ការបញ្ជាទិញត្រូវបានសម្គាល់ថាបានបញ្ចប់ដោយជោគជ័យ');
@@ -557,18 +546,18 @@ const SellerOrderManagement: React.FC = () => {
                                                 តម្លៃសរុប (រួមដឹកជញ្ជូន):
                                             </p>
                                             <p className="text-lg font-semibold text-green-700">
-                                                {Number(order.shipping_cost)
-                                                    ? (
-                                                          Number(
-                                                              order.total_amount,
-                                                          ) +
-                                                          Number(
-                                                              order.shipping_cost,
-                                                          )
-                                                      ).toFixed(2)
-                                                    : Number(
-                                                          order.total_amount,
-                                                      ).toFixed(2)}{' '}
+                                                {((
+                                                    order.items?.reduce(
+                                                        (acc, item) =>
+                                                            acc +
+                                                            item.quantity *
+                                                                Number(
+                                                                    item.price_per_unit,
+                                                                ),
+                                                        0,
+                                                    ) ?? 0) + 
+                                                    (Number(order.shipping_cost) || 0)
+                                                ).toFixed(2)}{' '}
                                                 ៛
                                             </p>
                                         </div>
