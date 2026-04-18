@@ -1,4 +1,3 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -11,7 +10,23 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Box, ChartColumnIncreasing, DollarSign, Folder, House, LayoutGrid, Package, Package2, ShoppingBasket, Star, Tags, Truck, User } from 'lucide-react';
+import {
+    Bell,
+    Box,
+    ChartColumnIncreasing,
+    CreditCard,
+    Folder,
+    House,
+    LayoutGrid,
+    Lock,
+    Package,
+    ShoppingBasket,
+    Star,
+    Store,
+    Tags,
+    Truck,
+    User,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -23,8 +38,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-    // ...mainNavItems,
-     {
+    {
         title: 'ផ្ទាំងទំព័រដើម',
         href: '/admin/dashboard',
         icon: LayoutGrid,
@@ -54,14 +68,14 @@ const adminNavItems: NavItem[] = [
         href: '/admin/ratings',
         icon: Star,
     },
-    {   title: 'របាយការណ៍',
+    {
+        title: 'របាយការណ៍',
         href: '/admin/reports',
         icon: ChartColumnIncreasing,
     },
 ];
 
 const sellerNavItems: NavItem[] = [
-    //...mainNavItems,
     {
         title: 'ផ្ទាំងទំព័រដើម',
         href: '/seller/dashboard',
@@ -69,19 +83,23 @@ const sellerNavItems: NavItem[] = [
     },
     {
         title: 'គណនីរបស់ខ្ញុំ',
-        href: '/seller/profile',
         icon: User,
-
+        children: [
+    { title: 'ប្រវត្តិរូបរបស់ខ្ញុំ',      href: '/seller/profile',           icon: User        },
+    { title: 'ព័ត៌មានហាង',               href: '/seller/farm_info',         icon: Store       },
+    { title: 'ការកំណត់ការបង់ប្រាក់',     href: '/seller/payment_info',      icon: CreditCard  },
+    { title: 'ពាក្យសម្ងាត់',             href: '/seller/password',          icon: Lock        },
+    { title: 'ការកំណត់ការជូនដំណឹង',      href: '/seller/telegram_settings', icon: Bell        },
+],
     },
     {
         title: 'ផលិតផលរបស់ខ្ញុំ',
         icon: Box,
         children: [
-            { title: 'ផលិតផល', href: '/seller/product', icon: ShoppingBasket },
+            { title: 'ផលិតផល',      href: '/seller/product',  icon: ShoppingBasket },
             { title: 'ក្រុមផលិតផល', href: '/seller/category', icon: Tags },
         ],
     },
-
     {
         title: 'ចំនួននៃការបញ្ជាទិញ',
         href: '/seller/orders',
@@ -94,20 +112,18 @@ const sellerNavItems: NavItem[] = [
     },
     {
         title: 'ការវាយតម្លៃរបស់ខ្ញុំ',
-        href: '/Farmdetail',
+        href: '/seller/reviews',
         icon: Star,
     },
     {
         title: 'របាយការណ៍របស់ខ្ញុំ',
         href: '/seller/reports',
-        icon: ChartColumnIncreasing
+        icon: ChartColumnIncreasing,
     },
-
 ];
 
 export function AppSidebar() {
     const { props } = usePage();
-    // Inertia shares auth on the page props under `auth` — guard access with optional chaining
     const userRole: string | undefined = (props as any)?.auth?.user?.role;
 
     let roleBasedNavItems = mainNavItems;
@@ -122,17 +138,16 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                                <AppLogo />
+                        <AppLogo />
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={roleBasedNavItems}  />
+                <NavMain items={roleBasedNavItems} />
             </SidebarContent>
 
             <SidebarFooter>
-                {/* <NavFooter items={footerNavItems} className="mt-auto" /> */}
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

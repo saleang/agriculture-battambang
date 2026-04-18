@@ -421,7 +421,7 @@ export function Header({
                                             <Store className="h-4 w-4" />ទំព័រដើម
                                         </a>
                                         <a href="/seller/farm-info" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <Package className="h-4 w-4" />ព័ត៌មានកសិដ្ឋាន
+                                            <Package className="h-4 w-4" />ព័ត៌មានហាង
                                         </a>
                                         <a href="/seller/orders" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
                                             <ShoppingCart className="h-4 w-4" />ការបញ្ជាទិញរបស់អតិថិជន

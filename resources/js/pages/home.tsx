@@ -339,19 +339,19 @@ export default function Home({
                     <div className="max-w-2xl">
                         {/* Badge */}
                         <div className="mb-6 inline-flex items-center rounded-full border border-yellow-500/50 bg-black/30 px-4 py-1.5 text-sm font-medium text-yellow-500 backdrop-blur-sm">
-                            ថ្មី! កសិផលពីកសិដ្ឋាននៅបាត់ដំបង
+                            ថ្មី! កសិផលពីហាងនៅបាត់ដំបង
                         </div>
 
                         {/* Heading */}
                         <h1 className="mb-6 text-4xl leading-tight font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
-                            ស្រស់ៗពីកសិដ្ឋាន <br />
+                            កសិផលស្រស់ៗពីចម្ការខ្មែរ <br />
                             <span className="text-green-400">សរីរាង្គ</span>
                         </h1>
 
                         {/* Description */}
                         <p className="mb-10 text-base text-gray-200 sm:text-lg md:text-xl">
-                            ទិញកសិផលស្រស់ៗ គ្មានគីមី ដឹកជញ្ជូនរហ័ស ដល់ផ្ទះអ្នក។
-                            សុខភាពល្អ ចាប់ផ្តើមពីឥឡូវនេះ!
+                            ទិញកសិផលស្រស់ៗ គ្មានសារធាតុគីមី ដឹកជញ្ជូនរហ័ស ទំនុកចិត្តខ្ពស់។
+                            ទំនិញនាំមកនូវសុខភាពល្អ ចាប់ផ្តើមទិញឥឡូវនេះ!
                         </p>
 
                         {/* Buttons */}

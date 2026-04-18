@@ -69,14 +69,14 @@ export default function SellerReviews({
     return (
         <AppLayout>
         <div className="min-h-screen bg-gray-50">
-            <Head title={`ការវាយតម្លៃ - ${farmName}`} />
+            <Head title={`ការវាយតម្លៃ `} />
 
             <div className="mx-auto max-w-5xl px-4 py-8">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <MessageSquare className="h-7 w-7 text-green-600" />
-                        ការវាយតម្លៃ - {farmName}
+                        ការវាយតម្លៃ
                     </h1>
                     <p className="mt-1 text-sm text-gray-500">
                         មតិយោបល់ និងការវាយតម្លៃពីអតិថិជនរបស់អ្នក

@@ -11,7 +11,7 @@ import SellerEditForm from './components/SellerEditForm';
 import { User, Mail, Phone, Users, FileText, Pencil, BadgeCheck } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'ការកំណត់ប្រូហ្វាល់', href: '/seller/profile' },
+    { title: 'ការកំណត់ប្រវត្តិរូប', href: '/seller/profile' },
 ];
 
 function Row({ icon: Icon, label, value }: { icon: any; label: string; value?: string }) {
@@ -37,26 +37,26 @@ export default function SellerProfile() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="ការកំណត់ប្រូហ្វាល់" />
+            <Head title="ការកំណត់ប្រវត្តិរូប" />
 
             <SellerLayout>
-                <div className="space-y-6 max-w-2xl">
+                <div className="space-y-6 w-full">
 
                     {/* Section heading */}
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-base font-semibold text-gray-900">ព័ត៌មានផ្ទាល់ខ្លួន</h2>
+                            <h2 className="text-base font-moul text-gray-900">ព័ត៌មានផ្ទាល់ខ្លួន</h2>
                             <p className="text-sm text-gray-500 mt-0.5">គ្រប់គ្រងទិន្នន័យគណនីរបស់អ្នក</p>
                         </div>
                         <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setOpen(true)}
-                            className="flex items-center gap-1.5 border-gray-300 text-gray-700 hover:bg-gray-50"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                            កែប្រែ
-                        </Button>
+    size="sm"
+    variant="outline"
+    onClick={() => setOpen(true)}
+    className="flex items-center gap-1.5 border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+>
+    <Pencil className="h-3.5 w-3.5" />
+    កែប្រែ
+</Button>
                     </div>
 
                     {/* Avatar + name */}
@@ -78,14 +78,14 @@ export default function SellerProfile() {
                     <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">
                         <Row icon={User}  label="គោត្តនាម និងនាម" value={auth?.user?.username} />
                         <Row icon={Mail}  label="អ៊ីមែល"           value={auth?.user?.email} />
-                        <Row icon={Phone} label="លេខទូរស័ព្ទ"     value={auth?.user?.phone} />
+                        <Row icon={Phone} label="លេខទូរសព្ទ"     value={auth?.user?.phone} />
                         <Row icon={Users} label="ភេទ"              value={genderLabel} />
 
                         {seller?.certification_url && (
                             <div className="flex items-start gap-3 px-5 py-4">
                                 <FileText className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs text-gray-500 mb-2">ឯកសារអត្តសញ្ញាណ / វិញ្ញាបនប័ត្រ</p>
+                                    <p className="text-xs text-gray-500 mb-2">ឯកសារអត្តសញ្ញាណ / វិញ្ញាបនបត្រ</p>
                                     <a
                                         href={seller.certification_url}
                                         target="_blank"
@@ -120,7 +120,7 @@ export default function SellerProfile() {
                         <div className="relative z-10 w-full max-w-xl bg-white rounded-xl shadow-xl border border-gray-200">
                             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-900">កែប្រែព័ត៌មានប្រូហ្វាយល៍</h3>
+                                    <h3 className="text-sm font-moul text-gray-900">កែប្រែព័ត៌មានប្រវត្តិរូប</h3>
                                     <p className="text-xs text-gray-500 mt-0.5">ធ្វើបច្ចុប្បន្នភាពព័ត៌មានផ្ទាល់ខ្លួនរបស់អ្នក</p>
                                 </div>
                                 <button

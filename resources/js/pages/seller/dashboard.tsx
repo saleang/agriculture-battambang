@@ -4,7 +4,9 @@ import {
     CheckCircle,
     Cog,
     Eye,
+    Hand,
     Landmark,
+    MessageCircleHeart,
     Package,
     Plus,
     RefreshCw,
@@ -140,11 +142,19 @@ export default function SellerDashboard({
                     {/* Header */}
                     <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-white p-6 shadow-sm sm:flex-row sm:items-center">
                         <div>
-                            <h1 className="font-moul text-3xl text-gray-900">
-                                សួស្តី {seller?.farm_name || 'អ្នកលក់'} 👋
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <h1 className="font-moul text-2xl text-gray-900">
+                                សូមស្វាគមន៍ {seller?.farm_name || 'អ្នកលក់'} 
                             </h1>
+                            <MessageCircleHeart
+                                    size={28}
+                                    className={refreshing ? 'animate-spin' : ''}
+                                />
+                            </div>
+                            
                             <p className="mt-1 text-gray-600">
-                                📍 {seller?.full_location || 'មិនមានទីតាំង'}
+                                អាសយដ្ឋាន៖ {seller?.full_location || 'មិនមានទីតាំង'}
                             </p>
                         </div>
 

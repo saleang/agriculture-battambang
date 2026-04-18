@@ -41,10 +41,11 @@ export default function TelegramSettings() {
 
             <SellerLayout>
                 <div className="space-y-6 max-w-2xl">
-                    <HeadingSmall
-                        title="ការជូនដំណឹងតាម Telegram"
-                        description="កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង"
-                    />
+                    
+                    <div>
+                         <h2 className="font-moul text-base text-gray-900">ការជូនដំណឹងតាម Telegram</h2>
+                         <p className="text-sm text-gray-500 mb-4">កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង</p>
+                    </div>
 
                     <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">
                         <form onSubmit={handleSubmit}>
@@ -96,19 +97,19 @@ export default function TelegramSettings() {
                                     </p>
                                 </div>
                                 <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={data.telegram_notifications_enabled}
-                                    onClick={() => setData('telegram_notifications_enabled', !data.telegram_notifications_enabled)}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
-                                                transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                                                ${data.telegram_notifications_enabled ? 'bg-gray-900' : 'bg-gray-200'}`}
-                                >
-                                    <span
-                                        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
-                                                    ${data.telegram_notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`}
-                                    />
-                                </button>
+    type="button"
+    role="switch"
+    aria-checked={data.telegram_notifications_enabled}
+    onClick={() => setData('telegram_notifications_enabled', !data.telegram_notifications_enabled)}
+    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
+                transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2
+                ${data.telegram_notifications_enabled ? 'bg-emerald-600' : 'bg-gray-200'}`}
+>
+    <span
+        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                    ${data.telegram_notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`}
+    />
+</button>
                             </div>
 
                             {/* Actions */}
@@ -121,8 +122,7 @@ export default function TelegramSettings() {
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-gray-900 hover:bg-gray-800 text-white text-sm shadow-none min-w-[100px]"
-                                >
+                                    className="cursor-pointer bg-emerald-600 hover:bg-emerald-800 text-white border-none">
                                     {processing ? (
                                         <span className="flex items-center gap-1.5">
                                             <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">

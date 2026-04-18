@@ -34,10 +34,13 @@ export default function PaymentInfo() {
 
             <SellerLayout>
                 <div className="space-y-6">
-                    <HeadingSmall
-                        title="ការកំណត់ការបង់ប្រាក់"
-                        description="មើល និងគ្រប់គ្រងព័ត៌មានការបង់ប្រាក់របស់អ្នក"
-                    />
+                    <div>
+                         <h2 className="font-moul text-base text-gray-900">ការកំណត់ការបង់ប្រាក់</h2>
+                         <p className="text-sm text-gray-500 mb-4">មើល និងគ្រប់គ្រងព័ត៌មានការបង់ប្រាក់របស់អ្នក</p>
+                    </div>
+                <div>
+            
+                </div>
 
                     <div className="bg-white rounded-lg shadow p-6 space-y-6">
                         {/* Bank Account Name */}
@@ -62,7 +65,9 @@ export default function PaymentInfo() {
 
                         {/* Edit Button */}
                         <div className="flex items-center gap-4 pt-6 border-t">
-                            <Button onClick={() => setOpen(true)}>
+                            <Button onClick={() => setOpen(true)}
+                               className="cursor-pointer bg-emerald-600 hover:bg-emerald-800 text-white border-none"
+    >
                                 កែសម្រួលការកំណត់ការបង់ប្រាក់
                             </Button>
                         </div>

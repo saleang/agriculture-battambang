@@ -504,7 +504,7 @@ export default function FarmDetail({
                         <>
                             <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                                 <h2 className="text-2xl font-bold text-gray-800 md:text-3xl">
-                                    ផលិតផលពីកសិដ្ឋាននេះ
+                                    ផលិតផលពីហាងនេះ
                                 </h2>
                                 <div className="flex items-center gap-4">
                                         <span className="text-sm font-medium text-gray-700">តម្រៀបតាមតម្លៃ:</span>
@@ -710,7 +710,7 @@ export default function FarmDetail({
                                         >
                                             ចូលគណនី
                                         </Link>{' '}
-                                        ដើម្បីវាយតម្លៃកសិដ្ឋាននេះ។
+                                        ដើម្បីវាយតម្លៃហាងនេះ។
                                     </p>
                                 </div>
                             )}

@@ -40,7 +40,7 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
     );
 
     const getImageUrl = (url: string | null | undefined): string => {
-        if (!url) return 'https://via.placeholder.com/150?text=កសិដ្ឋាន';
+        if (!url) return 'https://via.placeholder.com/150?text=ហាង';
         if (url.startsWith('http')) return url;
         return `/storage/${url.startsWith('/') ? url.substring(1) : url}`;
     };

@@ -2,40 +2,18 @@ import { PropsWithChildren } from "react";
 import { Link, usePage, useRemember } from "@inertiajs/react";
 import { User, Sprout, CreditCard, Lock, Bell } from "lucide-react";
 import { NavItem } from "@/types";
-import { Button } from "@/components/ui/button";
-import { cn, resolveUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";  // លុប resolveUrl ចេញ
 
 const sidebarNavItems: NavItem[] = [
-  { title: "ប្រវត្តិរូបរបស់ខ្ញុំ", href: "/seller/profile", icon: User },
-  { title: "ព័ត៌មានកសិដ្ឋាន", href: "/seller/farm_info", icon: Sprout },
-  { title: "ការកំណត់ការបង់ប្រាក់", href: "/seller/payment_info", icon: CreditCard },
-  { title: "ពាក្យសម្ងាត់", href: "/seller/password", icon: Lock },
-  { title: "ការកំណត់ការជូនដំណឹង", href: "/seller/telegram_settings", icon: Bell },
-//   {
-//     title: "ប្រវត្តិរូបរបស់ខ្ញុំ",
-//     href: "/seller/profile",
-//     icon: User,
-//   },
-//   {
-//     title: "ព័ត៌មានកសិដ្ឋាន",
-//     href: "/seller/farm_info",
-//     icon: Sprout,
-//   },
-//   {
-//     title: "ការកំណត់ការបង់ប្រាក់",
-//     href: "/seller/payment_info",
-//     icon: CreditCard,
-//   },
-//   {
-//     title: "ពាក្យសម្ងាត់",
-//     href: "/seller/password",
-//     icon: Lock,
-//   },
+  { title: "ប្រវត្តិរូបរបស់ខ្ញុំ",      href: "/seller/profile",           icon: User       },
+  { title: "ព័ត៌មានហាង",          href: "/seller/farm_info",         icon: Sprout     },
+  { title: "ការកំណត់ការបង់ប្រាក់",     href: "/seller/payment_info",      icon: CreditCard },
+  { title: "ពាក្យសម្ងាត់",             href: "/seller/password",          icon: Lock       },
+  { title: "ការកំណត់ការជូនដំណឹង",      href: "/seller/telegram_settings", icon: Bell       },
 ];
 
 export default function SellerLayout({ children }: PropsWithChildren) {
-  const page = usePage();
-  const currentPath = page.url;
+  const { url } = usePage(); // ← url គឺ "/seller/profile" ជាដើម
 
   const [openMenu, setOpenMenu] = useRemember<string | null>(null, "sidebar-open-menu");
 
@@ -43,24 +21,25 @@ export default function SellerLayout({ children }: PropsWithChildren) {
     setOpenMenu((prev) => (prev === title ? null : title));
   };
 
+  // ✅ fix: ប្រៀបធៀប url ដោយផ្ទាល់ មិនប្រើ resolveUrl
   const isActive = (href?: string) => {
     if (!href) return false;
-    return currentPath.startsWith(resolveUrl(href));
+    return url === href || url.startsWith(href + "/");
   };
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
       {/* Page Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-5">
+      {/* <div className="border-b border-gray-200 bg-white px-6 py-5">
         <h1 className="text-xl font-semibold tracking-tight text-gray-900">ការកំណត់គណនី</h1>
         <p className="mt-0.5 text-sm text-gray-500">គ្រប់គ្រងប្រវត្តិរូប និងការកំណត់គណនីរបស់អ្នក</p>
-      </div>
+      </div> */}
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex flex-col gap-8 lg:flex-row">
 
           {/* Sidebar */}
-          <aside className="w-full shrink-0 lg:w-56">
+          {/* <aside className="w-full shrink-0 lg:w-56">
             <nav className="flex flex-col gap-0.5">
               {sidebarNavItems.map((item) => {
                 const active = isActive(item.href);
@@ -86,8 +65,9 @@ export default function SellerLayout({ children }: PropsWithChildren) {
                         <span className="text-xs opacity-60">{open ? "▾" : "▸"}</span>
                       </button>
                     ) : (
+                      // ✅ fix: href ដោយផ្ទាល់ មិនប្រើ resolveUrl(item.href!)
                       <Link
-                        href={resolveUrl(item.href!)}
+                        href={item.href!}
                         className={cn(
                           "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           active
@@ -112,9 +92,10 @@ export default function SellerLayout({ children }: PropsWithChildren) {
 
                     {open &&
                       item.children?.map((child) => (
+                        // ✅ fix: href ដោយផ្ទាល់ មិនប្រើ resolveUrl(child.href!)
                         <Link
                           key={child.title}
-                          href={resolveUrl(child.href!)}
+                          href={child.href!}
                           className={cn(
                             "ml-6 flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
                             isActive(child.href)
@@ -130,7 +111,7 @@ export default function SellerLayout({ children }: PropsWithChildren) {
                 );
               })}
             </nav>
-          </aside>
+          </aside> */}
 
           {/* Main Content */}
           <main className="min-w-0 flex-1">{children}</main>

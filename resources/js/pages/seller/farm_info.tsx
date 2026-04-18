@@ -17,7 +17,7 @@ interface PageProps extends InertiaPageProps {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'ព័ត៌មានកសិដ្ឋាន',
+        title: 'ព័ត៌មានហាង',
         href: '/seller/farm_info',
     },
 ];
@@ -28,19 +28,19 @@ export default function FarmInfo() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="ព័ត៌មានកសិដ្ឋាន" />
+            <Head title="ព័ត៌មានហាង" />
 
             <SellerLayout>
-                <div className="space-y-6">
-                    <HeadingSmall
-                        title="ព័ត៌មានកសិដ្ឋាន"
-                        description="មើល និងគ្រប់គ្រងព័ត៌មានកសិដ្ឋានរបស់អ្នក"
-                    />
+                 <div className="space-y-6">
+        <div>
+            <h2 className="font-moul text-base text-gray-900">ព័ត៌មានហាង</h2>
+            <p className="text-sm text-gray-500 mt-0.5">មើល និងគ្រប់គ្រងព័ត៌មានហាងរបស់អ្នក</p>
+        </div>
 
                     <div className="bg-white rounded-lg shadow p-6 space-y-6">
                         {/* Farm Name */}
                         <div>
-                            <Label className="text-sm font-medium text-gray-700">ឈ្មោះកសិដ្ឋាន</Label>
+                            <Label className="text-sm font-medium text-gray-700">ឈ្មោះហាង</Label>
                             <div className="mt-1 text-base text-gray-900">{seller?.farm_name || '-'}</div>
                         </div>
 
@@ -57,9 +57,11 @@ export default function FarmInfo() {
                         </div>
 
                         {/* Edit Button */}
-                        <div className="flex items-center gap-4 pt-6 border-t">
-                            <Button onClick={() => setOpen(true)}>
-                                កែសម្រួលព័ត៌មានកសិដ្ឋាន
+                        <div className="flex items-center  gap-4 pt-6 border-t">
+                            <Button onClick={() => setOpen(true)}
+                                className="cursor-pointer bg-emerald-600 hover:bg-emerald-800 text-white border-none"
+    >
+                                កែសម្រួលព័ត៌មានហាង
                             </Button>
                         </div>
                     </div>
@@ -73,7 +75,7 @@ export default function FarmInfo() {
                             />
                             <div className="relative z-10 w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-y-auto max-h-[80vh]">
                                 <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-                                    <h3 className="text-lg font-semibold">កែសម្រួលព័ត៌មានកសិដ្ឋាន</h3>
+                                    <h3 className="text-lg font-semibold">កែសម្រួលព័ត៌មានហាង</h3>
                                     <Button
                                         variant="ghost"
                                         onClick={() => setOpen(false)}
