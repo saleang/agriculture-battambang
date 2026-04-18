@@ -29,7 +29,7 @@ class DashboardController extends Controller
             })
             ->sum(DB::raw('price_per_unit * quantity'));
 
-        $activeProductsCount = Product::where('seller_id', $seller->seller_id)
+        $activeProductsCount = DB::table('products')->where('seller_id', $seller->seller_id)
             ->where('is_active', true)
             ->count();
 

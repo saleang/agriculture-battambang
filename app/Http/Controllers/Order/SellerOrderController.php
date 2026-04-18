@@ -106,8 +106,8 @@ class SellerOrderController extends Controller
         return inertia('seller/orders/show', ['order' => $order]);
     }
 
-    //  Complete order (seller confirms they've prepared the order)
-    public function complete(Order $order, Request $request)
+    //  Set shipping cost and move order to processing
+    public function setShippingCost(Order $order, Request $request)
     {
         $user = Auth::user();
         $request->validate(['shipping_cost' => 'required|numeric|min:0']);
@@ -115,44 +115,67 @@ class SellerOrderController extends Controller
             return response()->json(['message' => 'User is not a seller'], 403);
         }
 
-        $sellerId = $user->seller->seller_id;
-
-        // Check if seller has items in this order
-        $hasItems = $order->items()->where('seller_id', $sellerId)->exists();
-
-        if (!$hasItems) {
-            return response()->json(['message' => 'Unauthorized - You don\'t have items in this order'], 403);
+        if (Gate::denies('manage-order', $order)) {
+            return response()->json(['message' => 'You are not authorized to update this order.'], 403);
         }
 
-        if (!$order->canBeCompleted()) {
+        // Logic: Only confirmed orders can have shipping cost set.
+        if ($order->status !== Order::STATUS_CONFIRMED) {
             return response()->json([
-                'message' => 'Order cannot be completed at this stage. Current status: ' . $order->status
-            ], 400);
+                'message' => 'Shipping cost can only be set for confirmed orders. Current status: ' . $order->status
+            ], 422);
         }
 
         try {
             $order->update([
-                'status' => Order::STATUS_COMPLETED,
-                // make seller input delivery cost
+                'status' => Order::STATUS_PROCESSING, // Correctly move to PROCESSING
                 'shipping_cost' => $request->shipping_cost,
-                // should using sub amount and total amount
-                // 'total_amount' => $order->total_amount + $request->shipping_cost,
+                'total_amount' => $order->total_amount + $request->shipping_cost,
             ]);
 
-            // Notify customer that order has been completed
-            $this->notifyCustomerOrderCompleted($order);
-
             return response()->json([
-                'message' => 'Order marked as completed successfully',
+                'message' => 'Shipping cost set. Order is now awaiting payment.',
                 'data' => $order
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Order completion failed: ' . $e->getMessage());
+            Log::error('Setting shipping cost failed: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to complete order',
+                'message' => 'Failed to set shipping cost',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Mark the order as completed by the seller.
+     */
+    public function complete(Order $order)
+    {
+        if (Gate::denies('manage-order', $order)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Only orders that are being processed can be completed.
+        if ($order->status !== Order::STATUS_PROCESSING) {
+            return response()->json([
+                'message' => 'Only processing orders can be marked as completed. Current status: ' . $order->status
+            ], 422);
+        }
+
+        try {
+            $order->update(['status' => Order::STATUS_COMPLETED]);
+
+            // Notify customer
+            $this->notifyCustomerOrderCompleted($order);
+
+            return response()->json([
+                'message' => 'Order marked as completed successfully!',
+                'data' => $order
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Marking order as completed failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to mark order as completed.'], 500);
         }
     }
 

@@ -227,7 +227,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/',                       [SellerOrderController::class, 'index'])->name('index');
             Route::get('/{order}',                [SellerOrderController::class, 'show'])->name('show');
             Route::post('/{order}/confirm',       [SellerOrderController::class, 'confirm'])->name('confirm');
-            Route::post('/{order}/complete',      [SellerOrderController::class, 'complete'])->name('complete');
+            Route::post('/{order}/complete',      [SellerOrderController::class, 'setShippingCost'])->name('complete'); // Renamed from complete -> setShippingCost
+            Route::post('/{order}/finish',        [SellerOrderController::class, 'complete'])->name('finish'); // New route for final completion
             Route::post('/{order}/cancel',        [SellerOrderController::class, 'cancel'])->name('cancel');
             Route::post('/{order}/payment-status', [SellerOrderController::class, 'updatePaymentStatus'])->name('payment-status');
         });
