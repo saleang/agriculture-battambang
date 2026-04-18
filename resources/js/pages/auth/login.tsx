@@ -57,35 +57,6 @@ export default function Login({
                                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">ចូលគណនី</h1>
                                 <p className="text-gray-600 text-xs sm:text-sm">កសិផលស្រស់ៗពីខេត្តបាត់ដំបង</p>
                             </div>
-
-                            {/* Toggle */}
-                            <div className="flex mb-5 bg-gray-100 rounded-lg p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPhoneMode(false)}
-                                    className={`flex-1 py-2 sm:py-2.5 text-center rounded-md text-xs sm:text-sm font-medium transition-all ${
-                                        !isPhoneMode ? 'bg-white text-green-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                                        <Mail className="w-4 h-4" />
-                                        អ៊ីមែល
-                                    </div>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPhoneMode(true)}
-                                    className={`flex-1 py-2 sm:py-2.5 text-center rounded-md text-xs sm:text-sm font-medium transition-all ${
-                                        isPhoneMode ? 'bg-white text-green-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                                        <Smartphone className="w-4 h-4" />
-                                        លេខទូរស័ព្ទ
-                                    </div>
-                                </button>
-                            </div>
-
                             {status && (
                                 <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-xs sm:text-sm rounded-lg border border-emerald-200 text-center">
                                     {status}

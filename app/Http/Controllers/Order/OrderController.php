@@ -63,7 +63,7 @@ class OrderController extends Controller
                 'payment_method' => 'required|in:KHQR,manual(cash)',
                 'customer_notes' => 'nullable|string',
                 'items' => 'required|array|min:1',
-                'items.*.product_id' => 'required|integer|exists:product,product_id',
+                'items.*.product_id' => 'required|integer|exists:products,product_id',
                 'items.*.quantity' => 'required|integer|min:1',
             ]);
 
@@ -79,16 +79,12 @@ class OrderController extends Controller
             foreach ($validated['items'] as $item) {
                 $product = Product::with('images', 'seller')->findOrFail($item['product_id']);
 
-                if (!$product->seller_id) {
+                if (!$product->seller) {
                     throw new \Exception("Product '{$product->productname}' does not have a seller assigned.");
                 }
 
-                if (!$product->is_active) {
-                    throw new \Exception("Product '{$product->productname}' is no longer available.");
-                }
-
                 // Get the seller's actual seller_id
-                $sellerId = $product->seller->seller_id ?? null;
+                $sellerId = $product->seller->seller_id;
 
                 if (!$sellerId) {
                     throw new \Exception("Seller for product '{$product->productname}' does not have a valid seller ID.");
