@@ -297,7 +297,7 @@ const CustomerOrderList: React.FC = () => {
             dot: 'bg-blue-500',
         },
         processing: {
-            label: 'កំពុងដំណើរការ',
+            label: 'មិនទាន់បានទូទាត់ប្រាក់',
             Icon: RotateCcw,
             color: 'text-amber-600',
             bg: 'bg-amber-50',
@@ -325,7 +325,7 @@ const CustomerOrderList: React.FC = () => {
     const TABS: { key: FilterTab; label: string }[] = [
         { key: 'all', label: 'ទាំងអស់' },
         { key: 'confirmed', label: 'រងចាំការបញ្ជាក់តម្លៃដឹកជញ្ជូន' },
-        { key: 'processing', label: 'កំពុងដំណើរការ' },
+        { key: 'processing', label: 'មិនទាន់បានទូទាត់ប្រាក់' },
         { key: 'completed', label: 'បានបញ្ចប់' },
         { key: 'cancelled', label: 'បានលុបចោល' },
     ];
@@ -369,6 +369,8 @@ const CustomerOrderList: React.FC = () => {
             return next;
         });
     };
+
+    
 
     if (loading)
         return (

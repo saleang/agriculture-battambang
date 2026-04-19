@@ -23,7 +23,7 @@ class PaymentController extends Controller
         }
 
         // យក product IDs របស់អ្នកលក់
-        $productIds = DB::table('product')
+        $productIds = DB::table('products')
             ->where('seller_id', $seller->seller_id)
             ->pluck('product_id');
 
@@ -251,7 +251,7 @@ class PaymentController extends Controller
 
         // យកផលិតផលក្នុងបញ្ជាទិញនេះរបស់អ្នកលក់
         $items = DB::table('order_items as oi')
-            ->join('product as p', 'oi.product_id', '=', 'p.product_id')
+            ->join('products as p', 'oi.product_id', '=', 'p.product_id')
             ->where('oi.order_id', $orderId)
             ->where('oi.seller_id', $seller->seller_id)
             ->select(
@@ -385,7 +385,7 @@ class PaymentController extends Controller
     public function export(Request $request)
     {
         $seller = Auth::user()->seller;
-        $productIds = DB::table('product')
+        $productIds = DB::table('products')
             ->where('seller_id', $seller->seller_id)
             ->pluck('product_id');
 

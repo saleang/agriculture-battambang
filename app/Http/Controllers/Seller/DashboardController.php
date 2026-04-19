@@ -52,12 +52,13 @@ class DashboardController extends Controller
 
                 return [
                     'order_id' => $order->order_id,
-                    'order_number' => $order->order_number,
-                    'customer_name' => $order->customer_name,
-                    'status' => $order->status,
-                    'seller_total' => $sellerTotal,
-                    'order_date' => $order->created_at->locale('km')->isoFormat('D MMMM YYYY'),
-                ];
+            'order_number' => $order->order_number,
+            'customer_name' => $order->customer_name,
+            'status' => $order->status,
+            'payment_status' => $order->payment_status,
+            'seller_total' => $sellerTotal,
+            'order_date' => $order->created_at->locale('km')->isoFormat('D MMMM YYYY'),
+        ];
             });
 
         // Sales data for chart (last 30 days)
