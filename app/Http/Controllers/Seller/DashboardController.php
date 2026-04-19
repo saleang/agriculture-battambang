@@ -29,9 +29,9 @@ class DashboardController extends Controller
             })
             ->sum(DB::raw('price_per_unit * quantity'));
 
-        $activeProductsCount = DB::table('products')->where('seller_id', $seller->seller_id)
-            ->where('is_active', true)
-            ->count();
+        $activeProductsCount = DB::table('product')->where('seller_id', $seller->seller_id)
+    ->where('is_active', true)
+    ->count();
 
         // Recent Orders for this seller
         $recentOrders = Order::join('users', 'orders.user_id', '=', 'users.user_id')
