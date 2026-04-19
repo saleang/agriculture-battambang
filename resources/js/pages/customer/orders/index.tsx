@@ -287,7 +287,17 @@ const CustomerOrderList: React.FC = () => {
         return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} · ${h12}:${m} ${period}`;
     };
 
-    const STATUS_CONFIG = {
+    const STATUS_CONFIG: Record<
+        string,
+        {
+            label: string;
+            Icon: React.ElementType;
+            color: string;
+            bg: string;
+            border: string;
+            dot: string;
+        }
+    > = {
         confirmed: {
             label: 'រងចាំការបញ្ជាក់តម្លៃដឹកជញ្ជូន',
             Icon: CheckCircle2,
@@ -304,8 +314,16 @@ const CustomerOrderList: React.FC = () => {
             border: 'border-amber-200',
             dot: 'bg-amber-500',
         },
+        paid: {
+            label: 'ទូទាត់រួច',
+            Icon: CheckCircle,
+            color: 'text-emerald-600',
+            bg: 'bg-emerald-50',
+            border: 'border-emerald-200',
+            dot: 'bg-emerald-500',
+        },
         completed: {
-            label: 'បានបញ្ចប់',
+            label: 'ទូទាត់រួច',
             Icon: CheckCircle,
             color: 'text-emerald-600',
             bg: 'bg-emerald-50',
@@ -320,13 +338,21 @@ const CustomerOrderList: React.FC = () => {
             border: 'border-red-200',
             dot: 'bg-red-400',
         },
+        unknown: {
+            label: 'Unknown',
+            Icon: AlertTriangle,
+            color: 'text-gray-500',
+            bg: 'bg-gray-100',
+            border: 'border-gray-200',
+            dot: 'bg-gray-400',
+        },
     };
 
     const TABS: { key: FilterTab; label: string }[] = [
         { key: 'all', label: 'ទាំងអស់' },
         { key: 'confirmed', label: 'រងចាំការបញ្ជាក់តម្លៃដឹកជញ្ជូន' },
         { key: 'processing', label: 'មិនទាន់បានទូទាត់ប្រាក់' },
-        { key: 'completed', label: 'បានបញ្ចប់' },
+        { key: 'completed', label: 'ទូទាត់រួច' },
         { key: 'cancelled', label: 'បានលុបចោល' },
     ];
 
@@ -462,13 +488,37 @@ const CustomerOrderList: React.FC = () => {
                     ) : (
                         <div className="space-y-3">
                             {filtered.map((order) => {
-                                const cfg = STATUS_CONFIG[order.status];
+                                const getStatusConfig = () => {
+                                    if (order.payment_status === 'paid') {
+                                        return STATUS_CONFIG.paid;
+                                    }
+                                    if (
+                                        order.status === 'completed' &&
+                                        order.payment_status === 'unpaid'
+                                    ) {
+                                        return STATUS_CONFIG.processing;
+                                    }
+                                    return (
+                                        STATUS_CONFIG[order.status] ||
+                                        STATUS_CONFIG.unknown
+                                    );
+                                };
+
+                                const cfg = getStatusConfig();
                                 const StatusIcon = cfg.Icon;
                                 const isExpanded = expandedOrders.has(
                                     order.order_id,
                                 );
-                                const subTotal = order.items?.reduce((acc, item) => acc + (item.quantity * item.price_per_unit), 0) ?? 0;
-                                const grandTotal = subTotal + Number(order.shipping_cost ?? 0);
+                                const subTotal =
+                                    order.items?.reduce(
+                                        (acc, item) =>
+                                            acc +
+                                            item.quantity *
+                                                item.price_per_unit,
+                                        0,
+                                    ) ?? 0;
+                                const grandTotal =
+                                    subTotal + Number(order.shipping_cost ?? 0);
                                 const hasShipping =
                                     order.shipping_cost !== null &&
                                     order.shipping_cost !== undefined;
