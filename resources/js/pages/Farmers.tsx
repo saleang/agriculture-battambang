@@ -45,9 +45,17 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
         return `/storage/${url.startsWith('/') ? url.substring(1) : url}`;
     };
     const getInitials = (name: string): string => {
-    const words = name.trim().split(/\s+/);
-    if (words.length === 1) return words[0].charAt(0);
-    return words[0].charAt(0) + words[1].charAt(0);
+    const trimmed = name.trim();
+    const words = trimmed.split(/\s+/).filter(Boolean);
+    
+    if (words.length >= 2) {
+        // មានពាក្យ ២ ឬច្រើន — យកអក្សរទី ១ នៃពាក្យ ២ ដំបូង
+        return [...words[0]][0] + [...words[1]][0];
+    }
+    
+    // ពាក្យតែ ១ — យក character ២ ដំបូង (ចំណាំ: ខ្មែរ 1 character = 1 codepoint)
+    const chars = [...trimmed];
+    return chars.length >= 2 ? chars[0] + chars[1] : chars[0] ?? '?';
 };
 
     const handleFollowToggle = async (e: React.MouseEvent, sellerId: number) => {
@@ -110,6 +118,7 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
             <Header
                 isAuthenticated={!!user}
                 userName={user?.username ?? ''}
+                userPhoto={user?.photo_url ?? null}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
             />
@@ -169,7 +178,7 @@ export default function Farmers({ sellers: initialSellers, auth }: FarmersPagePr
 
                                         {/* Job Title / Role (you can adjust this) */}
                                         <p className="text-green-600 font-medium mt-1 text-sm">
-                                            កសិករ / ផលិតករ
+                                            អ្នកលក់
                                         </p>
 
                                         {/* Location */}

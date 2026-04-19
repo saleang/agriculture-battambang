@@ -399,6 +399,7 @@ export default function FarmDetail({
                 onSearchChange={() => {}}
                 isAuthenticated={!!auth.user}
                 userName={auth.user?.username}
+                userPhoto={auth.user?.photo_url ?? null}
             />
 
             <main className="mx-auto max-w-7xl px-4 py-8 md:py-45">
@@ -416,11 +417,31 @@ export default function FarmDetail({
                 {/* Farm Header */}
                 <div className="mb-10 rounded-xl bg-white p-6 shadow-md md:p-8">
                     <div className="flex flex-col items-center gap-6 md:flex-row md:items-start">
-                        <img
-                            src={getImageUrl(farm.user.photo)}
-                            alt={farm.farm_name}
-                            className="h-32 w-32 shrink-0 rounded-full border-4 border-green-200 object-cover"
-                        />
+                        {farm.user.photo ? (
+                            <img
+                                src={getImageUrl(farm.user.photo)}
+                                alt={farm.farm_name}
+                                className="h-32 w-32 shrink-0 rounded-full border-4 border-green-200 object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.removeAttribute('style');
+                                }}
+                            />
+                        ) : null}
+                        <div
+                            className="h-32 w-32 shrink-0 rounded-full border-4 border-green-200 bg-green-100 flex items-center justify-center"
+                            style={farm.user.photo ? { display: 'none' } : {}}
+                        >
+                            <span className="text-green-700 font-bold text-3xl">
+                                {(() => {
+                                    const chars = [...farm.farm_name.trim()];
+                                    const words = farm.farm_name.trim().split(/\s+/);
+                                    return words.length >= 2
+                                        ? [...words[0]][0] + [...words[1]][0]
+                                        : chars.length >= 2 ? chars[0] + chars[1] : chars[0] ?? '?';
+                                })()}
+                            </span>
+                        </div>
                         <div className="flex-1 text-center md:text-left">
                             <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
                                 {farm.farm_name}

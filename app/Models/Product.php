@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model 
 {
 
-    protected $table = 'products';
+    protected $table = 'product';
     protected $primaryKey = 'product_id';
 
     /**
