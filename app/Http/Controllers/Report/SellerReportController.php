@@ -239,8 +239,8 @@ class SellerReportController extends Controller
     {
         $categories = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
-            ->join('product', 'order_items.product_id', '=', 'product.product_id')
-            ->join('category', 'product.category_id', '=', 'category.category_id')
+            ->join('products', 'order_items.product_id', '=', 'products.product_id')
+            ->join('category', 'products.category_id', '=', 'category.category_id')
             ->where('order_items.seller_id', $sellerUserId)
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->where('orders.status', '!=', Order::STATUS_CANCELLED)
@@ -268,17 +268,17 @@ class SellerReportController extends Controller
     {
         return DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
-            ->join('product', 'order_items.product_id', '=', 'product.product_id')
+            ->join('products', 'order_items.product_id', '=', 'products.product_id')
             ->where('order_items.seller_id', $sellerUserId)
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->where('orders.status', '!=', Order::STATUS_CANCELLED)
             ->select(
-                'product.productname as name',
+                'products.productname as name',
                 DB::raw('SUM(order_items.quantity) as sold'),
                 DB::raw('SUM(order_items.quantity * order_items.price_per_unit) as revenue'),
-                'product.unit'
+                'products.unit'
             )
-            ->groupBy('product.product_id', 'product.productname', 'product.unit')
+            ->groupBy('products.product_id', 'products.productname', 'products.unit')
             ->orderBy('revenue', 'desc')
             ->take(5)
             ->get()

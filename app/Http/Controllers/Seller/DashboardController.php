@@ -30,8 +30,8 @@ class DashboardController extends Controller
             ->sum(DB::raw('price_per_unit * quantity'));
 
         $activeProductsCount = DB::table('product')->where('seller_id', $seller->seller_id)
-            ->where('is_active', true)
-            ->count();
+    ->where('is_active', true)
+    ->count();
 
         // Recent Orders for this seller
         $recentOrders = Order::join('users', 'orders.user_id', '=', 'users.user_id')
@@ -52,12 +52,13 @@ class DashboardController extends Controller
 
                 return [
                     'order_id' => $order->order_id,
-                    'order_number' => $order->order_number,
-                    'customer_name' => $order->customer_name,
-                    'status' => $order->status,
-                    'seller_total' => $sellerTotal,
-                    'order_date' => $order->created_at->locale('km')->isoFormat('D MMMM YYYY'),
-                ];
+            'order_number' => $order->order_number,
+            'customer_name' => $order->customer_name,
+            'status' => $order->status,
+            'payment_status' => $order->payment_status,
+            'seller_total' => $sellerTotal,
+            'order_date' => $order->created_at->locale('km')->isoFormat('D MMMM YYYY'),
+        ];
             });
 
         // Sales data for chart (last 30 days)

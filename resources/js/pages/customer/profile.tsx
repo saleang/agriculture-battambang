@@ -69,12 +69,13 @@ export default function ProfilePage() {
         <Head>
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link href="https://fonts.googleapis.com/css2?family=Moul&family=Siemreap&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Moul&family=Battambang&display=swap" rel="stylesheet" />
             <style>{`
 
                 .font-moul { font-family: 'Moul', serif; }
-                .font-siemreap { font-family: 'Siemreap', sans-serif; }
-                body { font-family: 'Siemreap', sans-serif; }
+                .font-Battambang { font-family: 'Battambang', sans-serif; }
+                .font-battambang{ font-family: 'Battambang', sans-serif; }
+                body { font-family: 'battambang', sans-serif; }
             `}</style>
         </Head>
     );
@@ -263,11 +264,11 @@ export default function ProfilePage() {
                 userPhoto={photoPreview || userPhoto}
             />
 
-            <div className="min-h-screen bg-gray-50 pt-28 pb-12 font-siemreap mt-20">
+            <div className="min-h-screen bg-gray-50 pt-28 pb-12 font-Battambang mt-20">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 font-moul">ប្រូហ្វាល់របស់ខ្ញុំ</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 font-moul">ប្រូហ្វាល់របស់ខ្ញុំ</h1>
                         <p className="text-gray-600 mt-2">គ្រប់គ្រងព័ត៌មានផ្ទាល់ខ្លួន និងសុវត្ថិភាពគណនីរបស់អ្នក</p>
 
                         {/* Profile Completion */}
@@ -529,7 +530,7 @@ export default function ProfilePage() {
                                                             value={profileForm.data.gender}
                                                             onChange={(e) => profileForm.setData('gender', e.target.value)}
                                                             disabled={!isEditingProfile || profileForm.processing}
-                                                            className={`w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition font-siemreap ${
+                                                            className={`w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition font-Battambang ${
                                                                 !isEditingProfile ? 'bg-gray-50' : 'bg-white'
                                                             } ${profileForm.errors.gender ? 'border-red-500' : 'border-gray-300'}`}
                                                         >
@@ -610,7 +611,7 @@ export default function ProfilePage() {
                                                         value={profileForm.data.address}
                                                         onChange={(e) => profileForm.setData('address', e.target.value)}
                                                         disabled={!isEditingProfile || profileForm.processing}
-                                                        className={`w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition resize-y min-h-[100px] font-siemreap ${
+                                                        className={`w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition resize-y min-h-[100px] font-Battambang ${
                                                             !isEditingProfile ? 'bg-gray-50' : 'bg-white'
                                                         } ${profileForm.errors.address ? 'border-red-500' : 'border-gray-300'}`}
                                                         placeholder="បំពេញអាសយដ្ឋានពេញលេញរបស់អ្នក..."

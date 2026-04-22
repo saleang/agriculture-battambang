@@ -76,9 +76,9 @@ type OrderFilter =
 // Translation helper for order status
 const getOrderStatusKhmer = (status: Order['status']): string => {
     const statusMap: Record<Order['status'], string> = {
-        confirmed: 'បានបញ្ជាក់',
-        processing: 'កំពុងដំណើរការ',
-        completed: 'បានបញ្ចប់',
+        confirmed: 'រង់ចាំតម្លៃដឹកជញ្ជូន',
+        processing: 'រង់ចាំអតិថិជនទូទាត់',
+        completed: 'បញ្ចប់',
         cancelled: 'បានលុបចោល',
     };
     return statusMap[status] || status.toUpperCase();
@@ -93,7 +93,7 @@ const getPaymentStatusKhmer = (status: Order['payment_status']): string => {
 const getFilterLabelKhmer = (filter: OrderFilter): string => {
     const filterMap: Record<OrderFilter, string> = {
         all: 'ទាំងអស់',
-        confirmed: 'បញ្ជាក់តម្លៃដឹកជញ្ជូន',
+        confirmed: 'រង់ចាំតម្លៃដឹកជញ្ជូន',
         processing: 'រង់ចាំអតិថិជនទូទាត់',
         completed: 'ទូទាត់រួច', 
         cancelled: 'បានលុបចោល',
