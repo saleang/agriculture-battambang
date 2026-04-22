@@ -16,8 +16,17 @@ use Carbon\Carbon;
 class DashboardController extends Controller
 {
     /**
-     * Display the admin dashboard with dynamic data
+     * All statuses that represent a real placed order (excludes shopping carts).
+     * OrderController::addToCart() stores cart rows with status = 'in_cart',
+     * which must be excluded from every dashboard metric.
      */
+    private const REAL_STATUSES = [
+        Order::STATUS_CONFIRMED,
+        Order::STATUS_PROCESSING,
+        Order::STATUS_COMPLETED,
+        Order::STATUS_CANCELLED,
+    ];
+
     public function index()
     {
         // ── Stats ─────────────────────────────────────────────────────
@@ -27,89 +36,112 @@ class DashboardController extends Controller
         $totalProducts  = Product::count();
         $activeProducts = Product::where('is_active', true)->count();
 
-        // Pending seller approvals = sellers whose user account is inactive/pending
         $pendingApprovals = User::where('role', 'seller')
             ->where('status', 'inactive')
             ->count();
 
-        // Pending orders = confirmed or processing
+        // Only real orders — no carts
         $pendingOrders = Order::whereIn('status', [
             Order::STATUS_CONFIRMED,
             Order::STATUS_PROCESSING,
         ])->count();
 
-        // Total revenue = sum of paid completed orders
-        $totalRevenue = Order::where('payment_status', Order::PAYMENT_PAID)
+        // Revenue from real paid orders only
+        $totalRevenue = Order::whereIn('status', self::REAL_STATUSES)
+            ->where('payment_status', Order::PAYMENT_PAID)
             ->sum('total_amount');
 
-        // ── Monthly revenue & orders (last 7 months) ──────────────────
-        $khmerMonths = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
+        // ── Khmer month names ─────────────────────────────────────────
+        $khmerMonths = [
+            'មករា',
+            'កុម្ភៈ',
+            'មីនា',
+            'មេសា',
+            'ឧសភា',
+            'មិថុនា',
+            'កក្កដា',
+            'សីហា',
+            'កញ្ញា',
+            'តុលា',
+            'វិច្ឆិកា',
+            'ធ្នូ',
+        ];
 
-        // ── Monthly revenue & orders (last 7 months) ──────────────────
-        $monthlyData = collect(range(6, 0))->map(function ($i) use ($khmerMonths) {
+        // ── Pre-fetch monthly data in 3 queries (last 12 months) ──────
+        $startDate12 = Carbon::now()->subMonths(11)->startOfMonth();
+
+        // Revenue per month — real paid orders only
+        $revenueByMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->where('payment_status', Order::PAYMENT_PAID)
+            ->where('created_at', '>=', $startDate12)
+            ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m, SUM(total_amount) as total')
+            ->groupByRaw('YEAR(created_at), MONTH(created_at)')
+            ->get()
+            ->keyBy(fn($r) => $r->y . '-' . $r->m);
+
+        // Orders per month — real orders only (no carts)
+        $ordersByMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->where('created_at', '>=', $startDate12)
+            ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m, COUNT(*) as total')
+            ->groupByRaw('YEAR(created_at), MONTH(created_at)')
+            ->get()
+            ->keyBy(fn($r) => $r->y . '-' . $r->m);
+
+        // Users per month
+        $usersByMonth = User::where('created_at', '>=', $startDate12)
+            ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m, COUNT(*) as total')
+            ->groupByRaw('YEAR(created_at), MONTH(created_at)')
+            ->get()
+            ->keyBy(fn($r) => $r->y . '-' . $r->m);
+
+        // ── Monthly data (last 7 months) ──────────────────────────────
+        $monthlyData = collect(range(6, 0))->map(function ($i) use ($khmerMonths, $revenueByMonth, $ordersByMonth, $usersByMonth) {
             $month = Carbon::now()->subMonths($i);
-            $revenue = Order::where('payment_status', Order::PAYMENT_PAID)
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->sum('total_amount');
-            $orders = Order::whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->count();
-            $users = User::whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->count();
+            $key   = $month->year . '-' . $month->month;
             return [
-                // 'm'   => $month->locale('km')->isoFormat('MMM'),
-
-                'm' => $khmerMonths[$month->month - 1],
-                'rev' => round($revenue / 1_000_000, 2), // in millions
-                'ord' => $orders,
-                'usr' => $users,
+                'm'   => $khmerMonths[$month->month - 1],
+                // 'rev' => (float) round(($revenueByMonth[$key]->total ?? 0) / 1_000_000, 2),
+                'rev' => (float) round(($revenueByMonth[$key]->total ?? 0) / 1_000, 1),
+                'ord' => (int)   ($ordersByMonth[$key]->total ?? 0),
+                'usr' => (int)   ($usersByMonth[$key]->total ?? 0),
             ];
         })->values()->toArray();
 
-        // // ── Product category breakdown ────────────────────────────────
-        // $categoryData = Category::withCount(['sellers as product_count' => function ($q) {
-        //     // count products linked through sellers in this category
-        // }])
-        //     ->with(['sellers.user'])
-        //     ->get()
-        //     ->map(function ($cat) {
-        //         // Count products belonging to sellers in this category
-        //         $count = Product::whereHas(
-        //             'seller.categories',
-        //             fn($q) =>
-        //             $q->where('category.category_id', $cat->category_id)
-        //         )->count();
-        //         return [
-        //             'name' => $cat->category_name,
-        //             'v'    => $count,
-        //         ];
-        //     })
-        //     ->filter(fn($c) => $c['v'] > 0)
-        //     ->sortByDesc('v')
-        //     ->take(5)
-        //     ->values()
-        //     ->toArray();
+        // ── Sparkline data (last 12 months) ───────────────────────────
+        $sparkRevenue = collect(range(11, 0))->map(function ($i) use ($revenueByMonth) {
+            $d   = Carbon::now()->subMonths($i);
+            $key = $d->year . '-' . $d->month;
+            // return round(($revenueByMonth[$key]->total ?? 0) / 1_000_000, 1);
+            return round(($revenueByMonth[$key]->total ?? 0) / 1_000);
+        })->values()->toArray();
 
-        // ✅ FIXED
+        $sparkOrders = collect(range(11, 0))->map(function ($i) use ($ordersByMonth) {
+            $d   = Carbon::now()->subMonths($i);
+            $key = $d->year . '-' . $d->month;
+            return (int) ($ordersByMonth[$key]->total ?? 0);
+        })->values()->toArray();
+
+        $sparkUsers = collect(range(11, 0))->map(function ($i) use ($usersByMonth) {
+            $d   = Carbon::now()->subMonths($i);
+            $key = $d->year . '-' . $d->month;
+            return (int) ($usersByMonth[$key]->total ?? 0);
+        })->values()->toArray();
+
+        // ── Product category breakdown ────────────────────────────────
         $categoryData = Category::all()
             ->map(function ($cat) {
                 $count = Product::whereHas(
                     'seller.category',
                     fn($q) => $q->where('category.category_id', $cat->category_id)
                 )->count();
-                return [
-                    'name' => $cat->category_name,
-                    'v'    => $count,
-                ];
+                return ['name' => $cat->category_name, 'v' => $count];
             })
             ->filter(fn($c) => $c['v'] > 0)
             ->sortByDesc('v')
             ->take(5)
             ->values()
             ->toArray();
-        // Normalize to percentages
+
         $totalCatProducts = collect($categoryData)->sum('v');
         if ($totalCatProducts > 0) {
             $categoryData = collect($categoryData)->map(fn($c) => [
@@ -118,31 +150,9 @@ class DashboardController extends Controller
             ])->toArray();
         }
 
-        // ── Sparkline data (last 12 months) ───────────────────────────
-        $sparkRevenue = collect(range(11, 0))->map(
-            fn($i) =>
-            round(Order::where('payment_status', Order::PAYMENT_PAID)
-                ->whereYear('created_at', Carbon::now()->subMonths($i)->year)
-                ->whereMonth('created_at', Carbon::now()->subMonths($i)->month)
-                ->sum('total_amount') / 1_000_000, 1)
-        )->values()->toArray();
-
-        $sparkOrders = collect(range(11, 0))->map(
-            fn($i) =>
-            Order::whereYear('created_at', Carbon::now()->subMonths($i)->year)
-                ->whereMonth('created_at', Carbon::now()->subMonths($i)->month)
-                ->count()
-        )->values()->toArray();
-
-        $sparkUsers = collect(range(11, 0))->map(
-            fn($i) =>
-            User::whereYear('created_at', Carbon::now()->subMonths($i)->year)
-                ->whereMonth('created_at', Carbon::now()->subMonths($i)->month)
-                ->count()
-        )->values()->toArray();
-
-        // ── Recent orders (last 5) ────────────────────────────────────
+        // ── Recent orders (last 5) — real orders only, no carts ───────
         $recentOrders = Order::with('user')
+            ->whereIn('status', self::REAL_STATUSES)
             ->latest()
             ->take(5)
             ->get()
@@ -151,11 +161,10 @@ class DashboardController extends Controller
                 'customer' => $order->user?->username ?? $order->recipient_name ?? 'Unknown',
                 'amount'   => number_format($order->total_amount, 0) . ' ៛',
                 'status'   => $order->status,
-                // 'date'     => $order->created_at->locale('km')->isoFormat('D MMM'),
-                'date' => $order->created_at->format('d/m'),
+                'date'     => $order->created_at->format('d/m'),
             ])->toArray();
 
-        // ── Pending sellers (awaiting approval) ───────────────────────
+        // ── Pending sellers ───────────────────────────────────────────
         $pendingSellers = User::where('role', 'seller')
             ->where('status', 'inactive')
             ->with('seller.province')
@@ -170,75 +179,109 @@ class DashboardController extends Controller
                 'date'     => $user->created_at->locale('km')->isoFormat('D MMM'),
             ])->toArray();
 
-        // ── Recent activities (last 8 events) ─────────────────────────
+        // ── Recent activities — real orders only, no carts ────────────
         $recentActivities = collect();
 
-        // New user registrations
         User::latest()->take(3)->get()->each(function ($user) use (&$recentActivities) {
             $recentActivities->push([
                 'id'     => 'user_' . $user->user_id,
                 'action' => "<strong>{$user->username}</strong> បានចុះឈ្មោះជា {$user->role}",
                 'user'   => $user->username,
                 'time'   => $user->created_at->diffForHumans(),
+                '_ts'    => $user->created_at->timestamp,
                 'status' => 'new',
                 'type'   => 'user',
             ]);
         });
 
-        // Recent orders
-        Order::with('user')->latest()->take(3)->get()->each(function ($order) use (&$recentActivities) {
-            $recentActivities->push([
-                'id'     => 'order_' . $order->order_id,
-                'action' => "ការបញ្ជាទិញ <strong>{$order->order_number}</strong> ស្ថានភាព: {$order->status}",
-                'user'   => $order->user?->username ?? 'Unknown',
-                'time'   => $order->created_at->diffForHumans(),
-                'status' => $order->status,
-                'type'   => 'order',
-            ]);
-        });
+        Order::with('user')
+            ->whereIn('status', self::REAL_STATUSES)
+            ->latest()
+            ->take(3)
+            ->get()
+            ->each(function ($order) use (&$recentActivities) {
+                $recentActivities->push([
+                    'id'     => 'order_' . $order->order_id,
+                    'action' => "ការបញ្ជាទិញ <strong>{$order->order_number}</strong> ស្ថានភាព: {$order->status}",
+                    'user'   => $order->user?->username ?? 'Unknown',
+                    'time'   => $order->created_at->diffForHumans(),
+                    '_ts'    => $order->created_at->timestamp,
+                    'status' => $order->status,
+                    'type'   => 'order',
+                ]);
+            });
 
-        // New products
         Product::with('seller.user')->latest()->take(2)->get()->each(function ($product) use (&$recentActivities) {
             $recentActivities->push([
                 'id'     => 'product_' . $product->product_id,
                 'action' => "ផលិតផលថ្មី <strong>{$product->productname}</strong> ត្រូវបានបន្ថែម",
                 'user'   => $product->seller?->user?->username ?? 'Unknown',
                 'time'   => $product->created_at->diffForHumans(),
+                '_ts'    => $product->created_at->timestamp,
                 'status' => $product->is_active ? 'active' : 'inactive',
                 'type'   => 'product',
             ]);
         });
 
         $recentActivities = $recentActivities
-            ->sortByDesc(fn($a) => $a['time'])
+            ->sortByDesc('_ts')
             ->values()
             ->take(8)
+            ->map(fn($a) => collect($a)->except('_ts')->all())
             ->toArray();
 
-        // ── Platform health metrics ────────────────────────────────────
-        $activeRate       = $totalProducts > 0 ? round(($activeProducts / $totalProducts) * 100) : 0;
-        $completionRate   = Order::count() > 0
-            ? round((Order::where('status', Order::STATUS_COMPLETED)->count() / Order::count()) * 100)
+        // ── Platform health ───────────────────────────────────────────
+        $activeRate = $totalProducts > 0
+            ? round(($activeProducts / $totalProducts) * 100)
             : 0;
+
+        // completionRate: completed out of all real orders
+        $realOrderCount = Order::whereIn('status', self::REAL_STATUSES)->count();
+        $completionRate = $realOrderCount > 0
+            ? round((Order::where('status', Order::STATUS_COMPLETED)->count() / $realOrderCount) * 100)
+            : 0;
+
         $userActivityRate = $totalUsers > 0
             ? round(($totalCustomers / $totalUsers) * 100)
             : 0;
-        $paymentSuccessRate = Order::whereIn('status', [Order::STATUS_COMPLETED, Order::STATUS_PROCESSING])->count() > 0
-            ? round((Order::where('payment_status', Order::PAYMENT_PAID)->count() /
-                max(Order::whereIn('status', [Order::STATUS_COMPLETED, Order::STATUS_PROCESSING])->count(), 1)) * 100)
+
+        // paymentSuccessRate: paid out of non-cancelled real orders
+        $nonCancelledCount = Order::whereIn('status', [
+            Order::STATUS_CONFIRMED,
+            Order::STATUS_PROCESSING,
+            Order::STATUS_COMPLETED,
+        ])->count();
+
+        $paymentSuccessRate = $nonCancelledCount > 0
+            ? round(
+                (Order::whereIn('status', [
+                    Order::STATUS_CONFIRMED,
+                    Order::STATUS_PROCESSING,
+                    Order::STATUS_COMPLETED,
+                ])
+                    ->where('payment_status', Order::PAYMENT_PAID)
+                    ->count() / $nonCancelledCount) * 100
+            )
             : 0;
 
-        // ── Calendar events (upcoming orders & activities) ────────────
-        $calendarEvents = Order::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
+        // ── Calendar events — keyed by "YYYY-MM-DD" ───────────────────
+        // Fetch real orders from the past 3 months + next month so the
+        // calendar stays accurate when the user navigates months.
+        // The React Calendar component filters by year+month of viewDate.
+        $calStart = Carbon::now()->subMonths(2)->startOfMonth();
+        $calEnd   = Carbon::now()->addMonth()->endOfMonth();
+
+        $calendarEvents = Order::whereIn('status', self::REAL_STATUSES)
+            ->whereBetween('created_at', [$calStart, $calEnd])
             ->get()
-            ->groupBy(fn($o) => Carbon::parse($o->created_at)->day)
-            ->map(fn($orders, $day) => $orders->map(fn($o) => [
+            ->groupBy(fn($o) => Carbon::parse($o->created_at)->format('Y-m-d'))
+            ->map(fn($orders) => $orders->map(fn($o) => [
                 'label' => 'ការបញ្ជា',
                 'color' => match ($o->status) {
                     Order::STATUS_COMPLETED  => '#228B22',
                     Order::STATUS_PROCESSING => '#32CD32',
                     Order::STATUS_CONFIRMED  => '#FFD700',
+                    Order::STATUS_CANCELLED  => '#ef4444',
                     default                  => '#90EE90',
                 },
             ])->take(2)->values()->toArray())
@@ -250,37 +293,59 @@ class DashboardController extends Controller
 
         $usersThisMonth = User::whereYear('created_at', $thisMonth->year)->whereMonth('created_at', $thisMonth->month)->count();
         $usersLastMonth = User::whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->count();
-        $userTrend = $usersLastMonth > 0 ? round((($usersThisMonth - $usersLastMonth) / $usersLastMonth) * 100) : 0;
+        $userTrend      = $usersLastMonth > 0
+            ? round((($usersThisMonth - $usersLastMonth) / $usersLastMonth) * 100)
+            : 0;
 
-        $revenueThisMonth = Order::where('payment_status', Order::PAYMENT_PAID)->whereYear('created_at', $thisMonth->year)->whereMonth('created_at', $thisMonth->month)->sum('total_amount');
-        $revenueLastMonth = Order::where('payment_status', Order::PAYMENT_PAID)->whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->sum('total_amount');
-        $revenueTrend = $revenueLastMonth > 0 ? round((($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100) : 0;
+        $revenueThisMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->where('payment_status', Order::PAYMENT_PAID)
+            ->whereYear('created_at', $thisMonth->year)
+            ->whereMonth('created_at', $thisMonth->month)
+            ->sum('total_amount');
+        $revenueLastMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->where('payment_status', Order::PAYMENT_PAID)
+            ->whereYear('created_at', $lastMonth->year)
+            ->whereMonth('created_at', $lastMonth->month)
+            ->sum('total_amount');
+        $revenueTrend = $revenueLastMonth > 0
+            ? round((($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100)
+            : 0;
 
-        $ordersThisMonth = Order::whereYear('created_at', $thisMonth->year)->whereMonth('created_at', $thisMonth->month)->count();
-        $ordersLastMonth = Order::whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->count();
-        $orderTrend = $ordersLastMonth > 0 ? round((($ordersThisMonth - $ordersLastMonth) / $ordersLastMonth) * 100) : 0;
+        $ordersThisMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->whereYear('created_at', $thisMonth->year)
+            ->whereMonth('created_at', $thisMonth->month)
+            ->count();
+        $ordersLastMonth = Order::whereIn('status', self::REAL_STATUSES)
+            ->whereYear('created_at', $lastMonth->year)
+            ->whereMonth('created_at', $lastMonth->month)
+            ->count();
+        $orderTrend = $ordersLastMonth > 0
+            ? round((($ordersThisMonth - $ordersLastMonth) / $ordersLastMonth) * 100)
+            : 0;
 
         $sellersThisMonth = User::where('role', 'seller')->whereYear('created_at', $thisMonth->year)->whereMonth('created_at', $thisMonth->month)->count();
         $sellersLastMonth = User::where('role', 'seller')->whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->count();
-        $sellerTrend = $sellersLastMonth > 0 ? round((($sellersThisMonth - $sellersLastMonth) / $sellersLastMonth) * 100) : 0;
+        $sellerTrend      = $sellersLastMonth > 0
+            ? round((($sellersThisMonth - $sellersLastMonth) / $sellersLastMonth) * 100)
+            : 0;
 
         // ── Render ────────────────────────────────────────────────────
         return Inertia::render('admin/dashboard', [
             'stats' => [
-                'total_users'        => $totalUsers,
-                'total_sellers'      => $totalSellers,
-                'total_customers'    => $totalCustomers,
-                'total_products'     => $totalProducts,
-                'active_products'    => $activeProducts,
-                'pending_approvals'  => $pendingApprovals,
-                'pending_orders'     => $pendingOrders,
-                'total_revenue'      => (float) $totalRevenue,
+                'total_users'       => $totalUsers,
+                'total_sellers'     => $totalSellers,
+                'total_customers'   => $totalCustomers,
+                'total_products'    => $totalProducts,
+                'active_products'   => $activeProducts,
+                'pending_approvals' => $pendingApprovals,
+                'pending_orders'    => $pendingOrders,
+                'total_revenue'     => (float) $totalRevenue,
             ],
             'trends' => [
-                'user_trend'     => $userTrend,
-                'revenue_trend'  => $revenueTrend,
-                'order_trend'    => $orderTrend,
-                'seller_trend'   => $sellerTrend,
+                'user_trend'    => $userTrend,
+                'revenue_trend' => $revenueTrend,
+                'order_trend'   => $orderTrend,
+                'seller_trend'  => $sellerTrend,
             ],
             'platformHealth' => [
                 'active_rate'          => $activeRate,

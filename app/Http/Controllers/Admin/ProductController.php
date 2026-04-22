@@ -253,9 +253,13 @@ class ProductController extends Controller
     {
         $product->update(['is_active' => !$product->is_active]);
 
-        return back()->with('success',
-            'Product ' . ($product->is_active ? 'activated' : 'deactivated') . ' successfully!'
-        );
+        // return back()->with('success',
+        //     'Product ' . ($product->is_active ? 'activated' : 'deactivated') . ' successfully!'
+        // );
+        return response()->json([
+            'success' => true,
+            'is_active' => $product->is_active,
+        ]);
     }
 
     /**

@@ -144,6 +144,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{product}/edit',              [App\Http\Controllers\Admin\ProductController::class, 'edit'])->name('edit');
             Route::put('/{product}',                   [App\Http\Controllers\Admin\ProductController::class, 'update'])->name('update');
             Route::delete('/{product}',                [App\Http\Controllers\Admin\ProductController::class, 'destroy'])->name('destroy');
+
+
             Route::patch('/{product}/toggle-active',   [App\Http\Controllers\Admin\ProductController::class, 'toggleActive'])->name('toggle-active');
             Route::post('/bulk-action',                [App\Http\Controllers\Admin\ProductController::class, 'bulkAction'])->name('bulk-action');
         });
@@ -157,7 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('toggle-status');
         });
 
-        //Views Rating 
+        //Views Rating
         Route::prefix('ratings')->name('ratings.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\AdminRatingController::class, 'index'])->name('index');
     Route::delete('/{rating}', [\App\Http\Controllers\Admin\AdminRatingController::class, 'destroy'])->name('destroy');

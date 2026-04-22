@@ -6,9 +6,12 @@ import { PageProps } from "@/types";
 import { route } from "@/lib/route";
 import {
     Search, Plus, Edit2, Trash2, Eye, Filter, Image as ImageIcon,
-    Grid, List, RefreshCw, ToggleLeft, ToggleRight, Check, AlertTriangle, X
+    Grid, List, RefreshCw, ToggleLeft, ToggleRight, Check, AlertTriangle, X,
+    House,
+    Package
 } from "lucide-react";
 import Swal from "sweetalert2";
+import axios from 'axios';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Product {
@@ -33,7 +36,28 @@ interface PaginatedProducts {
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
-
+/* ─── Color palette ──────────────────────────── */
+const C = {
+    bg:      '#f9fafb',
+    surface: '#ffffff',
+    border:  '#e5e7eb',
+    border2: '#d1fae5',
+    muted:   '#9ca3af',
+    sub:     '#6b7280',
+    text:    '#374151',
+    strong:  '#111827',
+    p:       '#228B22',
+    a:       '#32CD32',
+    gold:    '#FFD700',
+    goldD:   '#ca8a04',
+    light:   '#90EE90',
+    dark:    '#006400',
+    bgG:     '#f0fdf4',
+    bgY:     '#fefce8',
+    font:    "'Khmer os Battambang', sans-serif",
+    display: "'Moul', serif",
+    mono:    "'JetBrains Mono', monospace",
+};
 interface PagePropsExtended {
     products: PaginatedProducts;
     categories: Category[];
@@ -87,16 +111,31 @@ export default function ProductIndex() {
         router.get(route("admin.products.index"), {}, { preserveState: false, replace: true });
     };
 
-    const handleToggleActive = (product: Product) => {
-        router.patch(route("admin.products.toggle-active", product.product_id), {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                showToast(`ផលិតផល${product.is_active ? "បានបិទ" : "បានបើក"}ដោយជោគជ័យ!`, "success");
-                router.reload({ only: ["products"] });
-            },
-            onError: () => showToast("បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាព", "error"),
-        });
-    };
+    // const handleToggleActive = (product: Product) => {
+    //     router.post(route("admin.products.toggle-active", { product: product.product_id }), { }, {
+    //         preserveScroll: true,
+    //         onSuccess: () => {
+    //             showToast(`ផលិតផល${product.is_active ? "បានបិទ" : "បានបើក"}ដោយជោគជ័យ!`, "success");
+    //             router.reload({ only: ["products"] });
+    //         },
+    //         onError: () => showToast("បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាព", "error"),
+    //     });
+    // };
+    // Replace handleToggleActive with:
+const handleToggleActive = async (product: Product) => {
+    try {
+        await axios.patch(`/admin/products/${product.product_id}/toggle-active`);
+        showToast(
+            `ផលិតផល${product.is_active ? "បានបិទ" : "បានបើក"}ដោយជោគជ័យ!`,
+            "success"
+        );
+        router.reload({ only: ["products"] });
+    } catch (err: any) {
+        // Add this to see the real error
+        console.error('Toggle error:', err.response?.status, err.response?.data);
+        showToast("បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាព", "error");
+    }
+};
 
     const handleDelete = async (product: Product) => {
         const result = await Swal.fire({
@@ -169,17 +208,26 @@ export default function ProductIndex() {
 
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                        <div>
+                        {/* <div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">គ្រប់គ្រងផលិតផល</h1>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 ផលិតផលទាំងអស់ក្នុងទីផ្សារ — សរុប {products.total}
                             </p>
-                        </div>
-                        <Link href={route("admin.products.create")}>
+                        </div> */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                    <div style={{ width: 42, height: 42, borderRadius: 11, background: `linear-gradient(135deg,${C.p},${C.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <Package size={20} color="#fff" />
+                                                    </div>
+                                                    <div>
+                                                        <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>គ្រប់គ្រងផលិតផល  </h1>
+                                                        <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>គ្រប់គ្រងផលិតផលទាំងអស់ក្នុងប្រព័ន្ធ</p>
+                                                    </div>
+                                                </div>
+                        {/* <Link href={route("admin.products.create")}>
                             <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
                                 <Plus className="w-4 h-4" /> បន្ថែមផលិតផល
                             </button>
-                        </Link>
+                        </Link> */}
                     </div>
 
                     {/* Filters */}
@@ -338,9 +386,9 @@ export default function ProductIndex() {
                                                         <Link href={route("admin.products.show", product.product_id)}>
                                                             <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors w-24" title="មើល"><Eye className="w-4 h-4" />ព័ត៌មានលម្អិត</button>
                                                         </Link>
-                                                        <Link href={route("admin.products.edit", product.product_id)}>
+                                                        {/* <Link href={route("admin.products.edit", product.product_id)}>
                                                             <button className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors" title="កែសម្រួល"><Edit2 className="w-4 h-4" />កែប្រែ</button>
-                                                        </Link>
+                                                        </Link> */}
                                                         <button onClick={() => handleDelete(product)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors" title="លុប">
                                                             <Trash2 className="w-4 h-4" />លុប
                                                         </button>

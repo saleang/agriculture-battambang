@@ -6,6 +6,8 @@ import { PageProps } from "@/types";
 import {
     Search, Plus, Edit2, Trash2, Mail, Phone, Store,
     Calendar, MapPin, Grid, List, Filter, User as UserIcon,
+    House,
+    Users2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -52,7 +54,28 @@ interface SellerUser {
 interface TotalStats {
     total: number; active: number; inactive: number; banned: number;
 }
-
+/* ─── Color palette ──────────────────────────── */
+const C = {
+    bg:      '#f9fafb',
+    surface: '#ffffff',
+    border:  '#e5e7eb',
+    border2: '#d1fae5',
+    muted:   '#9ca3af',
+    sub:     '#6b7280',
+    text:    '#374151',
+    strong:  '#111827',
+    p:       '#228B22',
+    a:       '#32CD32',
+    gold:    '#FFD700',
+    goldD:   '#ca8a04',
+    light:   '#90EE90',
+    dark:    '#006400',
+    bgG:     '#f0fdf4',
+    bgY:     '#fefce8',
+    font:    "'Khmer os Battambang', sans-serif",
+    display: "'Moul', serif",
+    mono:    "'JetBrains Mono', monospace",
+};
 /* ── Component ──────────────────────────────────────────────── */
 export default function SellersIndex({
     sellers, filters, totalStats,
@@ -125,10 +148,19 @@ export default function SellersIndex({
 
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-                        <div>
+                        {/* <div>
                             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ការគ្រប់គ្រងអ្នកលក់</h1>
                             <p className="mt-1.5 text-gray-600 text-sm">គ្រប់គ្រងអ្នកលក់ និងកសិករក្នុងប្រព័ន្ធ</p>
-                        </div>
+                        </div> */}
+                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                    <div style={{ width: 42, height: 42, borderRadius: 11, background: `linear-gradient(135deg,${C.p},${C.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <Users2 size={20} color="#fff" />
+                                                    </div>
+                                                    <div>
+                                                        <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>ការគ្រប់គ្រងអ្នកលក់</h1>
+                                                        <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>គ្រប់គ្រងអ្នកលក់ និងកសិករក្នុងប្រព័ន្ធ</p>
+                                                    </div>
+                                                </div>
                         <Link href="/admin/sellers/create"
                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg shadow-sm hover:bg-green-700 transition-colors text-sm">
                             <Plus size={17} /> បន្ថែមអ្នកលក់
@@ -138,7 +170,7 @@ export default function SellersIndex({
                     {/* Stats */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                         {[
-                            { label: "អ្នកលក់សរុប", value: totalStats.total,    color: "text-gray-600",    bg: "bg-gray-50",    icon: Store      },
+                            { label: "អាជីវករសរុប", value: totalStats.total,    color: "text-gray-600",    bg: "bg-gray-50",    icon: Store      },
                             { label: "សកម្ម",        value: totalStats.active,   color: "text-emerald-600", bg: "bg-emerald-50", dot: "bg-emerald-500" },
                             { label: "មិនសកម្ម",     value: totalStats.inactive, color: "text-amber-600",   bg: "bg-amber-50",   dot: "bg-amber-500"   },
                             { label: "បានបិទ",       value: totalStats.banned,   color: "text-rose-600",    bg: "bg-rose-50",    dot: "bg-rose-500"    },

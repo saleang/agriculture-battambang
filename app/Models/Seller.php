@@ -133,6 +133,11 @@ class Seller extends Model
         return $this->hasMany(Rating::class, 'seller_id', 'seller_id');
     }
 
+    // In Seller.php — add alongside the existing relationships
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'seller_id', 'seller_id');
+    }
     /**
      * Get full URL for the seller's certification file stored on the `public` disk.
      */

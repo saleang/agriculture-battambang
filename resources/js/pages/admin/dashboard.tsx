@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-// pages/admin/dashboard.tsx — Fully Dynamic v5
+// pages/admin/dashboard.tsx — Fully Dynamic v7 (calendar fix)
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -7,7 +7,8 @@ import {
     Users, Package, ShoppingCart, DollarSign, Store,
     UserCheck, Clock, CheckCircle, Shield,
     ArrowUpRight, ArrowDownRight, ChevronRight, ChevronLeft,
-    Leaf, Eye, Settings, Bell, RefreshCw, TrendingUp
+    Leaf, Eye, Settings, Bell, RefreshCw, TrendingUp,
+    House
 } from 'lucide-react';
 import {
     AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -49,6 +50,7 @@ interface RecentActivity {
     id: string; action: string; user: string;
     time: string; status: string; type: string;
 }
+// Keys are now "YYYY-MM-DD" strings (e.g. "2025-04-19")
 type CalendarEvents = Record<string, { label: string; color: string }[]>;
 
 /* ─── Color palette ──────────────────────────── */
@@ -69,7 +71,7 @@ const C = {
     dark:    '#006400',
     bgG:     '#f0fdf4',
     bgY:     '#fefce8',
-    font:    "'Kantumruy Pro', sans-serif",
+    font:    "'Khmer os Battambang', sans-serif",
     display: "'Moul', serif",
     mono:    "'JetBrains Mono', monospace",
 };
@@ -88,7 +90,7 @@ const card: React.CSSProperties = {
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
-const fmtM = (n: number) => `${(n / 1_000_000).toFixed(1)}M ៛`;
+const fmtM = (n: number) => `${n.toLocaleString()} ៛`;
 
 const trendBadge = (val: number) => ({
     fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
@@ -158,12 +160,17 @@ const ActIcon = ({ type }: { type: string }) => {
     );
 };
 
+/* ─── pad2 helper ────────────────────────────── */
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
 /* ─── Calendar ───────────────────────────────── */
+// events keys are "YYYY-MM-DD" — the Calendar filters by the viewed year+month
 const Calendar = ({ events }: { events: CalendarEvents }) => {
     const today = new Date();
     const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
     const year  = viewDate.getFullYear();
-    const month = viewDate.getMonth();
+    const month = viewDate.getMonth(); // 0-based
+
     const firstDay    = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const cells: (number | null)[] = [
@@ -171,6 +178,24 @@ const Calendar = ({ events }: { events: CalendarEvents }) => {
         ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
     ];
     while (cells.length % 7 !== 0) cells.push(null);
+
+    // Filter events that belong to the currently viewed year+month.
+    // Backend keys are "YYYY-MM-DD"; we build the prefix to match.
+    const monthPrefix = `${year}-${pad2(month + 1)}-`; // e.g. "2025-04-"
+
+    // Build a day→events lookup for this month only
+    const monthEvents: Record<number, { label: string; color: string }[]> = {};
+    Object.entries(events).forEach(([dateStr, evs]) => {
+        if (dateStr.startsWith(monthPrefix)) {
+            const day = parseInt(dateStr.slice(8), 10); // extract DD
+            monthEvents[day] = evs;
+        }
+    });
+
+    // For the "upcoming" list at the bottom, show only this month's events sorted by day
+    const upcomingEntries = Object.entries(monthEvents)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .slice(0, 4);
 
     return (
         <div>
@@ -199,8 +224,11 @@ const Calendar = ({ events }: { events: CalendarEvents }) => {
             {/* Cells */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
                 {cells.map((day, i) => {
-                    const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-                    const dayEvents = day ? (events[day] ?? []) : [];
+                    const isToday =
+                        day === today.getDate() &&
+                        month === today.getMonth() &&
+                        year === today.getFullYear();
+                    const dayEvents = day ? (monthEvents[day] ?? []) : [];
                     return (
                         <div key={i} style={{
                             minHeight: 36, borderRadius: 6, padding: 3,
@@ -233,12 +261,12 @@ const Calendar = ({ events }: { events: CalendarEvents }) => {
                 })}
             </div>
 
-            {/* Upcoming events from real data */}
-            {Object.keys(events).length > 0 && (
+            {/* Upcoming events for this viewed month */}
+            {upcomingEntries.length > 0 && (
                 <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
-                    <p style={{ fontSize: 10, color: C.sub, margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>ការបញ្ជាទិញថ្ងៃនេះ</p>
+                    <p style={{ fontSize: 10, color: C.muted, margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>ការបញ្ជាទិញក្នុងខែ</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        {Object.entries(events).slice(0, 4).map(([day, evs]) =>
+                        {upcomingEntries.map(([day, evs]) =>
                             evs.slice(0, 1).map((ev, i) => (
                                 <div key={`${day}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: ev.color === C.gold ? C.goldD : ev.color, flexShrink: 0 }} />
@@ -258,7 +286,7 @@ const Calendar = ({ events }: { events: CalendarEvents }) => {
 export default function AdminDashboard({
     stats, trends, platformHealth,
     monthlyData, categoryData, sparkData,
-    recentOrders, pendingSellers, recentActivities, calendarEvents,
+    recentOrders, recentActivities, calendarEvents,
 }: PageProps<{
     stats: AdminStats;
     trends: Trends;
@@ -267,12 +295,11 @@ export default function AdminDashboard({
     categoryData: CategoryPoint[];
     sparkData: SparkData;
     recentOrders: RecentOrder[];
-    pendingSellers: PendingSeller[];
     recentActivities: RecentActivity[];
     calendarEvents: CalendarEvents;
 }>) {
 
-    // Safe defaults — spread first, then ?? fallbacks so TypeScript doesn't warn about duplicate keys
+    // Safe defaults
     const s = {
         total_users:       stats?.total_users       ?? 0,
         total_sellers:     stats?.total_sellers     ?? 0,
@@ -303,26 +330,74 @@ export default function AdminDashboard({
         users:   (sparkData?.users   ?? []) as number[],
     };
     const orders     = recentOrders     ?? [];
-    const sellers    = pendingSellers   ?? [];
     const activities = recentActivities ?? [];
     const calEvents  = calendarEvents   ?? {};
 
+    const headerButtons: { icon: React.ReactNode; label: string; badge: boolean }[] = [
+        { icon: <Settings size={13}/>, label: 'ការកំណត់', badge: false },
+    ];
+
     const kpiCards = [
-        { label: 'អ្នកប្រើប្រាស់សរុប', value: s.total_users.toLocaleString(), sub: `${s.total_customers} អតិថិជន`, trend: tr.user_trend,    spark: spark.users,   color: C.p,     iconBg: C.bgG,  borderL: C.p,    icon: <Users size={18} color={C.p} /> },
-        { label: 'កសិករសរុប',          value: s.total_sellers,                 sub: `${s.pending_approvals} រង់ចាំ`, trend: tr.seller_trend,  spark: spark.orders,  color: C.a,     iconBg: C.bgG,  borderL: C.a,    icon: <Store size={18} color={C.a} /> },
-        { label: 'ផលិតផលសរុប',        value: s.total_products,                sub: `${s.active_products} សកម្ម`,   trend: 0,                 spark: spark.revenue, color: C.goldD, iconBg: C.bgY,  borderL: C.gold, icon: <Package size={18} color={C.goldD} /> },
-        { label: 'អតិថិជនសរុប',        value: s.total_customers,               sub: `${s.pending_orders} ការបញ្ជា`, trend: tr.order_trend,   spark: spark.users,   color: C.a,     iconBg: C.bgG,  borderL: C.light,icon: <ShoppingCart size={18} color={C.a} /> },
-        { label: 'ចំណូលសរុប',          value: fmtM(s.total_revenue),           sub: 'ប្រចាំខែ',                      trend: tr.revenue_trend, spark: spark.revenue, color: C.dark,  iconBg: C.bgG,  borderL: C.dark, icon: <DollarSign size={18} color={C.dark} /> },
+        {
+            label:   'អ្នកប្រើប្រាស់សរុប',
+            value:   s.total_users.toLocaleString(),
+            sub:     `${s.total_customers} អតិថិជន`,
+            trend:   tr.user_trend,
+            spark:   spark.users,
+            color:   C.p,
+            iconBg:  C.bgG,
+            borderL: C.p,
+            icon:    <Users size={18} color={C.p} />,
+        },
+        {
+            label:   'អាជីវករសរុប',
+            value:   s.total_sellers,
+            sub:     `${s.pending_approvals} រង់ចាំ`,
+            trend:   tr.seller_trend,
+            spark:   spark.users,
+            color:   C.a,
+            iconBg:  C.bgG,
+            borderL: C.a,
+            icon:    <Store size={18} color={C.a} />,
+        },
+        {
+            label:   'ផលិតផលសរុប',
+            value:   s.total_products,
+            sub:     `${s.active_products} សកម្ម`,
+            trend:   0,
+            spark:   spark.orders,
+            color:   C.goldD,
+            iconBg:  C.bgY,
+            borderL: C.gold,
+            icon:    <Package size={18} color={C.goldD} />,
+        },
+        {
+            label:   'អតិថិជនសរុប',
+            value:   s.total_customers,
+            sub:     `${s.pending_orders} ការបញ្ជា`,
+            trend:   tr.order_trend,
+            spark:   spark.orders,
+            color:   C.a,
+            iconBg:  C.bgG,
+            borderL: C.light,
+            icon:    <ShoppingCart size={18} color={C.a} />,
+        },
+        {
+            label:   'ចំណូលសរុប',
+            value:   fmtM(s.total_revenue),
+            sub:     'ប្រចាំខែ',
+            trend:   tr.revenue_trend,
+            spark:   spark.revenue,
+            color:   C.dark,
+            iconBg:  C.bgG,
+            borderL: C.dark,
+            icon:    <DollarSign size={18} color={C.dark} />,
+        },
     ];
 
     return (
         <AppLayout>
             <Head title="ផ្ទាំងគ្រប់គ្រង - កសិផលខេត្តបាត់ដំបង" />
-            <Head>
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Moul&family=Kantumruy+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-            </Head>
 
             <div style={{ background: C.bg, minHeight: '100vh', fontFamily: C.font, color: C.text }}>
                 <div style={{ maxWidth: 1440, margin: '0 auto', padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -331,7 +406,7 @@ export default function AdminDashboard({
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 42, height: 42, borderRadius: 11, background: `linear-gradient(135deg,${C.p},${C.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Leaf size={20} color="#fff" />
+                                <House size={20} color="#fff" />
                             </div>
                             <div>
                                 <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>ផ្ទាំងគ្រប់គ្រងអ្នកគ្រប់គ្រង</h1>
@@ -339,10 +414,7 @@ export default function AdminDashboard({
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            {[{ icon: <RefreshCw size={13}/>, label: 'Refresh' },
-                              { icon: <Bell size={13}/>,      label: 'Alerts', badge: true },
-                              { icon: <Settings size={13}/>,  label: 'Settings' }
-                            ].map(btn => (
+                            {headerButtons.map(btn => (
                                 <button key={btn.label} style={{ position: 'relative', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 12px', color: C.sub, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontFamily: C.font }}>
                                     {btn.icon} {btn.label}
                                     {btn.badge && s.pending_approvals > 0 && (
@@ -415,7 +487,7 @@ export default function AdminDashboard({
                                     <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
                                     <YAxis tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<LightTooltip />} />
-                                    <Area type="monotone" dataKey="rev" name="ចំណូល (M)" stroke={C.p}     strokeWidth={2} fill="url(#lg1)" dot={false} activeDot={{ r: 4, fill: C.p }} />
+                                    <Area type="monotone" dataKey="rev" name="ចំណូល (ពាន់រៀល)" stroke={C.p}     strokeWidth={2} fill="url(#lg1)" dot={false} activeDot={{ r: 4, fill: C.p }} />
                                     <Area type="monotone" dataKey="ord" name="ការបញ្ជា"  stroke={C.goldD} strokeWidth={2} fill="url(#lg2)" dot={false} activeDot={{ r: 4, fill: C.goldD }} />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -441,8 +513,8 @@ export default function AdminDashboard({
 
                         {/* Donut — categories */}
                         <div style={card}>
-                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 3px' }}>ប្រភេទ</p>
-                            <p style={{ color: C.sub, fontSize: 11, margin: '0 0 6px' }}>ចែករំលែកផ.ផ</p>
+                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 3px' }}>ប្រភេទផលិតផល</p>
+                            <p style={{ color: C.sub, fontSize: 11, margin: '0 0 6px' }}>ការប្រើប្រាស់ប្រភេទផលិតផល</p>
                             <div style={{ position: 'relative' }}>
                                 <ResponsiveContainer width="100%" height={145}>
                                     <PieChart>
@@ -454,7 +526,7 @@ export default function AdminDashboard({
                                 </ResponsiveContainer>
                                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
                                     <p style={{ fontSize: 20, fontWeight: 700, color: C.strong, margin: 0 }}>{s.total_products}</p>
-                                    <p style={{ fontSize: 9, color: C.sub, margin: 0 }}>ផ.ផ</p>
+                                    <p style={{ fontSize: 9, color: C.sub, margin: 0 }}>ប.ផ</p>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -476,10 +548,9 @@ export default function AdminDashboard({
                         </div>
                     </div>
 
-                    {/* ── Bottom Row ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px 270px', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 14 }}>
 
-                        {/* Orders table */}
+                        {/* 1. Orders table — top left */}
                         <div style={card}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                 <div>
@@ -519,125 +590,78 @@ export default function AdminDashboard({
                             </table>
                         </div>
 
-                        {/* Right panels */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-                            {/* Platform health */}
-                            <div style={{ ...card, padding: 18 }}>
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
-                                <p style={{ color: C.sub, fontSize: 10, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                                    <ResponsiveContainer width={80} height={80}>
-                                        <RadialBarChart innerRadius={24} outerRadius={38}
-                                            data={[{ value: ph.completion_rate, fill: C.p }]}
-                                            startAngle={90} endAngle={-270}>
-                                            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                                            <RadialBar dataKey="value" cornerRadius={6} background={{ fill: '#f3f4f6' }} />
-                                        </RadialBarChart>
-                                    </ResponsiveContainer>
-                                    <div>
-                                        <p style={{ fontSize: 28, fontWeight: 700, color: C.p, margin: 0, lineHeight: 1 }}>
-                                            {ph.completion_rate}<span style={{ fontSize: 14, color: C.sub }}>%</span>
-                                        </p>
-                                        <p style={{ fontSize: 10, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
+                        {/* 2. Platform health — top right */}
+                        <div style={{ ...card, padding: 18 }}>
+                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
+                            <p style={{ color: C.sub, fontSize: 10, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                                <ResponsiveContainer width={80} height={80}>
+                                    <RadialBarChart innerRadius={24} outerRadius={38}
+                                        data={[{ value: ph.completion_rate, fill: C.p }]}
+                                        startAngle={90} endAngle={-270}>
+                                        <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                                        <RadialBar dataKey="value" cornerRadius={6} background={{ fill: '#f3f4f6' }} />
+                                    </RadialBarChart>
+                                </ResponsiveContainer>
+                                <div>
+                                    <p style={{ fontSize: 28, fontWeight: 700, color: C.p, margin: 0, lineHeight: 1 }}>
+                                        {ph.completion_rate}<span style={{ fontSize: 14, color: C.sub }}>%</span>
+                                    </p>
+                                    <p style={{ fontSize: 10, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
+                                </div>
+                            </div>
+                            {[
+                                { label: 'អត្រាផលិតផលសកម្ម',   pct: ph.active_rate,          color: C.p },
+                                { label: 'អត្រាបញ្ចប់ការបញ្ជា',  pct: ph.completion_rate,      color: C.goldD },
+                                { label: 'សកម្មភាពអ្នកប្រើ',    pct: ph.user_activity_rate,   color: C.dark },
+                                { label: 'អត្រាទូទាត់ជោគជ័យ',  pct: ph.payment_success_rate, color: C.a },
+                            ].map(r => (
+                                <div key={r.label} style={{ marginBottom: 10 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                        <span style={{ fontSize: 11, color: C.text }}>{r.label}</span>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: r.color }}>{r.pct}%</span>
+                                    </div>
+                                    <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
+                                        <div style={{ width: `${Math.min(r.pct, 100)}%`, height: '100%', background: r.color, borderRadius: 4, transition: 'width 0.6s ease' }} />
                                     </div>
                                 </div>
-                                {[
-                                    { label: 'អត្រាផលិតផលសកម្ម',   pct: ph.active_rate,          color: C.p },
-                                    { label: 'អត្រាបញ្ចប់ការបញ្ជា',  pct: ph.completion_rate,      color: C.goldD },
-                                    { label: 'សកម្មភាពអ្នកប្រើ',    pct: ph.user_activity_rate,   color: C.dark },
-                                    { label: 'អត្រាទូទាត់ជោគជ័យ',  pct: ph.payment_success_rate, color: C.a },
-                                ].map(r => (
-                                    <div key={r.label} style={{ marginBottom: 10 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                            <span style={{ fontSize: 11, color: C.text }}>{r.label}</span>
-                                            <span style={{ fontSize: 11, fontWeight: 700, color: r.color }}>{r.pct}%</span>
-                                        </div>
-                                        <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
-                                            <div style={{ width: `${r.pct}%`, height: '100%', background: r.color, borderRadius: 4, transition: 'width 0.6s ease' }} />
+                            ))}
+                        </div>
+
+                        {/* 3. Recent activities — bottom left (directly under Orders table) */}
+                        <div style={{ ...card, padding: 18 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.a, display: 'inline-block' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {activities.map(act => (
+                                    <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                                        <ActIcon type={act.type} />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ fontSize: 12, color: C.text, margin: 0, lineHeight: 1.4 }}
+                                                dangerouslySetInnerHTML={{ __html: act.action }} />
+                                            <p style={{ fontSize: 10, color: C.muted, margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                                <Clock size={9} />{act.time}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-
-                            {/* Pending sellers */}
-                            <div style={{ ...card, padding: 18, flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>កសិកររង់ចាំ</p>
-                                    <span style={{ background: C.bgY, color: C.goldD, borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 700, border: '1px solid #fde68a' }}>
-                                        {s.pending_approvals} នាក់
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                    {sellers.map(sel => (
-                                        <div key={sel.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, transition: 'all 0.15s' }}
-                                            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#86efac'; (e.currentTarget as HTMLDivElement).style.background = C.bgG; }}
-                                            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = C.border;  (e.currentTarget as HTMLDivElement).style.background = C.bg; }}
-                                        >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                                <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg,${C.p},${C.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                                                    {sel.name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p style={{ fontSize: 12, fontWeight: 600, color: C.strong, margin: 0 }}>{sel.name}</p>
-                                                    <p style={{ fontSize: 10, color: C.muted, margin: 0 }}>{sel.location} · {sel.products} ផ.</p>
-                                                </div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: 6 }}>
-                                                <button style={{ background: C.bgG, color: C.p, border: `1px solid ${C.border2}`, borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <CheckCircle size={13} />
-                                                </button>
-                                                <button style={{ background: C.surface, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <Eye size={13} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {sellers.length === 0 && (
-                                        <p style={{ textAlign: 'center', color: C.muted, fontSize: 12, padding: '12px 0' }}>មិនមានសំណើ</p>
-                                    )}
-                                </div>
-                                <button style={{ marginTop: 10, width: '100%', background: 'transparent', border: `1px solid ${C.border2}`, borderRadius: 8, padding: 7, color: C.p, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.font, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                                    មើលសំណើទាំងអស់ <ChevronRight size={12}/>
-                                </button>
+                                {activities.length === 0 && (
+                                    <p style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>មិនមានសកម្មភាព</p>
+                                )}
                             </div>
                         </div>
 
-                        {/* Calendar */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                            <div style={{ ...card, padding: 18 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                                    <div style={{ width: 4, height: 20, borderRadius: 2, background: `linear-gradient(${C.p},${C.a})` }} />
-                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>ប្រតិទិន</p>
-                                </div>
-                                <Calendar events={calEvents} />
+                        {/* 4. Calendar — bottom right (directly under Platform health) */}
+                        <div style={{ ...card, padding: 18 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                <div style={{ width: 4, height: 20, borderRadius: 2, background: `linear-gradient(${C.p},${C.a})` }} />
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>ប្រតិទិន</p>
                             </div>
-
-                            {/* Recent activities */}
-                            <div style={{ ...card, padding: 18, flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
-                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.a, display: 'inline-block' }} />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                    {activities.map(act => (
-                                        <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                                            <ActIcon type={act.type} />
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <p style={{ fontSize: 12, color: C.text, margin: 0, lineHeight: 1.4 }}
-                                                    dangerouslySetInnerHTML={{ __html: act.action }} />
-                                                <p style={{ fontSize: 10, color: C.muted, margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                    <Clock size={9} />{act.time}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {activities.length === 0 && (
-                                        <p style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>មិនមានសកម្មភាព</p>
-                                    )}
-                                </div>
-                            </div>
+                            <Calendar events={calEvents} />
                         </div>
+
                     </div>
 
                 </div>

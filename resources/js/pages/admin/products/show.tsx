@@ -9,6 +9,7 @@ import {
     Eye, Mail, Phone, MapPin, Store, Check, AlertTriangle, X, ToggleLeft, ToggleRight
 } from "lucide-react";
 import Swal from "sweetalert2";
+import axios from 'axios';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Product {
@@ -88,13 +89,17 @@ export default function ProductShow() {
 
     const getUrl = (url: string) => url.startsWith("http") ? url : `/storage/${url}`;
 
-    const handleToggle = () => {
-        router.patch(route("admin.products.toggle-active", product.product_id), {}, {
-            preserveScroll: true,
-            onSuccess: () => { showToast(`ផលិតផល${product.is_active ? "បានបិទ" : "បានបើក"}!`, "success"); window.location.reload(); },
-            onError: () => showToast("បរាជ័យ", "error"),
-        });
-    };
+    // Replace handleToggle with:
+const handleToggle = async () => {
+    try {
+        await axios.patch(`/admin/products/${product.product_id}/toggle-active`);
+        showToast(`ផលិតផល${product.is_active ? "បានបិទ" : "បានបើក"}!`, "success");
+        router.reload();
+    } catch (err: any) {
+        console.error('Toggle error:', err.response?.status, err.response?.data);
+        showToast("បរាជ័យ", "error");
+    }
+};
 
     const handleDelete = async () => {
         const result = await Swal.fire({
@@ -134,11 +139,11 @@ export default function ProductShow() {
                             </div>
                         </div>
                         <div className="flex gap-2 flex-wrap">
-                            <Link href={route("admin.products.edit", product.product_id)}>
+                            {/* <Link href={route("admin.products.edit", product.product_id)}>
                                 <button className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors">
                                     <Edit2 className="w-3.5 h-3.5" /> កែសម្រួល
                                 </button>
-                            </Link>
+                            </Link> */}
                             <button
                                 onClick={handleToggle}
                                 className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-colors ${

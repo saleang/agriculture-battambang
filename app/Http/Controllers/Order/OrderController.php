@@ -63,7 +63,7 @@ class OrderController extends Controller
                 'payment_method' => 'required|in:KHQR,manual(cash)',
                 'customer_notes' => 'nullable|string',
                 'items' => 'required|array|min:1',
-                'items.*.product_id' => 'required|integer|exists:products,product_id',
+                'items.*.product_id' => 'required|integer|exists:product,product_id',
                 'items.*.quantity' => 'required|integer|min:1',
             ]);
 

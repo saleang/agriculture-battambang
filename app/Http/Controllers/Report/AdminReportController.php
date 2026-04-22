@@ -219,12 +219,55 @@ class AdminReportController extends Controller
     /**
      * Key metrics for the dashboard header cards
      */
+    // private function getKeyMetrics(Carbon $start, Carbon $end): array
+    // {
+    //     $prevStart = $start->copy()->subDays($start->diffInDays($end) + 1);
+    //     $prevEnd   = $start->copy()->subSecond();
+
+    //     // ── Current period ──
+    //     $totalRevenue = Order::whereBetween('created_at', [$start, $end])
+    //         ->whereNotIn('status', [Order::STATUS_CANCELLED])
+    //         ->sum('total_amount');
+
+    //     $totalOrders = Order::whereBetween('created_at', [$start, $end])
+    //         ->whereNotIn('status', [Order::STATUS_CANCELLED])
+    //         ->count();
+
+    //     $newUsers = User::whereBetween('created_at', [$start, $end])->count();
+
+    //     $activeSellers = Seller::whereHas('user', fn($q) => $q->where('status', 'active'))
+    //         ->whereHas('user.orders', fn($q) => $q->whereBetween('orders.created_at', [$start, $end]))
+    //         ->count();
+
+    //     // ── Previous period for growth % ──
+    //     $prevRevenue = Order::whereBetween('created_at', [$prevStart, $prevEnd])
+    //         ->whereNotIn('status', [Order::STATUS_CANCELLED])
+    //         ->sum('total_amount');
+
+    //     $prevOrders = Order::whereBetween('created_at', [$prevStart, $prevEnd])
+    //         ->whereNotIn('status', [Order::STATUS_CANCELLED])
+    //         ->count();
+
+    //     $prevUsers = User::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+    //     return [
+    //         'total_revenue'  => round((float) $totalRevenue, self::KHR_FORMAT),
+    //         'total_orders'   => $totalOrders,
+    //         'new_users'      => $newUsers,
+    //         'active_sellers' => $activeSellers,
+    //         'revenue_growth' => $this->growthPercent($totalRevenue, $prevRevenue),
+    //         'orders_growth'  => $this->growthPercent($totalOrders, $prevOrders),
+    //         'users_growth'   => $this->growthPercent($newUsers, $prevUsers),
+    //         'avg_order_value' => $totalOrders > 0 ? round($totalRevenue / $totalOrders, self::KHR_FORMAT) : 0,
+    //     ];
+    // }
     private function getKeyMetrics(Carbon $start, Carbon $end): array
     {
-        $prevStart = $start->copy()->subDays($start->diffInDays($end) + 1);
-        $prevEnd   = $start->copy()->subSecond();
+        // Use calendar-day difference so a 30-day window always maps to exactly 30 prior days
+        $periodDays = (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
+        $prevStart  = $start->copy()->subDays($periodDays)->startOfDay();
+        $prevEnd    = $start->copy()->subSecond();
 
-        // ── Current period ──
         $totalRevenue = Order::whereBetween('created_at', [$start, $end])
             ->whereNotIn('status', [Order::STATUS_CANCELLED])
             ->sum('total_amount');
@@ -235,11 +278,20 @@ class AdminReportController extends Controller
 
         $newUsers = User::whereBetween('created_at', [$start, $end])->count();
 
+        // Fixed: traverse seller → orderItems → order (not user → orders which is buyer-side)
         $activeSellers = Seller::whereHas('user', fn($q) => $q->where('status', 'active'))
-            ->whereHas('user.orders', fn($q) => $q->whereBetween('orders.created_at', [$start, $end]))
+            ->whereHas(
+                'orderItems',
+                fn($q) =>
+                $q->whereHas(
+                    'order',
+                    fn($q2) =>
+                    $q2->whereBetween('created_at', [$start, $end])
+                        ->whereNotIn('status', [Order::STATUS_CANCELLED])
+                )
+            )
             ->count();
 
-        // ── Previous period for growth % ──
         $prevRevenue = Order::whereBetween('created_at', [$prevStart, $prevEnd])
             ->whereNotIn('status', [Order::STATUS_CANCELLED])
             ->sum('total_amount');
@@ -251,14 +303,16 @@ class AdminReportController extends Controller
         $prevUsers = User::whereBetween('created_at', [$prevStart, $prevEnd])->count();
 
         return [
-            'total_revenue'  => round((float) $totalRevenue, self::KHR_FORMAT),
-            'total_orders'   => $totalOrders,
-            'new_users'      => $newUsers,
-            'active_sellers' => $activeSellers,
-            'revenue_growth' => $this->growthPercent($totalRevenue, $prevRevenue),
-            'orders_growth'  => $this->growthPercent($totalOrders, $prevOrders),
-            'users_growth'   => $this->growthPercent($newUsers, $prevUsers),
-            'avg_order_value' => $totalOrders > 0 ? round($totalRevenue / $totalOrders, self::KHR_FORMAT) : 0,
+            'total_revenue'   => round((float) $totalRevenue, self::KHR_FORMAT),
+            'total_orders'    => $totalOrders,
+            'new_users'       => $newUsers,
+            'active_sellers'  => $activeSellers,
+            'revenue_growth'  => $this->growthPercent($totalRevenue, $prevRevenue),
+            'orders_growth'   => $this->growthPercent($totalOrders, $prevOrders),
+            'users_growth'    => $this->growthPercent($newUsers, $prevUsers),
+            'avg_order_value' => $totalOrders > 0
+                ? round((float) $totalRevenue / $totalOrders, self::KHR_FORMAT)
+                : 0,
         ];
     }
 
@@ -394,37 +448,71 @@ class AdminReportController extends Controller
         return $result;
     }
 
+    // private function getTopSellers(Carbon $start, Carbon $end, int $limit = 5)
+    // {
+    //     return DB::table('sellers')
+    //         ->join('users',       'sellers.user_id',        '=', 'users.user_id')
+    //         ->join('order_items', 'sellers.seller_id',      '=', 'order_items.seller_id')
+    //         ->join('orders',      'order_items.order_id',   '=', 'orders.order_id')
+    //         ->whereBetween('orders.created_at', [$start, $end])
+    //         ->where('orders.status', '!=', Order::STATUS_CANCELLED)
+    //         ->select(
+    //             'sellers.seller_id',
+    //             'sellers.farm_name as name',
+    //             DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
+    //             DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
+    //             DB::raw('SUM(order_items.quantity) as units_sold'),
+    //             'sellers.rating_average as rating',
+    //             'sellers.rating_count'
+    //         )
+    //         ->groupBy('sellers.seller_id', 'sellers.farm_name', 'sellers.rating_average', 'sellers.rating_count')
+    //         // ->orderByDesc('revenue')
+    //         ->orderByDesc('order_count')
+    //         ->take($limit)
+    //         ->get()
+    //         ->map(fn($r) => [
+    //             'seller_id'  => $r->seller_id,
+    //             'name'       => $r->name,
+    //             'revenue'    => (float) $r->revenue,
+    //             'orders'     => (int)   $r->order_count,
+    //             'units_sold' => (int)   $r->units_sold,
+    //             'rating'     => round((float) ($r->rating ?? 0), 1),
+    //             'rating_count' => (int) ($r->rating_count ?? 0),
+    //         ]);
+    // }
     private function getTopSellers(Carbon $start, Carbon $end, int $limit = 5)
-    {
-        return DB::table('sellers')
-            ->join('users',       'sellers.user_id',        '=', 'users.user_id')
-            ->join('order_items', 'sellers.seller_id',      '=', 'order_items.seller_id')
-            ->join('orders',      'order_items.order_id',   '=', 'orders.order_id')
-            ->whereBetween('orders.created_at', [$start, $end])
-            ->where('orders.status', '!=', Order::STATUS_CANCELLED)
-            ->select(
-                'sellers.seller_id',
-                'sellers.farm_name as name',
-                DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
-                DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
-                DB::raw('SUM(order_items.quantity) as units_sold'),
-                'sellers.rating_average as rating',
-                'sellers.rating_count'
-            )
-            ->groupBy('sellers.seller_id', 'sellers.farm_name', 'sellers.rating_average', 'sellers.rating_count')
-            ->orderByDesc('revenue')
-            ->take($limit)
-            ->get()
-            ->map(fn($r) => [
-                'seller_id'  => $r->seller_id,
-                'name'       => $r->name,
-                'revenue'    => (float) $r->revenue,
-                'orders'     => (int)   $r->order_count,
-                'units_sold' => (int)   $r->units_sold,
-                'rating'     => round((float) ($r->rating ?? 0), 1),
-                'rating_count' => (int) ($r->rating_count ?? 0),
-            ]);
-    }
+{
+    return DB::table('sellers')
+        ->join('users',       'sellers.user_id',      '=', 'users.user_id')
+        ->join('order_items', 'sellers.seller_id',    '=', 'order_items.seller_id')
+        ->join('orders',      'order_items.order_id', '=', 'orders.order_id')
+        ->whereBetween('orders.created_at', [$start, $end])
+        ->where('orders.status', '!=', Order::STATUS_CANCELLED)
+        ->select(
+            'sellers.seller_id',
+            'sellers.farm_name as name',
+            DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
+            DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
+            DB::raw('SUM(order_items.quantity) as units_sold'),
+            // MAX() makes these valid aggregates — fixes the GROUP BY / ONLY_FULL_GROUP_BY issue
+            // that was causing rating to return 0 or null in strict MySQL mode
+            DB::raw('ROUND(MAX(sellers.rating_average), 2) as rating'),
+            DB::raw('MAX(sellers.rating_count) as rating_count')
+        )
+        ->groupBy('sellers.seller_id', 'sellers.farm_name')
+        ->orderByDesc('order_count')
+        ->take($limit)
+        ->get()
+        ->map(fn($r) => [
+            'seller_id'    => $r->seller_id,
+            'name'         => $r->name,
+            'revenue'      => (float) $r->revenue,
+            'orders'       => (int)   $r->order_count,
+            'units_sold'   => (int)   $r->units_sold,
+            'rating'       => round((float) ($r->rating ?? 0), 1),
+            'rating_count' => (int)   ($r->rating_count ?? 0),
+        ]);
+}
 
     private function getTopProducts(Carbon $start, Carbon $end, int $limit = 5)
     {
