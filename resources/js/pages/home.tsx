@@ -60,6 +60,7 @@ export default function Home({
     const [wishlist, setWishlist] = useState<number[]>(
         wishlistProductIds || [],
     );
+    const [orderedStatus, setOrderedStatus] = useState<Record<number, boolean>>({});
     const [orderedProducts, setOrderedProducts] = useState<number[]>(() => {
         try {
             const saved = localStorage.getItem('orderedProducts');
@@ -141,9 +142,10 @@ export default function Home({
 
         addToCart(cartProduct);
 
-        setOrderedProducts((prev) => [
-            ...new Set([...prev, product.product_id]),
-        ]);
+        setOrderedStatus(prev => ({ ...prev, [product.product_id]: true }));
+        setTimeout(() => {
+            setOrderedStatus(prev => ({ ...prev, [product.product_id]: false }));
+        }, 1000); // Revert after 1 second
     };
 
     const handleAddToWishlist = async (product: Product) => {
@@ -676,17 +678,10 @@ export default function Home({
                                                         handleOrder(p);
                                                     }
                                                 }}
-                                                disabled={
-                                                    orderedProducts.includes(p.product_id) ||
-                                                    user?.role === 'seller'
-                                                }
+                                                disabled={orderedStatus[p.product_id] || user?.role === 'seller'}
                                                 className="flex-1 rounded-xl bg-green-600 py-3 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                                             >
-                                                {orderedProducts.includes(
-                                                    p.product_id,
-                                                )
-                                                    ? 'បានបញ្ជាទិញ'
-                                                    : 'បញ្ជាទិញ'}
+                                                {orderedStatus[p.product_id] ? 'បានបញ្ជាទិញ' : 'បញ្ជាទិញ'}
                                             </Button>
 
                                             <Button
