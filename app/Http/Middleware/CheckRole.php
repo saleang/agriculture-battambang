@@ -20,6 +20,10 @@ class CheckRole
                 ->with('error', 'Your account is ' . $request->user()->status);
         }
 
+        if ($request->user()->role === 'admin') {
+            return $next($request);
+        }
+
         if (!in_array($request->user()->role, $roles)) {
             abort(403, 'Unauthorized');
         }

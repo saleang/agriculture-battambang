@@ -18,6 +18,7 @@ class CustomerProfileUpdateRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'gender' => ['nullable', 'in:male,female,other'],
             'address' => ['nullable', 'string', 'max:500'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ];
     }
 }

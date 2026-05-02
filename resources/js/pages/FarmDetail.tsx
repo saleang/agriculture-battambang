@@ -74,6 +74,7 @@ interface Props extends PageProps {
     isFollowing: boolean;
     followersCount: number;
     wishlistedProductIds?: number[];
+    canReview: boolean;
 }
 
 // ────────────────────────────────────────────────
@@ -87,6 +88,7 @@ export default function FarmDetail({
     isFollowing: initialIsFollowing,
     followersCount: initialFollowersCount,
     wishlistedProductIds = [],
+    canReview,
 }: Props) {
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(initialFollowersCount);
@@ -663,61 +665,75 @@ export default function FarmDetail({
 
                             {/* Review Form */}
                             {auth.user ? (
-                                <form
-                                    onSubmit={handleRatingSubmit}
-                                    className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-                                >
-                                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                                        បញ្ចេញមតិរបស់អ្នក
-                                    </h3>
-                                    <div className="mb-4">
-                                        <label className="mb-2 block font-medium text-gray-700">
-                                            ការវាយតម្លៃរបស់អ្នក
-                                        </label>
-                                        <StarRatingInput
-                                            rating={data.rating}
-                                            setRating={(rating) =>
-                                                setData('rating', rating)
-                                            }
-                                        />
-                                        {errors.rating && (
-                                            <p className="mt-1 text-sm text-red-600">
-                                                {errors.rating}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="mb-4">
-                                        <label
-                                            htmlFor="comment"
-                                            className="mb-2 block font-medium text-gray-700"
-                                        >
-                                            មតិយោបល់
-                                        </label>
-                                        <textarea
-                                            id="comment"
-                                            value={data.comment}
-                                            onChange={(e) =>
-                                                setData('comment', e.target.value)
-                                            }
-                                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                                            rows={4}
-                                            placeholder="សរសេរមតិយោបល់របស់អ្នកនៅទីនេះ..."
-                                        ></textarea>
-                                        {errors.comment && (
-                                            <p className="mt-1 text-sm text-red-600">
-                                                {errors.comment}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:cursora_not-allowed disabled:opacity-70"
+                                canReview ? (
+                                    <form
+                                        onSubmit={handleRatingSubmit}
+                                        className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                                     >
-                                        {processing ? 'កំពុងផ្ញើ...' : 'ផ្ញើមតិ'}
-                                        <Send className="h-5 w-5" />
-                                    </button>
-                                </form>
+                                        <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                                            បញ្ចេញមតិរបស់អ្នក
+                                        </h3>
+                                        <div className="mb-4">
+                                            <label className="mb-2 block font-medium text-gray-700">
+                                                ការវាយតម្លៃរបស់អ្នក
+                                            </label>
+                                            <StarRatingInput
+                                                rating={data.rating}
+                                                setRating={(rating) =>
+                                                    setData('rating', rating)
+                                                }
+                                            />
+                                            {errors.rating && (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {errors.rating}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="mb-4">
+                                            <label
+                                                htmlFor="comment"
+                                                className="mb-2 block font-medium text-gray-700"
+                                            >
+                                                មតិយោបល់
+                                            </label>
+                                            <textarea
+                                                id="comment"
+                                                value={data.comment}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'comment',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                                                rows={4}
+                                                placeholder="សរសេរមតិយោបល់របស់អ្នកនៅទីនេះ..."
+                                            ></textarea>
+                                            {errors.comment && (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {errors.comment}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:cursora_not-allowed disabled:opacity-70"
+                                        >
+                                            {processing
+                                                ? 'កំពុងផ្ញើ...'
+                                                : 'ផ្ញើមតិ'}
+                                            <Send className="h-5 w-5" />
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <div className="mb-8 rounded-lg border border-yellow-300 bg-yellow-50 p-6 text-center text-yellow-800">
+                                        <p className="font-medium">
+                                            អ្នកត្រូវតែទិញផលិតផលពីកសិដ្ឋាននេះជាមុនសិន
+                                            ទើបអាចបញ្ចេញមតិបាន។
+                                        </p>
+                                    </div>
+                                )
                             ) : (
                                 <div className="mb-8 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
                                     <h3 className="text-lg font-semibold text-gray-800">
