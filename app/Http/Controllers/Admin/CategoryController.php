@@ -59,7 +59,7 @@ class CategoryController extends Controller
         $category = Category::create($validated);
 
         return response()->json([
-            'message' => 'Category created successfully.',
+            'message' => 'ប្រភេទផលិតផលបានបង្កើតដោយជោគជ័យ។',
             'data'    => $category,
         ], 201);
     }
@@ -94,7 +94,7 @@ class CategoryController extends Controller
         $category->update($validated);
 
         return response()->json([
-            'message' => 'Category updated successfully.',
+            'message' => 'ប្រភេទផលិតផលបានកែប្រែដោយជោគជ័យ។',
             'data'    => $category->fresh(),
         ], 200);
     }

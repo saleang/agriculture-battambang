@@ -22,12 +22,15 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
-    })
-     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->alias([
+         $middleware->alias([
             'role' => CheckRole::class,
         ]);
     })
+    //  ->withMiddleware(function (Middleware $middleware) {
+    //     $middleware->alias([
+    //         'role' => CheckRole::class,
+    //     ]);
+    // })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

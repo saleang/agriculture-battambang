@@ -9,9 +9,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { useForm, Head } from '@inertiajs/react';
-import { Mail, Lock, Eye, EyeOff, Smartphone, Leaf, ChevronRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Leaf, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-// This file is for the login page. It uses Inertia.js for form handling and Tailwind CSS for styling.
+
 interface LoginProps {
     status?: string;
     canResetPassword: boolean;
@@ -24,9 +24,8 @@ export default function Login({
     canRegister,
 }: LoginProps) {
     const [showPassword, setShowPassword] = useState(false);
-    const [isPhoneMode, setIsPhoneMode] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         email: '',
         password: '',
         remember: false,
@@ -34,21 +33,28 @@ export default function Login({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        clearErrors();
         post('/login', {
             onFinish: () => reset('password'),
         });
     };
+
+    // Derive a single top-level error message from Inertia's errors object.
+    // The backend throws ValidationException with key 'email' for both
+    // identifier errors AND account-status errors, and 'password' for wrong password.
+    const topLevelError = errors.email || errors.password || null;
 
     return (
         <>
             <Head title="ចូលគណនី - កសិផលខេត្តបាត់ដំបង" />
 
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
-                {/* Main container - centered, limited width, no overflow */}
                 <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row max-h-[90vh] lg:max-h-none">
-                        {/* Left - Form (will be centered vertically on desktop) */}
+
+                        {/* Left — Form */}
                         <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[50vh] lg:min-h-0">
+
                             {/* Header */}
                             <div className="text-center mb-6 lg:mb-8">
                                 <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-green-600 to-emerald-500 rounded-full mb-3 mx-auto">
@@ -57,36 +63,63 @@ export default function Login({
                                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">ចូលគណនី</h1>
                                 <p className="text-gray-600 text-xs sm:text-sm">កសិផលស្រស់ៗពីខេត្តបាត់ដំបង</p>
                             </div>
+
+                            {/* Session status (e.g. password reset success) */}
                             {status && (
                                 <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-xs sm:text-sm rounded-lg border border-emerald-200 text-center">
                                     {status}
                                 </div>
                             )}
 
+                            {/*
+                             * Unified error banner — driven directly by Inertia's `errors` object.
+                             * Covers: wrong email/phone, wrong password, inactive/banned account.
+                             * No separate loginError state needed.
+                             */}
+                            {topLevelError && (
+                                <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                    {topLevelError}
+                                </div>
+                            )}
+
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                {/* Identifier */}
+
+                                {/* Email / Phone */}
                                 <div>
                                     <Label htmlFor="email" className="text-sm text-gray-700 font-medium mb-1.5 block">
-                                        {isPhoneMode ? 'លេខទូរស័ព្ទ' : 'អ៊ីមែល'}
+                                        អ៊ីមែន ឬ លេខទូរស័ព្ទ
                                     </Label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            {isPhoneMode ? <Smartphone className="h-5 w-5 text-gray-400" /> : <Mail className="h-5 w-5 text-gray-400" />}
+                                            <Mail className="h-5 w-5 text-gray-400" />
                                         </div>
                                         <Input
                                             id="email"
-                                            type={isPhoneMode ? "tel" : "email"}
+                                            name="email"
+                                            type="text"
                                             value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
+                                            onChange={(e) => {
+                                                setData('email', e.target.value);
+                                                clearErrors('email');
+                                            }}
                                             required
                                             autoFocus
-                                            placeholder={isPhoneMode ? "ឧ. 012345678" : "ឧ. example@email.com"}
+                                            placeholder="ឧ. example@email.com ឬ 012345678"
                                             className={`pl-10 h-10 sm:h-11 rounded-lg text-sm ${
-                                                errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
+                                                errors.email
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
                                             }`}
                                         />
                                     </div>
-                                    {errors.email && <InputError message={errors.email} className="mt-1 text-xs" />}
+                                    {/*
+                                     * Intentionally NOT rendering <InputError> for email here because
+                                     * all errors (including account-status errors keyed to 'email') are
+                                     * already shown in the banner above. Remove the banner and
+                                     * uncomment this if you prefer inline-only display.
+                                     *
+                                     * {errors.email && <InputError message={errors.email} className="mt-1 text-xs" />}
+                                     */}
                                 </div>
 
                                 {/* Password */}
@@ -107,13 +140,19 @@ export default function Login({
                                         </div>
                                         <Input
                                             id="password"
+                                            name="password"
                                             type={showPassword ? 'text' : 'password'}
                                             value={data.password}
-                                            onChange={(e) => setData('password', e.target.value)}
+                                            onChange={(e) => {
+                                                setData('password', e.target.value);
+                                                clearErrors('password');
+                                            }}
                                             required
                                             placeholder="••••••••"
                                             className={`pl-10 pr-10 h-10 sm:h-11 rounded-lg text-sm ${
-                                                errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
+                                                errors.password
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300 focus:border-green-500 focus:ring-green-500'
                                             }`}
                                         />
                                         <button
@@ -124,9 +163,15 @@ export default function Login({
                                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                         </button>
                                     </div>
-                                    {errors.password && <InputError message={errors.password} className="mt-1 text-xs" />}
+                                    {/*
+                                     * Same as above — password errors surface in the banner.
+                                     * Uncomment for inline display instead:
+                                     *
+                                     * {errors.password && <InputError message={errors.password} className="mt-1 text-xs" />}
+                                     */}
                                 </div>
 
+                                {/* Remember me */}
                                 <div className="flex items-center">
                                     <Checkbox
                                         id="remember"
@@ -154,7 +199,7 @@ export default function Login({
                                     )}
                                 </Button>
 
-                                {/* Social login - optional, kept small */}
+                                {/* Social login */}
                                 <div className="pt-3">
                                     <div className="relative my-3">
                                         <div className="absolute inset-0 flex items-center">
@@ -188,7 +233,7 @@ export default function Login({
                             </form>
                         </div>
 
-                        {/* Right - Benefits (desktop only) */}
+                        {/* Right — Benefits panel (desktop only) */}
                         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 xl:p-10 flex-col justify-between">
                             <div>
                                 <h2 className="text-xl xl:text-2xl font-bold mb-6">ទិញផ្ទាល់ពីកសិករបាត់ដំបង</h2>
@@ -236,6 +281,7 @@ export default function Login({
                                 </p>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>

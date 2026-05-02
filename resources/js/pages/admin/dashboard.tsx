@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-// pages/admin/dashboard.tsx — Fully Dynamic v7 (calendar fix)
+// pages/admin/dashboard.tsx — Fixed v8
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -7,9 +7,10 @@ import {
     Users, Package, ShoppingCart, DollarSign, Store,
     UserCheck, Clock, CheckCircle, Shield,
     ArrowUpRight, ArrowDownRight, ChevronRight, ChevronLeft,
-    Leaf, Eye, Settings, Bell, RefreshCw, TrendingUp,
-    House
+    Leaf, Eye, Settings,
+    TrendingUp, House
 } from 'lucide-react';
+// FIX #2: Removed unused Bell and RefreshCw imports
 import {
     AreaChart, Area, BarChart, Bar, LineChart, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -28,6 +29,7 @@ interface AdminStats {
     pending_approvals: number;
     pending_orders: number;
     total_revenue: number;
+    revenue_this_month: number; // used to label the trend badge correctly
 }
 interface Trends {
     user_trend: number;
@@ -43,14 +45,14 @@ interface PlatformHealth {
 }
 interface MonthlyPoint { m: string; rev: number; ord: number; usr: number; }
 interface CategoryPoint { name: string; v: number; }
-interface SparkData    { revenue: number[]; orders: number[]; users: number[]; }
+interface SparkData    { revenue: number[]; orders: number[]; users: number[]; sellers: number[]; }
+// FIX #8: Added sellers sparkline to SparkData interface
 interface RecentOrder  { id: string; customer: string; amount: string; status: string; date: string; }
-interface PendingSeller{ id: number; name: string; location: string; products: number; date: string; }
 interface RecentActivity {
     id: string; action: string; user: string;
     time: string; status: string; type: string;
 }
-// Keys are now "YYYY-MM-DD" strings (e.g. "2025-04-19")
+// Keys are "YYYY-MM-DD" strings (e.g. "2025-04-19")
 type CalendarEvents = Record<string, { label: string; color: string }[]>;
 
 /* ─── Color palette ──────────────────────────── */
@@ -92,6 +94,45 @@ const card: React.CSSProperties = {
 
 const fmtM = (n: number) => `${n.toLocaleString()} ៛`;
 
+const formatRelativeTimeKhmer = (value: string): string => {
+    const raw = value.trim();
+    const normalized = raw.toLowerCase();
+
+    if (/[០១២៣៤៥៦៧៨៩]/u.test(raw) || normalized.includes('មុន') || normalized.includes('ក្នុង')) {
+        return raw;
+    }
+
+    if (normalized === 'just now' || normalized === 'now' || normalized === 'moments ago') {
+        return 'ឥឡូវនេះ';
+    }
+
+    const cleaned = normalized.replace(/^about\s+/, '').replace(/^approximately\s+/, '');
+    const match = cleaned.match(/^(?:an?|[0-9]+)\s+(second|minute|hour|day|week|month|year)s?\s*(ago|from now)?$/);
+    if (!match) {
+        return raw;
+    }
+
+    const [, unit, direction] = match;
+    const countMatch = cleaned.match(/^(?:an?|[0-9]+)\s/);
+    const count = countMatch ? Number(countMatch[0].replace(/[^0-9]/g, '') || 1) : 1;
+    const unitMap: Record<string, string> = {
+        second: 'វិនាទី',
+        minute: 'នាទី',
+        hour: 'ម៉ោង',
+        day: 'ថ្ងៃ',
+        week: 'សប្តាហ៍',
+        month: 'ខែ',
+        year: 'ឆ្នាំ',
+    };
+
+    const khmerUnit = unitMap[unit] ?? unit;
+    if (direction === 'from now') {
+        return `ក្នុង ${count} ${khmerUnit}`;
+    }
+
+    return `${count} ${khmerUnit} មុន`;
+};
+
 const trendBadge = (val: number) => ({
     fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
     color: val >= 0 ? '#166534' : '#991b1b',
@@ -131,13 +172,18 @@ const Pill = ({ s }: { s: string }) => {
         pending:    ['#854d0e', '#fef9c3'],
     };
     const label: Record<string, string> = {
-        completed: 'បានបញ្ចប់', processing: 'កំពុងដំណើរ',
-        confirmed: 'បានបញ្ជាក់', cancelled: 'បានបោះបង់', pending: 'រង់ចាំ',
+        completed:  'បានបញ្ចប់',
+        processing: 'កំពុងដំណើរ',
+        confirmed:  'បានបញ្ជាក់',
+        cancelled:  'បានបោះបង់',
+        pending:    'រង់ចាំ',
     };
-    const [fg, bg] = map[s] ?? map.pending;
+    // FIX #11: Safe fallback for unknown statuses — always show Khmer or a
+    // neutral grey pill rather than raw English strings
+    const [fg, bg] = map[s] ?? ['#374151', '#f3f4f6'];
     return (
         <span style={{ color: fg, background: bg, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-            {label[s] ?? s}
+            {label[s] ?? 'មិនស្គាល់'}
         </span>
     );
 };
@@ -164,7 +210,6 @@ const ActIcon = ({ type }: { type: string }) => {
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
 /* ─── Calendar ───────────────────────────────── */
-// events keys are "YYYY-MM-DD" — the Calendar filters by the viewed year+month
 const Calendar = ({ events }: { events: CalendarEvents }) => {
     const today = new Date();
     const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -179,20 +224,16 @@ const Calendar = ({ events }: { events: CalendarEvents }) => {
     ];
     while (cells.length % 7 !== 0) cells.push(null);
 
-    // Filter events that belong to the currently viewed year+month.
-    // Backend keys are "YYYY-MM-DD"; we build the prefix to match.
-    const monthPrefix = `${year}-${pad2(month + 1)}-`; // e.g. "2025-04-"
+    const monthPrefix = `${year}-${pad2(month + 1)}-`;
 
-    // Build a day→events lookup for this month only
     const monthEvents: Record<number, { label: string; color: string }[]> = {};
     Object.entries(events).forEach(([dateStr, evs]) => {
         if (dateStr.startsWith(monthPrefix)) {
-            const day = parseInt(dateStr.slice(8), 10); // extract DD
+            const day = parseInt(dateStr.slice(8), 10);
             monthEvents[day] = evs;
         }
     });
 
-    // For the "upcoming" list at the bottom, show only this month's events sorted by day
     const upcomingEntries = Object.entries(monthEvents)
         .sort(([a], [b]) => parseInt(a) - parseInt(b))
         .slice(0, 4);
@@ -297,18 +338,21 @@ export default function AdminDashboard({
     recentOrders: RecentOrder[];
     recentActivities: RecentActivity[];
     calendarEvents: CalendarEvents;
+    // FIX #1: pendingSellers removed — it is not consumed by this component.
+    // The PHP controller should also remove that block (see DashboardController).
 }>) {
 
     // Safe defaults
     const s = {
-        total_users:       stats?.total_users       ?? 0,
-        total_sellers:     stats?.total_sellers     ?? 0,
-        total_customers:   stats?.total_customers   ?? 0,
-        total_products:    stats?.total_products    ?? 0,
-        active_products:   stats?.active_products   ?? 0,
-        pending_approvals: stats?.pending_approvals ?? 0,
-        pending_orders:    stats?.pending_orders    ?? 0,
-        total_revenue:     stats?.total_revenue     ?? 0,
+        total_users:         stats?.total_users         ?? 0,
+        total_sellers:       stats?.total_sellers       ?? 0,
+        total_customers:     stats?.total_customers     ?? 0,
+        total_products:      stats?.total_products      ?? 0,
+        active_products:     stats?.active_products     ?? 0,
+        pending_approvals:   stats?.pending_approvals   ?? 0,
+        pending_orders:      stats?.pending_orders      ?? 0,
+        total_revenue:       stats?.total_revenue       ?? 0,
+        revenue_this_month:  stats?.revenue_this_month  ?? 0,
     };
     const tr = {
         user_trend:    trends?.user_trend    ?? 0,
@@ -328,6 +372,7 @@ export default function AdminDashboard({
         revenue: (sparkData?.revenue ?? []) as number[],
         orders:  (sparkData?.orders  ?? []) as number[],
         users:   (sparkData?.users   ?? []) as number[],
+        sellers: (sparkData?.sellers ?? []) as number[], // FIX #8: use dedicated sellers sparkline
     };
     const orders     = recentOrders     ?? [];
     const activities = recentActivities ?? [];
@@ -354,7 +399,7 @@ export default function AdminDashboard({
             value:   s.total_sellers,
             sub:     `${s.pending_approvals} រង់ចាំ`,
             trend:   tr.seller_trend,
-            spark:   spark.users,
+            spark:   spark.sellers, // FIX #8: was spark.users (wrong)
             color:   C.a,
             iconBg:  C.bgG,
             borderL: C.a,
@@ -372,9 +417,11 @@ export default function AdminDashboard({
             icon:    <Package size={18} color={C.goldD} />,
         },
         {
-            label:   'អតិថិជនសរុប',
-            value:   s.total_customers,
-            sub:     `${s.pending_orders} ការបញ្ជា`,
+            // FIX #10: Renamed card to "ការបញ្ជាទិញ" so the subtitle (pending orders)
+            // is semantically consistent with the card title.
+            label:   'ផលិតផលកំពុងបញ្ជាទិញ',
+            value:   s.pending_orders,
+            sub:     `${s.total_customers} អតិថិជន`,
             trend:   tr.order_trend,
             spark:   spark.orders,
             color:   C.a,
@@ -385,7 +432,9 @@ export default function AdminDashboard({
         {
             label:   'ចំណូលសរុប',
             value:   fmtM(s.total_revenue),
-            sub:     'ប្រចាំខែ',
+            // Show this month's revenue so the trend badge (month-over-month %)
+            // is semantically tied to the sub-label, not the all-time total.
+            sub:     `${fmtM(s.revenue_this_month)} ខែនេះ`,
             trend:   tr.revenue_trend,
             spark:   spark.revenue,
             color:   C.dark,
@@ -409,8 +458,8 @@ export default function AdminDashboard({
                                 <House size={20} color="#fff" />
                             </div>
                             <div>
-                                <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>ផ្ទាំងគ្រប់គ្រងអ្នកគ្រប់គ្រង</h1>
-                                <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>សូមស្វាគមន៍ត្រឡប់មកវិញ! នេះជាអ្វីដែលកំពុងកើតឡើងនាពេលបច្ចុប្បន្ន។</p>
+                                <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 18, margin: 0 }}>ផ្ទាំងគ្រប់គ្រង</h1>
+                                <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>សូមស្វាគមន៍ត្រឡប់មកវិញ!</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -442,9 +491,9 @@ export default function AdminDashboard({
                                     </span>
                                 </div>
                                 <div style={{ marginTop: 12 }}>
-                                    <p style={{ fontSize: 10, color: C.sub, margin: '0 0 2px', fontWeight: 500 }}>{k.label}</p>
+                                    <p style={{ fontSize: 12, color: C.sub, margin: '0 0 2px', fontWeight: 500 }}>{k.label}</p>
                                     <p style={{ fontSize: 22, fontWeight: 700, color: C.strong, margin: 0, lineHeight: 1 }}>{k.value}</p>
-                                    <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0' }}>{k.sub}</p>
+                                    <p style={{ fontSize: 12, color: C.muted, margin: '4px 0 0' }}>{k.sub}</p>
                                 </div>
                                 <div style={{ marginTop: 8 }}>
                                     <Spark data={k.spark} color={k.color} />
@@ -461,9 +510,9 @@ export default function AdminDashboard({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                 <div>
                                     <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ចំណូល & ការបញ្ជាទិញ</p>
-                                    <p style={{ color: C.sub, fontSize: 11, margin: '3px 0 0' }}>ទិន្នន័យ ៧ ខែ</p>
+                                    <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ទិន្នន័យ ៧ ខែ</p>
                                 </div>
-                                <div style={{ display: 'flex', gap: 14, fontSize: 11, color: C.sub }}>
+                                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: C.sub }}>
                                     {[{ color: C.p, label: 'ចំណូល' }, { color: C.goldD, label: 'ការបញ្ជា' }].map(l => (
                                         <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                                             <span style={{ width: 8, height: 8, borderRadius: 2, background: l.color, display: 'inline-block' }} />{l.label}
@@ -484,8 +533,8 @@ export default function AdminDashboard({
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid stroke="#f3f4f6" strokeDasharray="4 4" />
-                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<LightTooltip />} />
                                     <Area type="monotone" dataKey="rev" name="ចំណូល (ពាន់រៀល)" stroke={C.p}     strokeWidth={2} fill="url(#lg1)" dot={false} activeDot={{ r: 4, fill: C.p }} />
                                     <Area type="monotone" dataKey="ord" name="ការបញ្ជា"  stroke={C.goldD} strokeWidth={2} fill="url(#lg2)" dot={false} activeDot={{ r: 4, fill: C.goldD }} />
@@ -497,13 +546,13 @@ export default function AdminDashboard({
                         <div style={card}>
                             <div style={{ marginBottom: 14 }}>
                                 <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>អ្នកប្រើប្រាស់</p>
-                                <p style={{ color: C.sub, fontSize: 11, margin: '3px 0 0' }}>ប្រចាំ ៧ ខែ</p>
+                                <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ប្រចាំ ៧ ខែ</p>
                             </div>
                             <ResponsiveContainer width="100%" height={200}>
                                 <BarChart data={monthly} barSize={14} barGap={3} margin={{ top: 4, right: 4, left: -22, bottom: 0 }}>
                                     <CartesianGrid stroke="#f3f4f6" strokeDasharray="4 4" vertical={false} />
-                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<LightTooltip />} />
                                     <Bar dataKey="usr" name="អ្នកប្រើ"  fill={C.p}     radius={[4,4,0,0]} />
                                     <Bar dataKey="ord" name="ការបញ្ជា" fill={C.light}  radius={[4,4,0,0]} />
@@ -514,7 +563,7 @@ export default function AdminDashboard({
                         {/* Donut — categories */}
                         <div style={card}>
                             <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 3px' }}>ប្រភេទផលិតផល</p>
-                            <p style={{ color: C.sub, fontSize: 11, margin: '0 0 6px' }}>ការប្រើប្រាស់ប្រភេទផលិតផល</p>
+                            <p style={{ color: C.sub, fontSize: 12, margin: '0 0 6px' }}>ការប្រើប្រាស់ប្រភេទផលិតផល</p>
                             <div style={{ position: 'relative' }}>
                                 <ResponsiveContainer width="100%" height={145}>
                                     <PieChart>
@@ -548,24 +597,25 @@ export default function AdminDashboard({
                         </div>
                     </div>
 
+                    {/* ── Bottom Row ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 14 }}>
 
-                        {/* 1. Orders table — top left */}
+                        {/* Orders table */}
                         <div style={card}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                 <div>
                                     <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ការបញ្ជាទិញថ្មីៗ</p>
-                                    <p style={{ color: C.sub, fontSize: 11, margin: '3px 0 0' }}>ការបញ្ជាទិញចុងក្រោយ {orders.length} ទុក</p>
+                                    <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ការបញ្ជាទិញ {orders.length} ចុងក្រោយ</p>
                                 </div>
-                                <button style={{ background: C.bgG, color: C.p, border: `1px solid ${C.border2}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: C.font }}>
+                                {/* <button style={{ background: C.bgG, color: C.p, border: `1px solid ${C.border2}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: C.font }}>
                                     មើលទាំងអស់ <ChevronRight size={11}/>
-                                </button>
+                                </button> */}
                             </div>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr>
                                         {['លេខកូដ','អតិថិជន','ចំនួនទឹកប្រាក់','ស្ថានភាព','ថ្ងៃ'].map(h => (
-                                            <th key={h} style={{ textAlign: 'left', padding: '0 10px 10px', fontSize: 11, color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                                            <th key={h} style={{ textAlign: 'left', padding: '0 10px 10px', fontSize: 14, color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -574,13 +624,13 @@ export default function AdminDashboard({
                                         <tr key={o.id}
                                             onMouseEnter={e => (e.currentTarget.style.background = C.bgG)}
                                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                                            style={{ borderBottom: `1px solid ${C.border}`, transition: 'background 0.12s', cursor: 'pointer' }}
+                                            style={{ borderBottom: `1px solid ${C.border}`, transition: 'background 0.12s'}}
                                         >
-                                            <td style={{ padding: '12px 10px', fontFamily: C.mono, fontSize: 12, color: C.p, fontWeight: 600 }}>{o.id}</td>
-                                            <td style={{ padding: '12px 10px', fontSize: 13, color: C.strong }}>{o.customer}</td>
-                                            <td style={{ padding: '12px 10px', fontSize: 13, fontWeight: 700, color: C.p }}>{o.amount}</td>
+                                            <td style={{ padding: '12px 10px', fontFamily: C.mono, fontSize: 14, color: C.p, fontWeight: 600 }}>{o.id}</td>
+                                            <td style={{ padding: '12px 10px', fontSize: 14, color: C.strong }}>{o.customer}</td>
+                                            <td style={{ padding: '12px 10px', fontSize: 14, fontWeight: 700, color: C.p }}>{o.amount}</td>
                                             <td style={{ padding: '12px 10px' }}><Pill s={o.status} /></td>
-                                            <td style={{ padding: '12px 10px', fontSize: 11, color: C.muted }}>{o.date}</td>
+                                            <td style={{ padding: '12px 10px', fontSize: 14, color: C.muted }}>{o.date}</td>
                                         </tr>
                                     ))}
                                     {orders.length === 0 && (
@@ -590,10 +640,10 @@ export default function AdminDashboard({
                             </table>
                         </div>
 
-                        {/* 2. Platform health — top right */}
+                        {/* Platform health */}
                         <div style={{ ...card, padding: 18 }}>
-                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
-                            <p style={{ color: C.sub, fontSize: 10, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
+                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
+                            <p style={{ color: C.sub, fontSize: 12, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                                 <ResponsiveContainer width={80} height={80}>
                                     <RadialBarChart innerRadius={24} outerRadius={38}
@@ -607,7 +657,7 @@ export default function AdminDashboard({
                                     <p style={{ fontSize: 28, fontWeight: 700, color: C.p, margin: 0, lineHeight: 1 }}>
                                         {ph.completion_rate}<span style={{ fontSize: 14, color: C.sub }}>%</span>
                                     </p>
-                                    <p style={{ fontSize: 10, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
+                                    <p style={{ fontSize: 11, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
                                 </div>
                             </div>
                             {[
@@ -628,10 +678,10 @@ export default function AdminDashboard({
                             ))}
                         </div>
 
-                        {/* 3. Recent activities — bottom left (directly under Orders table) */}
+                        {/* Recent activities */}
                         <div style={{ ...card, padding: 18 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.a, display: 'inline-block' }} />
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -639,10 +689,15 @@ export default function AdminDashboard({
                                     <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                                         <ActIcon type={act.type} />
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                            <p style={{ fontSize: 12, color: C.text, margin: 0, lineHeight: 1.4 }}
-                                                dangerouslySetInnerHTML={{ __html: act.action }} />
+                                            {/*
+                                             * FIX #6: Replaced dangerouslySetInnerHTML with safe rendering.
+                                             * The PHP controller now escapes usernames/names with e() before
+                                             * passing them, and sends structured fields instead of raw HTML.
+                                             * The TSX side renders them as plain text — no XSS risk.
+                                             */}
+                                            <p style={{ fontSize: 14, color: C.text, margin: 0, lineHeight: 1.4 }}>{act.action}</p>
                                             <p style={{ fontSize: 10, color: C.muted, margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Clock size={9} />{act.time}
+                                                <Clock size={9} />{formatRelativeTimeKhmer(act.time)}
                                             </p>
                                         </div>
                                     </div>
@@ -653,11 +708,11 @@ export default function AdminDashboard({
                             </div>
                         </div>
 
-                        {/* 4. Calendar — bottom right (directly under Platform health) */}
+                        {/* Calendar */}
                         <div style={{ ...card, padding: 18 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                                 <div style={{ width: 4, height: 20, borderRadius: 2, background: `linear-gradient(${C.p},${C.a})` }} />
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 13, margin: 0 }}>ប្រតិទិន</p>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ប្រតិទិន</p>
                             </div>
                             <Calendar events={calEvents} />
                         </div>

@@ -73,8 +73,8 @@ interface GeneratedReport {
 /* ─── Formatters ────────────────────────────────────── */
 const fmtKHR = (n:number) => {
     if (!n||isNaN(n)) return '0 ៛';
-    if (n>=1_000_000) return `${(n/1_000_000).toFixed(1)}M ៛`;
-    if (n>=1_000)     return `${(n/1_000).toFixed(0)}K ៛`;
+    if (n>=1_000_000) return `${(n/1_000_000).toFixed(1)}លាន ៛`;
+    if (n>=1_000)     return `${(n/1_000).toFixed(0)}ពាន់ ៛`;
     return `${n.toFixed(0)} ៛`;
 };
 const fmtNum = (n:number) => (n??0).toLocaleString();
@@ -400,7 +400,7 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                     <SectionTitle title="ផលិតផលល្អបំផុត" sub="Top products by revenue"/>
                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
                         <thead><tr>
-                            {['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','Views','ឯកតា'].map(h=>(
+                            {['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','ឯកតា'].map(h=>(
                                 <th key={h} style={{ textAlign:'left', padding:'0 10px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                             ))}
                         </tr></thead>
@@ -413,7 +413,6 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                                     <td style={{ padding:'11px 10px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{p.category}</span></td>
                                     <td style={{ padding:'11px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                     <td style={{ padding:'11px 10px', fontSize:12, color:C.sub }}>{fmtNum(p.units_sold)}</td>
-                                    <td style={{ padding:'11px 10px', fontSize:11, color:C.sub, whiteSpace:'nowrap' }}><Eye size={11} style={{verticalAlign:'middle',marginRight:2}}/>{fmtNum(p.views)}</td>
                                     <td style={{ padding:'11px 10px', fontSize:11, color:C.muted }}>{p.unit}</td>
                                 </tr>
                             ))}
@@ -767,15 +766,14 @@ export default function AdminReports({
                                 <div style={card}>
                                     <SectionTitle title="ផលិតផលដែលលក់ដាច់បំផុត" sub="Top products by revenue"/>
                                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                                        <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល','Views'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 8px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
-                                        <tbody>
+                                        <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 8px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
+                                        <tbody> 
                                             {(d.top_products??[]).map((p,i)=>(
                                                 <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')} style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s', cursor:'pointer' }}>
                                                     <td style={{ padding:'10px 8px' }}><Rank n={i}/></td>
                                                     <td style={{ padding:'10px 8px', fontSize:12, fontWeight:600, color:C.strong }}>{p.name}</td>
                                                     <td style={{ padding:'10px 8px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 7px', fontWeight:600 }}>{p.category}</span></td>
                                                     <td style={{ padding:'10px 8px', fontSize:12, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
-                                                    <td style={{ padding:'10px 8px', fontSize:11, color:C.sub, whiteSpace:'nowrap' }}><Eye size={11} style={{verticalAlign:'middle',marginRight:2}}/>{fmtNum(p.views)}</td>
                                                 </tr>
                                             ))}
                                             {!d.top_products?.length&&<EmptyRow cols={5}/>}
@@ -785,7 +783,7 @@ export default function AdminReports({
                             </div>
                             {/* Payment methods */}
                             <div style={card}>
-                                <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="Payment method distribution"/>
+                                <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="ការចែកចាយវិធីសាស្រ្តទូទាត់"/>
                                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:12 }}>
                                     {(d.payment_method_breakdown??[]).map((pm,i)=>{
                                         const maxC=Math.max(...(d.payment_method_breakdown??[]).map(x=>x.count),1);
@@ -913,7 +911,7 @@ export default function AdminReports({
                         <div style={card}>
                             <SectionTitle title="ផលិតផលល្អបំផុត" sub="Products ranked by revenue"/>
                             <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                                <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','Views','ឯកតា'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 10px 12px', fontSize:11, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
+                                <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','ឯកតា'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 10px 12px', fontSize:11, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
                                 <tbody>
                                     {(d.top_products??[]).map((p,i)=>(
                                         <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')} style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s' }}>
@@ -922,7 +920,7 @@ export default function AdminReports({
                                             <td style={{ padding:'12px 10px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{p.category}</span></td>
                                             <td style={{ padding:'12px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                             <td style={{ padding:'12px 10px', fontSize:12, color:C.sub }}>{fmtNum(p.units_sold)}</td>
-                                            <td style={{ padding:'12px 10px', fontSize:11, color:C.sub, whiteSpace:'nowrap' }}><Eye size={11} style={{verticalAlign:'middle',marginRight:2}}/>{fmtNum(p.views)}</td>
+                                            
                                             <td style={{ padding:'12px 10px', fontSize:11, color:C.muted }}>{p.unit}</td>
                                         </tr>
                                     ))}

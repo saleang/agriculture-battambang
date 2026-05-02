@@ -33,59 +33,54 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email'    => 'required|string',
-            'password' => 'required|string',
+            'email'    => ['required', 'string'],
+            'password' => ['required', 'string'],
         ]);
 
-        // Determine if the input is email or phone
-        $loginField = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+        // Determine if the input is email or phone.
+        $loginValue = $request->input('email');
+        $loginField = filter_var($loginValue, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        // Find user by email or phone
-        $user = User::where($loginField, $request->email)->first();
+        // Find user by email or phone.
+        $user = User::where($loginField, $loginValue)->first();
 
-        // Check if user exists
         if (!$user) {
             throw ValidationException::withMessages([
                 'email' => $loginField === 'email'
-                    ? 'This email address is not registered.'
-                    : 'This phone number is not registered.',
+                    ? 'អ៊ីមែលមិនត្រឹមត្រូវ!'
+                    : 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ!',
             ]);
         }
 
-        // Check if password is correct
-        if (!Hash::check($request->password, $user->password)) {
+        if (!Hash::check($request->input('password'), $user->password)) {
             throw ValidationException::withMessages([
-                'password' => 'The password is incorrect.',
+                'password' => 'ពាក្យសម្ងាត់មិនត្រឹមត្រូវ!',
             ]);
         }
 
-        // Check if user is active
         if ($user->status !== 'active') {
             $statusMessage = match ($user->status) {
-                'inactive' => 'Your account is inactive. Please contact support.',
-                'banned' => 'Your account has been banned. Please contact support.',
-                default => 'Your account status does not allow login. Please contact support.'
+                'inactive' => 'គណនីរបស់អ្នកត្រូវបានដាក់ក្នុងស្ថានភាពអសកម្ម។​ សូមទំនាក់ទំនងទៅកាន់អ្នកគ្រប់គ្រង។',
+                'banned' => 'គណនីរបស់អ្នកត្រូវបានបិទ។​ សូមទំនាក់ទំនងទៅកាន់អ្នកគ្រប់គ្រង។',
+                default => 'គណនីរបស់អ្នកមិនអាចចូលប្រើប្រាស់បានទេ។ សូមទំនាក់ទំនងទៅកាន់អ្នកគ្រប់គ្រង។',
             };
 
             throw ValidationException::withMessages(['email' => $statusMessage]);
         }
 
-        // Log the user in
         Auth::login($user, $request->boolean('remember'));
-
-        // Update last login
+        $request->session()->regenerate();
         $user->updateLastLogin();
 
-        $request->session()->regenerate();
-
-        // Redirect based on role
         if ($user->role === 'seller') {
             return redirect()->intended('/seller/dashboard');
-        } elseif ($user->role === 'admin') {
-            return redirect()->intended('/admin/dashboard');
-        } else {
-            return redirect()->intended('/customer/dashboard');
         }
+
+        if ($user->role === 'admin') {
+            return redirect()->intended('/admin/dashboard');
+        }
+
+        return redirect()->intended('/customer/dashboard');
     }
 
     /**

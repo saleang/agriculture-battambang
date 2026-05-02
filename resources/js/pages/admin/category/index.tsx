@@ -387,7 +387,7 @@ export default function AdminCategoryPage() {
                         </div>
                         <button
                             onClick={openCreate}
-                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700"
+                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 cursor-pointer"
                         >
                             <Plus className="h-4 w-4" /> បន្ថែមប្រភេទថ្មី
                         </button>
@@ -406,7 +406,7 @@ export default function AdminCategoryPage() {
                                     onKeyDown={(e) =>
                                         e.key === 'Enter' && applyFilters()
                                     }
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-4 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                             <select
@@ -424,7 +424,7 @@ export default function AdminCategoryPage() {
                                 onClick={applyFilters}
                                 className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm text-white transition-colors hover:bg-emerald-700"
                             >
-                                <Filter className="h-4 w-4" /> តម្រង
+                                <Filter className="h-4 w-4" /> ស្វែងរក
                             </button>
                             <button
                                 onClick={resetFilters}
@@ -445,7 +445,7 @@ export default function AdminCategoryPage() {
                                             #
                                         </th>
                                         <th className="px-5 py-3.5 text-left font-semibold text-gray-600 dark:text-gray-400">
-                                            ឈ្មោះប្រភេទ
+                                            ឈ្មោះប្រភេទផលិតផល
                                         </th>
                                         <th className="px-5 py-3.5 text-left font-semibold text-gray-600 dark:text-gray-400">
                                             រូបភាព
@@ -454,7 +454,7 @@ export default function AdminCategoryPage() {
                                             ការពិពណ៌នា
                                         </th>
                                         <th className="px-5 py-3.5 text-center font-semibold text-gray-600 dark:text-gray-400">
-                                            អ្នកលក់ប្រើ
+                                            ចំនួនអ្នកលក់ប្រើប្រាស់
                                         </th>
                                         <th className="px-5 py-3.5 text-center font-semibold text-gray-600 dark:text-gray-400">
                                             ស្ថានភាព
@@ -472,7 +472,7 @@ export default function AdminCategoryPage() {
                                                 className="py-16 text-center text-gray-400"
                                             >
                                                 <Tag className="mx-auto mb-3 h-10 w-10 opacity-30" />
-                                                <p>មិនមានប្រភេទណាមួយទេ</p>
+                                                <p>មិនមានប្រភេទផលិតផលលណាមួយទេ</p>
                                             </td>
                                         </tr>
                                     ) : (
@@ -564,7 +564,7 @@ export default function AdminCategoryPage() {
                                                             className="rounded-lg p-1.5 text-blue-500 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                                             title="កែសម្រួល"
                                                         >
-                                                            <Pencil className="h-4 w-4" />
+                                                            <Pencil className="h-4 w-4" /> កែប្រែ
                                                         </button>
                                                         <button
                                                             onClick={() =>
@@ -575,7 +575,7 @@ export default function AdminCategoryPage() {
                                                             className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                                                             title="លុប"
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Trash2 className="h-4 w-4" />លុប
                                                         </button>
                                                     </div>
                                                 </td>
@@ -790,7 +790,7 @@ function CategoryForm({
             {/* Category Image */}
             <div>
                 <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-600 uppercase dark:text-gray-400">
-                    រូបភាពប្រភេទ {isEdit ? '(បើមិនផ្លាស់ប្តូរ រក្សាដដែល)' : '*'}
+                    រូបភាពប្រភេទផលិតផល {isEdit ? '(បើមិនផ្លាស់ប្តូរ រក្សាដដែល)' : '*'}
                 </label>
                 <input
                     type="file"
@@ -818,7 +818,7 @@ function CategoryForm({
                         </p>
                         <img
                             src={`/storage/${currentImage}`}
-                            alt="រូបភាពប្រភេទបច្ចុប្បន្ន"
+                            alt="រូបភាពប្រភេទផលិតផលបច្ចុប្បន្ន"
                             className="h-24 w-24 rounded-lg border border-gray-200 object-cover dark:border-gray-700"
                         />
                     </div>

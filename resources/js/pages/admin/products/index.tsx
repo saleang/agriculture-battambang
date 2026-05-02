@@ -208,18 +208,12 @@ const handleToggleActive = async (product: Product) => {
 
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                        {/* <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">គ្រប់គ្រងផលិតផល</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                ផលិតផលទាំងអស់ក្នុងទីផ្សារ — សរុប {products.total}
-                            </p>
-                        </div> */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                                     <div style={{ width: 42, height: 42, borderRadius: 11, background: `linear-gradient(135deg,${C.p},${C.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         <Package size={20} color="#fff" />
                                                     </div>
                                                     <div>
-                                                        <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>គ្រប់គ្រងផលិតផល  </h1>
+                                                        <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 18, margin: 0 }}>ផ្ទាំងគ្រប់គ្រងផលិតផល  </h1>
                                                         <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>គ្រប់គ្រងផលិតផលទាំងអស់ក្នុងប្រព័ន្ធ</p>
                                                     </div>
                                                 </div>
@@ -233,7 +227,7 @@ const handleToggleActive = async (product: Product) => {
                     {/* Filters */}
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 mb-6 shadow-sm">
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="relative flex-1">
+                            <div className="relative flex-1 " >
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
                                     type="text"
@@ -241,7 +235,7 @@ const handleToggleActive = async (product: Product) => {
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                     onKeyDown={e => e.key === "Enter" && applyFilters()}
-                                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                                    className="w-full pl-9 pr-4 py-3.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                                 />
                             </div>
                             <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}
@@ -262,7 +256,7 @@ const handleToggleActive = async (product: Product) => {
                                 <option value="out_of_stock">អស់ស្តុក</option>
                             </select>
                             <button onClick={applyFilters} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-xl flex items-center gap-2 transition-colors">
-                                <Filter className="w-4 h-4" /> តម្រង
+                                <Filter className="w-4 h-4" /> ស្វែងរក
                             </button>
                             <button onClick={resetFilters} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-xl flex items-center gap-2 transition-colors">
                                 <RefreshCw className="w-4 h-4" /> កំណត់ឡើងវិញ
@@ -277,19 +271,19 @@ const handleToggleActive = async (product: Product) => {
                         {selectedProducts.length > 0 && (
                             <div className="flex items-center justify-between px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
                                 <span className="text-sm text-amber-800 dark:text-amber-300">
-                                    បានជ្រើស <strong>{selectedProducts.length}</strong> ផលិតផល
+                                    កំពុងជ្រើសរើស <strong>{selectedProducts.length}</strong> ផលិតផល
                                 </span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => handleBulkAction("activate")} className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">បើក</button>
-                                    <button onClick={() => handleBulkAction("deactivate")} className="px-3 py-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors">បិទ</button>
-                                    <button onClick={() => handleBulkAction("delete")} className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">លុប</button>
+                                    <button onClick={() => handleBulkAction("activate")} className="px-3 py-1.5 text-[14px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">បើក</button>
+                                    <button onClick={() => handleBulkAction("deactivate")} className="px-3 py-1.5 text-[14px] bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors">បិទ</button>
+                                    <button onClick={() => handleBulkAction("delete")} className="px-3 py-1.5 text-[14px] bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">លុប</button>
                                 </div>
                             </div>
                         )}
 
                         {/* Toolbar */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-                            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                            <label className="flex items-center gap-2 text-[14px] text-gray-600 dark:text-gray-400 cursor-pointer">
                                 <input type="checkbox"
                                     checked={selectedProducts.length === products.data.length && products.data.length > 0}
                                     onChange={selectAll}
@@ -313,7 +307,7 @@ const handleToggleActive = async (product: Product) => {
                         {/* List View */}
                         {viewMode === "list" ? (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-[14px]">
                                     <thead>
                                         <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                                             <th className="w-8 px-5 py-3.5"></th>
@@ -348,18 +342,18 @@ const handleToggleActive = async (product: Product) => {
                                                         </div>
                                                         <div>
                                                             <div className="font-semibold text-gray-800 dark:text-gray-200">{product.productname}</div>
-                                                            <div className="text-xs text-gray-400">{product.unit}</div>
+                                                            <div className="text-[12px] text-gray-400">{product.unit}</div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-5 py-4">
-                                                    <div className="text-gray-700 dark:text-gray-300 text-sm">{product.seller.farm_name}</div>
-                                                    <div className="text-xs text-gray-400">@{product.seller.user.username}</div>
+                                                    <div className="text-gray-700 dark:text-gray-300 text-[14px]">{product.seller.farm_name}</div>
+                                                    <div className="text-[12px] text-gray-400">@{product.seller.user.username}</div>
                                                 </td>
-                                                <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400">{product.category.category_name}</td>
+                                                <td className="px-5 py-4 text-[12px] text-gray-500 dark:text-gray-400">{product.category.category_name}</td>
                                                 <td className="px-5 py-4 font-semibold text-gray-800 dark:text-gray-200">៛ {product.price}</td>
                                                 <td className="px-5 py-4 text-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium ${
                                                         product.stock === "available"
                                                             ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                                                             : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
@@ -371,7 +365,7 @@ const handleToggleActive = async (product: Product) => {
                                                     <button
                                                         onClick={() => handleToggleActive(product)}
                                                         title={product.is_active ? "ចុចដើម្បីបិទ" : "ចុចដើម្បីបើក"}
-                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${
                                                             product.is_active
                                                                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
                                                                 : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
@@ -384,12 +378,12 @@ const handleToggleActive = async (product: Product) => {
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center justify-center gap-1">
                                                         <Link href={route("admin.products.show", product.product_id)}>
-                                                            <button className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors w-24" title="មើល"><Eye className="w-4 h-4" />ព័ត៌មានលម្អិត</button>
+                                                            <button className="p-0.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors w-30" title="មើល"><Eye className="w-4 h-4" />ព័ត៌មានលម្អិត</button>
                                                         </Link>
                                                         {/* <Link href={route("admin.products.edit", product.product_id)}>
                                                             <button className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors" title="កែសម្រួល"><Edit2 className="w-4 h-4" />កែប្រែ</button>
                                                         </Link> */}
-                                                        <button onClick={() => handleDelete(product)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors" title="លុប">
+                                                        <button onClick={() => handleDelete(product)} className="p-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors w-30" title="លុប">
                                                             <Trash2 className="w-4 h-4" />លុប
                                                         </button>
                                                     </div>
@@ -412,23 +406,24 @@ const handleToggleActive = async (product: Product) => {
                                                 <input type="checkbox" checked={selectedProducts.includes(product.product_id)} onChange={() => toggleSel(product.product_id)} className="accent-emerald-600" />
                                             </div>
                                             <div className="absolute top-2 right-2">
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                                                <span className={`px-2 py-0.5 rounded-full text-[12px] font-medium ${product.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
                                                     {product.is_active ? "សកម្ម" : "អសកម្ម"}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="p-3">
-                                            <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">{product.productname}</div>
-                                            <div className="text-xs text-gray-400 mt-0.5 mb-2">{product.category.category_name}</div>
+                                            <div className="font-semibold text-[14px] text-gray-800 dark:text-gray-200 truncate">{product.productname}</div>
+                                            <div className="text-[14px] text-gray-400 mt-0.5 mb-2">{product.category.category_name}</div>
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="font-bold text-sm text-gray-800 dark:text-white">${product.price}</span>
+                                                <span className="font-bold text-sm text-gray-800 dark:text-white">៛ {product.price}</span>
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.stock === "available" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
                                                     {product.stock === "available" ? "មានស្តុក" : "អស់"}
                                                 </span>
                                             </div>
                                             <div className="flex gap-2">
-                                                <Link href={route("admin.products.show", product.product_id)} className="flex-1 text-center py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">មើល</Link>
-                                                <Link href={route("admin.products.edit", product.product_id)} className="flex-1 text-center py-1.5 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors">កែ</Link>
+
+                                                {/* <Link href={route("admin.products.edit", product.product_id)} className="flex-1 text-center py-1.5 text-[14px] bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors">កែ</Link> */}
+                                                <Link href={route("admin.products.show", product.product_id)} className="flex-1 text-center py-1.5 text-[14px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">មើល</Link>
                                             </div>
                                         </div>
                                     </div>

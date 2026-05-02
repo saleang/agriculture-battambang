@@ -134,7 +134,7 @@ const handleToggle = async () => {
                                 <ArrowLeft className="w-4 h-4" /> ត្រឡប់ក្រោយ
                             </Link>
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{product.productname}</h1>
+                                <h1 className="text-sm font-moul text-gray-900 dark:text-white">{product.productname}</h1>
                                 <p className="text-xs text-gray-400 mt-0.5">ព័ត៌មានលម្អិត</p>
                             </div>
                         </div>
@@ -168,7 +168,7 @@ const handleToggle = async () => {
                         {/* Left Column */}
                         <div>
                             {/* Images */}
-                             <Card title="រូបភាព" bodyClass="p-3">
+                             <Card title="រូបភាព" bodyClass="p-3" >
                                 {product.images.length > 0 ? (
                                     <>
                                         <img
