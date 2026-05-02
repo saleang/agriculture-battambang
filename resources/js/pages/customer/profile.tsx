@@ -171,15 +171,8 @@ export default function ProfilePage() {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('បានកែប្រែព័ត៌មានដោយជោគជ័យ!');
                 setIsEditingProfile(false);
                 setPhotoPreview(null);
-
-                // Reload to get fresh user data including new photo
-                router.reload({
-                    only: ['auth'],
-                    preserveUrl: true,
-                });
             },
             onError: (errors) => {
                 Object.values(errors).forEach(error => {
