@@ -84,8 +84,7 @@ export default function ProductCreate({ categories, sellers }: PageProps<{ categ
         fd.append("description", data.description);
         fd.append("is_active", data.is_active ? "1" : "0");
         data.images.forEach((img, i) => fd.append(`images[${i}]`, img));
-        post(route("admin.products.store"), {
-            data: fd,
+        post(route("admin.products.store"), fd as any, {
             onSuccess: () => { showToast("បង្កើតផលិតផលដោយជោគជ័យ!", "success"); router.visit(route("admin.products.index")); },
             onError: () => showToast("បរាជ័យ — សូមពិនិត្យទម្រង់បែបបទ", "error"),
         });
