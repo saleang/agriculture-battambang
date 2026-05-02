@@ -432,6 +432,30 @@ export default function ProductDetail({
         }
     };
 
+    const handleShare = async () => {
+        const shareData = {
+            title: product.productname,
+            text: `Check out this product: ${product.productname}`,
+            url: window.location.href,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Share failed:', err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success('បានចម្លងតំណទៅកាន់ក្ដារតម្បៀតខ្ទាស់');
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                toast.error('មិនអាចចម្លងតំណបានទេ');
+            }
+        }
+    };
+
     const handleDelete = async (
         e: React.MouseEvent<HTMLButtonElement>,
         commentId: number,
@@ -786,7 +810,10 @@ export default function ProductDetail({
                                 />
                                 {isInWishlist ? 'បានចូលចិត្ត' : 'ចូលចិត្ត'}
                             </button>
-                            <button className="flex items-center gap-2 rounded-xl border border-gray-300 px-6 py-3 hover:bg-gray-50">
+                            <button
+                                onClick={handleShare}
+                                className="flex items-center gap-2 rounded-xl border border-gray-300 px-6 py-3 transition hover:bg-gray-50"
+                            >
                                 <Share2 className="h-5 w-5" />
                                 ចែករំលែក
                             </button>
