@@ -20,7 +20,7 @@ import { FormEvent, useEffect, useState } from 'react';
 
 import { route } from '@/lib/route';
 import axios from 'axios';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { useCart } from './customer/orders/cart-context'; // <-- Import useCart
 import { Footer } from './customer/footer-customer';
 import { Header } from './header';
@@ -393,7 +393,6 @@ export default function FarmDetail({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Toaster richColors position="top-right" />
             <Head title={`${farm.farm_name} - កសិផលខេត្តបាត់ដំបង`} />
 
             <Header

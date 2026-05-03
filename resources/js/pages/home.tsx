@@ -12,7 +12,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Footer } from './customer/footer-customer';
@@ -293,7 +293,6 @@ export default function Home({
     return (
         <div className="min-h-screen bg-white">
             <Head title="ទំព័រដើម - កសិផលខេត្តបាត់ដំបង" />
-            <Toaster position="top-right" richColors />
 
             {/* Top Bar */}
             <div className="bg-gray-900 px-4 py-2.5 text-sm text-white">

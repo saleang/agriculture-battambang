@@ -5,7 +5,7 @@ import { Footer } from './customer/footer-customer';
 import { PageProps } from '@/types';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from './customer/orders/cart-context';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import axios from 'axios';
 
 interface Product {
@@ -179,7 +179,6 @@ const AllProducts = ({
     return (
         <>
             <Head title="ផលិតផលទាំងអស់" />
-            <Toaster richColors position="top-right" />
             <Header searchQuery={searchQuery} onSearchChange={(q) => setSearchQuery(q)} isAuthenticated={!!user} userName={user?.username} />
 
             <main className="bg-white min-h-screen py-45">
