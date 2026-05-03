@@ -263,7 +263,7 @@ class SellerProfileController extends Controller
 
             Log::info('Farm info updated successfully', ['user_id' => $user->user_id]);
 
-            return back()->with('success', 'Farm information updated successfully.');
+            return back();
         } catch (\Exception $e) {
             Log::error('Error updating farm info', [
                 'user_id' => $user->user_id,

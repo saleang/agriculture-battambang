@@ -54,7 +54,7 @@ interface TotalStats {
     total: number;
     active: number;
     inactive: number;
-    banned: number;
+    // banned: number;
 }
 
 /* ─── Color palette ──────────────────────────── */
@@ -113,11 +113,11 @@ export default function SellersIndex({
     const getStatusStyle = (s: string) => ({
         active: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
         inactive: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
-        banned: { bg: "bg-rose-50", text: "text-rose-700", dot: "bg-rose-500" },
+        // banned: { bg: "bg-rose-50", text: "text-rose-700", dot: "bg-rose-500" },
     }[s] ?? { bg: "bg-slate-50", text: "text-slate-700", dot: "bg-slate-400" });
 
     const getStatusLabel = (s: string) =>
-        ({ active: "សកម្ម", inactive: "បានបិទ"}[s] ?? s);
+        ({ active: "សកម្ម", inactive: "មិនសកម្ម"}[s] ?? s);
 
     const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
     const formatDate = (d: string) => {
@@ -215,7 +215,7 @@ export default function SellersIndex({
                                     <option value="">គ្រប់ស្ថានភាព</option>
                                     <option value="active">សកម្ម</option>
                                     <option value="inactive">មិនសកម្ម</option>
-                                    <option value="banned">បានបិទ</option>
+                                    {/* <option value="banned">បានបិទ</option> */}
                                 </select>
 
 

@@ -129,10 +129,10 @@ class User extends Authenticatable
     {
         return $this->status === 'inactive';
     }
-    public function isBanned(): bool
-    {
-        return $this->status === 'banned';
-    }
+    // public function isBanned(): bool
+    // {
+    //     return $this->status === 'banned';
+    // }
     public function updateLastLogin(): void
     {
         $this->update(['last_login' => now()]);

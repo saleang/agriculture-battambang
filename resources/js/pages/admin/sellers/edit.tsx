@@ -23,7 +23,7 @@ interface SellerUser {
     username: string;
     email:    string;
     phone:    string;
-    status:   'active' | 'inactive' | 'banned';
+    status:   'active' | 'inactive'; // | 'banned';
     seller?: {
         seller_id:   number;
         farm_name:   string;
@@ -35,7 +35,7 @@ interface SellerUser {
     };
 }
 
-type Status = 'active' | 'inactive' | 'banned';
+type Status = 'active' | 'inactive';
 type AvailabilityStatus = 'idle' | 'checking' | 'valid' | 'invalid' | 'taken';
 
 export default function EditSeller({ seller }: PageProps<{ seller: SellerUser }>) {
@@ -299,7 +299,7 @@ export default function EditSeller({ seller }: PageProps<{ seller: SellerUser }>
                                                 className="w-full cursor-pointer rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-base transition focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500 focus:outline-none">
                                                 <option value="active">សកម្ម</option>
                                                 <option value="inactive">មិនសកម្ម</option>
-                                                <option value="banned">បានបិទ</option>
+                                                {/* <option value="banned">បានបិទ</option> */}
                                             </select>
                                         </div>
                                     </div>

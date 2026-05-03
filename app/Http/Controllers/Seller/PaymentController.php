@@ -41,7 +41,7 @@ class PaymentController extends Controller
                     'customer_name'    => $item->customer_name,
                     'customer_phone'   => $item->customer_phone,
                     'method'           => $this->formatPaymentMethod($item->payment_method),
-                    'amount_received'  => (float) ($item->payment_amount ?? $item->seller_subtotal),
+                    'amount_received'  => (float) ($item->payment_amount ?? ($item->seller_subtotal + $item->shipping_cost)),
                     'transaction_id'   => $item->transaction_id ?? $this->generateTransactionId($item->order_id),
                     'status'           => $this->determinePaymentStatus($item),
                     'payment_date'     => $item->payment_date ?? $item->paid_at,
@@ -88,6 +88,16 @@ class PaymentController extends Controller
             ->select(DB::raw('SUM(oi.quantity * oi.price_per_unit) as total'))
             ->first();
 
+        $shippingCostTotal = DB::table('orders as o')
+            ->join('order_items as oi', 'o.order_id', '=', 'oi.order_id')
+            ->whereIn('oi.product_id', $productIds)
+            ->where('oi.seller_id', $sellerId)
+            ->where('o.payment_status', 'paid')
+            ->groupBy('o.order_id')
+            ->select(DB::raw('MAX(o.shipping_cost) as shipping_cost'))
+            ->get()
+            ->sum('shipping_cost');
+
         $totalRefunds = DB::table('payments as p')
             ->join('order_items as oi', 'p.order_id', '=', 'oi.order_id')
             ->where('oi.seller_id', $sellerId)
@@ -97,13 +107,14 @@ class PaymentController extends Controller
             ->first();
 
         return [
-            'total_earnings'      => (float) ($totalEarnings->total ?? 0),
-            'pending_payouts'     => (float) ($pendingPayouts->total ?? 0),
-            'this_month_earnings' => (float) ($thisMonthEarnings->total ?? 0),
-            'total_refunds'       => (float) ($totalRefunds->total ?? 0),
-            'completed_count'     => $this->getPaymentCountByStatus($sellerId, $productIds, 'completed'),
-            'pending_count'       => $this->getPaymentCountByStatus($sellerId, $productIds, 'pending'),
-            'refunded_count'      => $this->getPaymentCountByStatus($sellerId, $productIds, 'refunded'),
+            'total_earnings'                => (float) ($totalEarnings->total ?? 0),
+            'pending_payouts'               => (float) ($pendingPayouts->total ?? 0),
+            'this_month_earnings'           => (float) ($thisMonthEarnings->total ?? 0),
+            'total_earnings_with_shipping'  => (float) ($totalEarnings->total ?? 0) + (float) $shippingCostTotal,
+            'total_refunds'                 => (float) ($totalRefunds->total ?? 0),
+            'completed_count'               => $this->getPaymentCountByStatus($sellerId, $productIds, 'completed'),
+            'pending_count'                 => $this->getPaymentCountByStatus($sellerId, $productIds, 'pending'),
+            'refunded_count'                => $this->getPaymentCountByStatus($sellerId, $productIds, 'refunded'),
         ];
     }
 
@@ -128,6 +139,7 @@ class PaymentController extends Controller
                 'o.created_at',
                 'o.paid_at',
                 'o.status as order_status',
+                'o.shipping_cost',
                 'p.payment_id',
                 'p.transaction_id',
                 'p.amount as payment_amount',
@@ -148,6 +160,7 @@ class PaymentController extends Controller
                 'o.created_at',
                 'o.paid_at',
                 'o.status',
+                'o.shipping_cost',
                 'p.payment_id',
                 'p.transaction_id',
                 'p.amount',
@@ -380,57 +393,21 @@ class PaymentController extends Controller
     }
 
     /**
-     * ទាញយកទិន្នន័យជា CSV
+     * ទាញយកទិន្នន័យជា PDF
      */
     public function export(Request $request)
     {
-        $seller = Auth::user()->seller;
-        $productIds = DB::table('product')
-            ->where('seller_id', $seller->seller_id)
-            ->pluck('product_id');
+        try {
+            // Diagnostic Step: Attempt to generate the simplest possible PDF.
+            // This will tell us if the core dompdf library is working correctly.
+            $pdf = app('dompdf.wrapper')->loadHTML('<h1>Hello World Test</h1><p>If you can see this, the PDF library is working.</p>');
+            
+            return $pdf->download('test_export.pdf');
 
-        $payments = $this->getPaymentsQuery($seller->seller_id, $productIds)->get();
-
-        $filename = 'payments_export_' . date('Y-m-d_His') . '.csv';
-        $handle = fopen('php://temp', 'w+');
-
-        fputcsv($handle, [
-            'លេខការទូទាត់',
-            'លេខបញ្ជាទិញ',
-            'កាលបរិច្ឆេទបញ្ជាទិញ',
-            'ឈ្មោះអតិថិជន',
-            'ទូរស័ព្ទអតិថិជន',
-            'វិធីសាស្ត្រទូទាត់',
-            'ទឹកប្រាក់',
-            'លេខប្រតិបត្តិការ',
-            'ស្ថានភាព',
-            'កាលបរិច្ឆេទទូទាត់',
-            'ទឹកប្រាក់បង្វិលសង'
-        ]);
-
-        foreach ($payments as $payment) {
-            fputcsv($handle, [
-                'PAY-' . str_pad($payment->order_id, 3, '0', STR_PAD_LEFT),
-                $payment->order_number,
-                $payment->order_date,
-                $payment->customer_name,
-                $payment->customer_phone,
-                $this->formatPaymentMethod($payment->payment_method),
-                $payment->payment_amount ?? $payment->seller_subtotal,
-                $payment->transaction_id ?? '',
-                $this->determinePaymentStatus($payment),
-                $payment->payment_date ?? $payment->paid_at,
-                $payment->refund_amount ?? ''
-            ]);
+        } catch (\Exception $e) {
+            // If even this fails, we will get a very specific error message.
+            return response('Error during basic PDF generation: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), 500);
         }
-
-        rewind($handle);
-        $content = stream_get_contents($handle);
-        fclose($handle);
-
-        return response($content)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     // ====================== Helper Functions ======================
