@@ -1,5 +1,6 @@
 // pages/admin/users/edit.tsx
 import { FormEventHandler, useState, useEffect } from 'react';
+import axios from 'axios';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -37,6 +38,7 @@ interface UserData {
 
 type Role   = 'admin' | 'seller' | 'customer';
 type Status = 'active' | 'inactive' | 'banned';
+type AvailabilityStatus = 'idle' | 'checking' | 'valid' | 'invalid' | 'taken';
 
 export default function EditUser({ user }: PageProps<{ user: UserData }>) {
     const { data, setData, post, processing, errors } = useForm({
@@ -52,7 +54,47 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
     });
 
     const [activeTab, setActiveTab] = useState(0);
+    const [phoneStatus, setPhoneStatus] = useState<AvailabilityStatus>('idle');
     const isSeller = data.role === 'seller';
+
+    const passwordChecks = [
+        { label: 'យ៉ាងតិច ៨ តួអក្សរ', valid: data.password.length >= 8 },
+        { label: 'មានអក្សរធំ១តួ', valid: /[A-Z]/.test(data.password) },
+        { label: 'មានអក្សរតូច១តួ', valid: /[a-z]/.test(data.password) },
+        { label: 'មានលេខ១តួ', valid: /[0-9]/.test(data.password) },
+        { label: 'មានតួអក្សរពិសេស១តួ', valid: /[!@#$%^&*(),.\?"{}|<>]/.test(data.password) },
+    ];
+
+    const isPasswordComplex = passwordChecks.every(check => check.valid);
+
+    const checkPhoneAvailability = async (phone: string): Promise<boolean | null> => {
+        try {
+            const resp = await axios.get('/check-phone', { params: { phone, except_id: user.user_id } });
+            return resp?.data?.available ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        if (!data.phone) {
+            setPhoneStatus('idle');
+            return;
+        }
+
+        if (!/^[0-9]{9,10}$/.test(data.phone)) {
+            setPhoneStatus('invalid');
+            return;
+        }
+
+        setPhoneStatus('checking');
+        const timeout = setTimeout(async () => {
+            const available = await checkPhoneAvailability(data.phone);
+            setPhoneStatus(available ? 'valid' : 'taken');
+        }, 600);
+
+        return () => clearTimeout(timeout);
+    }, [data.phone]);
 
     const locVal: LocationValue = {
         province_id: data.province_id || null,
@@ -73,6 +115,17 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        if (phoneStatus === 'taken') {
+            toast.error('លេខទូរស័ព្ទនេះបានប្រើរួចហើយ។ សូមប្រើលេខផ្សេង។');
+            return;
+        }
+
+        if (data.password && !isPasswordComplex) {
+            toast.error('ពាក្យសម្ងាត់ត្រូវមាន ៨ តួអក្សរ និងមានអក្សរធំ, អក្សរតូច, លេខ និងតួអក្សរពិសេស។');
+            return;
+        }
+
         post(`/admin/users/${user.user_id}`, {
             preserveState: true,
             preserveScroll: true,
@@ -237,7 +290,7 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
                                             <label className="mb-2 block text-base font-medium text-gray-700">អ៊ីមែល <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className={inputCls('email')} />
+                                                <input type="email" value={data.email} readOnly className={`${inputCls('email')} cursor-not-allowed bg-gray-100`} />
                                             </div>
                                             <Err f="email" />
                                         </div>
@@ -245,9 +298,13 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
                                             <label className="mb-2 block text-base font-medium text-gray-700">លេខទូរស័ព្ទ <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="tel" value={data.phone} onChange={e => setData('phone', e.target.value)} className={inputCls('phone')} />
+                                                <input type="tel" value={data.phone} onChange={e => setData('phone', e.target.value)}
+                                                    className={`${inputCls('phone')} ${phoneStatus === 'taken' || phoneStatus === 'invalid' ? 'border-rose-300 focus:ring-rose-500 focus:border-rose-500' : phoneStatus === 'valid' ? 'border-green-500' : ''}`} />
                                             </div>
                                             <Err f="phone" />
+                                            {phoneStatus === 'taken' && (
+                                                <p className="mt-1 text-sm text-rose-500">លេខទូរស័ព្ទនេះបានប្រើរួចហើយ។</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">ស្ថានភាព</label>
@@ -342,7 +399,14 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
                                                     placeholder="••••••••" autoComplete="new-password" />
                                             </div>
                                             <Err f="password" />
-                                            <p className="mt-1 text-base text-gray-400">យ៉ាងតិច ៨ តួអក្សរ</p>
+                                            <div className="mt-2 space-y-1 text-sm">
+                                                {passwordChecks.map((check) => (
+                                                    <p key={check.label} className={`flex items-center gap-2 ${check.valid ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                        <span className={`inline-flex h-2.5 w-2.5 rounded-full ${check.valid ? 'bg-emerald-600' : 'bg-gray-300'}`} />
+                                                        {check.label}
+                                                    </p>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">បញ្ជាក់ពាក្យសម្ងាត់ថ្មី</label>
@@ -362,7 +426,7 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
                                 <div>
                                     <div className="mb-5 flex items-center gap-3">
                                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
-                                            <Lock size={17} className="text-amber-600" />
+                                            <Lock size={17} className="text-emerald-600" />
                                         </div>
                                         <div>
                                             <h2 className="text-base font-semibold text-gray-900" style={{ fontFamily: C.display }}>ផ្លាស់ប្តូរពាក្យសម្ងាត់</h2>
@@ -389,7 +453,14 @@ export default function EditUser({ user }: PageProps<{ user: UserData }>) {
                                                     placeholder="••••••••" autoComplete="new-password" />
                                             </div>
                                             <Err f="password" />
-                                            <p className="mt-1 text-base text-gray-400">យ៉ាងតិច ៨ តួអក្សរ</p>
+                                            <div className="mt-2 space-y-1 text-sm">
+                                                {passwordChecks.map((check) => (
+                                                    <p key={check.label} className={`flex items-center gap-2 ${check.valid ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                        <span className={`inline-flex h-2.5 w-2.5 rounded-full ${check.valid ? 'bg-emerald-600' : 'bg-gray-300'}`} />
+                                                        {check.label}
+                                                    </p>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">បញ្ជាក់ពាក្យសម្ងាត់ថ្មី</label>

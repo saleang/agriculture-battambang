@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-// pages/admin/reports.tsx — Full v2 (all functions working)
+// pages/admin/reports.tsx — Fixed v3
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -13,7 +13,7 @@ import {
     DollarSign, ShoppingCart, Users, Store, Download, RefreshCw,
     Calendar, FileText, ArrowUpRight, ArrowDownRight, Star, Eye,
     Package, BarChart2, Clock, CheckCircle, AlertCircle, X,
-    ChevronRight, TrendingUp,
+    TrendingUp,
 } from 'lucide-react';
 
 /* ─── Brand colors ─────────────────────────────────── */
@@ -57,17 +57,29 @@ interface RecentArchive {
     id:number; report_type:string; period:string;
     generated_at:string; generated_by:string;
 }
+
+/**
+ * The flat data shape GeneratedReportView expects.
+ * All keys are optional — different report types populate different subsets.
+ */
+interface ReportData {
+    summary?:Record<string,number>;
+    by_category?:SalesByCategory[];
+    daily_revenue?:DailyPoint[];
+    daily_growth?:DailyUserPoint[];
+    top_sellers?:TopSeller[];
+    top_products?:TopProduct[];
+    by_role?:{role:string;count:number}[];
+    by_status?:any[];
+    by_payment_method?:PayBreak[];
+    by_province?:{province:string;count:number}[];
+    by_stock?:{stock:string;count:number}[];
+}
+
 interface GeneratedReport {
     success:boolean; report_type:string; archive_id:number|null;
     period:{ start:string; end:string; label:string; };
-    data:{
-        summary?:Record<string,number>;
-        by_category?:SalesByCategory[]; daily_revenue?:DailyPoint[];
-        daily_growth?:DailyUserPoint[]; top_sellers?:TopSeller[];
-        top_products?:TopProduct[]; by_role?:{role:string;count:number}[];
-        by_status?:any[]; by_payment_method?:PayBreak[];
-        by_province?:{province:string;count:number}[];
-    };
+    data: ReportData;
 }
 
 /* ─── Formatters ────────────────────────────────────── */
@@ -103,22 +115,11 @@ const LightTooltip = ({active,payload,label}:any) => {
     );
 };
 
-// const Stars = ({rating}:{rating:number}) => (
-//     <span style={{ display:'inline-flex', alignItems:'center', gap:1 }}>
-//         {[1,2,3,4,5].map(i=>(
-//             <Star key={i} size={10}
-//                 fill={i<=Math.round(rating)?C.goldD:'none'}
-//                 color={i<=Math.round(rating)?C.goldD:C.muted}/>
-//         ))}
-//         <span style={{ fontSize:10, color:C.sub, marginLeft:3 }}>{(rating||0).toFixed(1)}</span>
-//     </span>
-// );
-// In the Stars component, change:
 const Stars = ({rating}:{rating:number}) => (
     <span style={{ display:'inline-flex', alignItems:'center', gap:1 }}>
         {[1,2,3,4,5].map(i=>(
             <Star key={i} size={10}
-                fill={i<=Math.round(Number(rating))?C.goldD:'none'}  // ← Number() cast
+                fill={i<=Math.round(Number(rating))?C.goldD:'none'}
                 color={i<=Math.round(Number(rating))?C.goldD:C.muted}/>
         ))}
         <span style={{ fontSize:10, color:C.sub, marginLeft:3 }}>{(Number(rating)||0).toFixed(1)}</span>
@@ -180,7 +181,6 @@ const Toast = ({msg,kind,onClose}:{msg:string;kind:ToastKind;onClose:()=>void}) 
     );
 };
 
-/* ─── Spinner icon (inline) ─────────────────────────── */
 const Spin = ({size=13}:{size?:number}) => (
     <RefreshCw size={size} style={{ animation:'spin 1s linear infinite', flexShrink:0 }}/>
 );
@@ -207,56 +207,80 @@ const TABS = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   GENERATED REPORT RENDERER — renders any report type
+   GENERATED REPORT RENDERER
+   Works for both freshly generated reports AND loaded archives.
+   Accepts the flat ReportData shape (all keys optional).
 ═══════════════════════════════════════════════════════ */
-const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:()=>void}) => {
-    const {data,report_type,period} = report;
-    const typeLabel = REPORT_TYPES.find(r=>r.value===report_type)?.label ?? report_type;
+const GeneratedReportView = ({
+    report,
+    onExport,
+    isArchive = false,
+    archiveMeta,
+}: {
+    report: GeneratedReport;
+    onExport: () => void;
+    isArchive?: boolean;
+    archiveMeta?: { id:number; period:string; generated_at:string; generated_by:string; };
+}) => {
+    const {data, report_type, period} = report;
+    const typeLabel = REPORT_TYPES.find(r=>r.value===report_type?.replace('admin_',''))?.label ?? report_type;
+
     const btnOut:React.CSSProperties = {
         background:C.bgG, color:C.p, border:`1px solid #d1fae5`, borderRadius:9,
         padding:'7px 14px', fontSize:12, fontWeight:600, cursor:'pointer',
         display:'flex', alignItems:'center', gap:6, fontFamily:C.font,
     };
+
     return (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             {/* Header */}
-            <div style={{ ...card, borderLeft:`4px solid ${C.p}`, padding:'18px 22px' }}>
+            <div style={{ ...card, borderLeft:`4px solid ${isArchive ? C.goldD : C.p}`, padding:'18px 22px' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
                     <div>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8, flexWrap:'wrap' }}>
                             <span style={{ background:C.bgG, color:C.p, border:`1px solid #86efac`, borderRadius:6, padding:'2px 10px', fontSize:11, fontWeight:700 }}>{typeLabel}</span>
                             {report.archive_id&&(
                                 <span style={{ background:C.bgY, color:C.goldD, border:`1px solid #fde68a`, borderRadius:6, padding:'2px 10px', fontSize:11, fontWeight:700 }}>Archive #{report.archive_id}</span>
                             )}
-                            <span style={{ background:'#f0f9ff', color:'#0369a1', border:'1px solid #bae6fd', borderRadius:6, padding:'2px 10px', fontSize:11, fontWeight:700 }}>✓ រក្សាទុករួច</span>
+                            {isArchive ? (
+                                <span style={{ background:C.bgY, color:C.goldD, border:'1px solid #fde68a', borderRadius:6, padding:'2px 10px', fontSize:11, fontWeight:700 }}>📁 ប្រវត្តិ</span>
+                            ) : (
+                                <span style={{ background:'#f0f9ff', color:'#0369a1', border:'1px solid #bae6fd', borderRadius:6, padding:'2px 10px', fontSize:11, fontWeight:700 }}>✓ រក្សាទុករួច</span>
+                            )}
                         </div>
-                        <p style={{ fontFamily:C.display, color:C.p, fontSize:17, margin:'0 0 4px' }}>របាយការណ៍{typeLabel}</p>
-                        <p style={{ color:C.sub, fontSize:12, margin:0, display:'flex', alignItems:'center', gap:5 }}>
-                            <Calendar size={12}/> {period?.label}
-                            <span style={{ margin:'0 4px', color:C.border }}>·</span>
-                            <Clock size={12}/> {new Date().toLocaleTimeString('km-KH')}
+                        <p style={{ fontFamily:C.display, color: isArchive ? C.goldD : C.p, fontSize:17, margin:'0 0 4px' }}>
+                            {isArchive ? 'ប្រវត្តិ​របាយការណ៍' : 'របាយការណ៍'}{typeLabel}
+                        </p>
+                        <p style={{ color:C.sub, fontSize:12, margin:0, display:'flex', alignItems:'center', gap:5, flexWrap:'wrap' }}>
+                            <Calendar size={12}/> {period?.label ?? archiveMeta?.period}
+                            {archiveMeta && <>
+                                <span style={{ margin:'0 4px', color:C.border }}>·</span>
+                                <Clock size={12}/> {archiveMeta.generated_at}
+                                <span style={{ margin:'0 4px', color:C.border }}>·</span>
+                                by {archiveMeta.generated_by}
+                            </>}
                         </p>
                     </div>
-                    <button style={btnOut} onClick={onExport}><Download size={13}/> នាំចេញ</button>
+                    {!isArchive && <button style={btnOut} onClick={onExport}><Download size={13}/> នាំចេញ</button>}
                 </div>
             </div>
 
             {/* Summary metrics */}
-            {data?.summary&&Object.keys(data.summary).length>0&&(
+            {data?.summary && Object.keys(data.summary).length > 0 && (
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(155px,1fr))', gap:12 }}>
                     {Object.entries(data.summary).map(([k,v],i)=>(
                         <div key={k} style={{ ...card, padding:'14px 16px', borderTop:`3px solid ${CAT_COLORS[i%CAT_COLORS.length]}` }}>
-                            <p style={{ fontSize:16, color:C.sub, margin:'0 0 4px', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{k.replace(/_/g,' ')}</p>
+                            <p style={{ fontSize:11, color:C.sub, margin:'0 0 4px', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{k.replace(/_/g,' ')}</p>
                             <p style={{ fontSize:19, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length], margin:0 }}>
-                                {typeof v==='number'&&v>999?fmtKHR(v):fmtNum(v as number)}
+                                {typeof v==='number' && v>999 ? fmtKHR(v) : fmtNum(v as number)}
                             </p>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Daily revenue */}
-            {data?.daily_revenue&&data.daily_revenue.length>0&&(
+            {/* Daily revenue chart */}
+            {data?.daily_revenue && data.daily_revenue.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="ចំណូលប្រចាំថ្ងៃ" sub="Daily revenue trend"/>
                     <ResponsiveContainer width="100%" height={220}>
@@ -276,8 +300,8 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                 </div>
             )}
 
-            {/* By category */}
-            {data?.by_category&&data.by_category.length>0&&(
+            {/* By category bar chart */}
+            {data?.by_category && data.by_category.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="ការលក់តាមប្រភេទ" sub="Revenue by category"/>
                     <ResponsiveContainer width="100%" height={220}>
@@ -295,7 +319,7 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
             )}
 
             {/* Daily user growth */}
-            {data?.daily_growth&&data.daily_growth.length>0&&(
+            {data?.daily_growth && data.daily_growth.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="ការលូតលាស់អ្នកប្រើ" sub="New registrations per day"/>
                     <ResponsiveContainer width="100%" height={220}>
@@ -310,8 +334,8 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                 </div>
             )}
 
-            {/* By role + by status (users report) */}
-            {data?.by_role&&data.by_role.length>0&&(
+            {/* Users by role + by status */}
+            {data?.by_role && data.by_role.length > 0 && (
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
                     <div style={card}>
                         <SectionTitle title="ចែកតាមតួនាទី" sub="Users by role"/>
@@ -335,12 +359,12 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                             ))}
                         </div>
                     </div>
-                    {data.by_status&&(
+                    {data.by_status && (
                         <div style={card}>
                             <SectionTitle title="ចែកតាមស្ថានភាព" sub="Users by account status"/>
                             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:8 }}>
                                 {(data.by_status as any[]).map((s:any,i)=>(
-                                    <div key={s.status??s.role} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:C.bg, borderRadius:8, border:`1px solid ${C.border}` }}>
+                                    <div key={s.status??s.role??i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:C.bg, borderRadius:8, border:`1px solid ${C.border}` }}>
                                         <span style={{ fontSize:12, color:C.text, fontWeight:600 }}>{s.status??s.role}</span>
                                         <span style={{ fontSize:14, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length] }}>{fmtNum(s.count)}</span>
                                     </div>
@@ -351,8 +375,8 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                 </div>
             )}
 
-            {/* Top sellers */}
-            {data?.top_sellers&&data.top_sellers.length>0&&(
+            {/* Top sellers table */}
+            {data?.top_sellers && data.top_sellers.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="កសិករល្អបំផុត" sub="Top performers by revenue"/>
                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
@@ -363,8 +387,10 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                         </tr></thead>
                         <tbody>
                             {data.top_sellers.map((s,i)=>(
-                                <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
-                                    style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s', cursor:'pointer' }}>
+                                <tr key={i}
+                                    onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)}
+                                    onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+                                    style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s' }}>
                                     <td style={{ padding:'11px 10px' }}><Rank n={i}/></td>
                                     <td style={{ padding:'11px 10px', fontSize:13, fontWeight:600, color:C.strong }}>{s.name}</td>
                                     <td style={{ padding:'11px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(s.revenue)}</td>
@@ -378,11 +404,11 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                 </div>
             )}
 
-            {/* By province */}
-            {data?.by_province&&data.by_province.length>0&&(
+            {/* Sellers by province */}
+            {data?.by_province && data.by_province.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="កសិករតាមខេត្ត" sub="Seller distribution by province"/>
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={Math.max(180, data.by_province.length * 28)}>
                         <BarChart data={data.by_province} layout="vertical" margin={{top:4,right:10,left:80,bottom:0}}>
                             <CartesianGrid stroke="#f3f4f6" strokeDasharray="4 4" horizontal={false}/>
                             <XAxis type="number" tick={{fill:C.muted,fontSize:10}} axisLine={false} tickLine={false}/>
@@ -394,8 +420,8 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                 </div>
             )}
 
-            {/* Top products */}
-            {data?.top_products&&data.top_products.length>0&&(
+            {/* Top products table */}
+            {data?.top_products && data.top_products.length > 0 && (
                 <div style={card}>
                     <SectionTitle title="ផលិតផលល្អបំផុត" sub="Top products by revenue"/>
                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
@@ -406,7 +432,9 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
                         </tr></thead>
                         <tbody>
                             {data.top_products.map((p,i)=>(
-                                <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+                                <tr key={i}
+                                    onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)}
+                                    onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
                                     style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s' }}>
                                     <td style={{ padding:'11px 10px' }}><Rank n={i}/></td>
                                     <td style={{ padding:'11px 10px', fontSize:13, fontWeight:600, color:C.strong }}>{p.name}</td>
@@ -422,15 +450,30 @@ const GeneratedReportView = ({report,onExport}:{report:GeneratedReport;onExport:
             )}
 
             {/* Payment methods */}
-            {data?.by_payment_method&&data.by_payment_method.length>0&&(
+            {data?.by_payment_method && data.by_payment_method.length > 0 && (
                 <div style={card}>
-                    <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="Payment method distribution"/>
+                    <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="Payment method distribution (from payments ledger)"/>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:10 }}>
                         {data.by_payment_method.map((pm,i)=>(
                             <div key={pm.method} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, padding:'12px 14px' }}>
                                 <p style={{ fontSize:10, color:C.sub, margin:'0 0 4px', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{pm.method}</p>
                                 <p style={{ fontSize:18, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length], margin:'0 0 2px' }}>{fmtNum(pm.count)}</p>
                                 <p style={{ fontSize:11, color:C.muted, margin:0 }}>{fmtKHR(pm.total)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Products by stock */}
+            {data?.by_stock && data.by_stock.length > 0 && (
+                <div style={card}>
+                    <SectionTitle title="ស្ត្រុក​ផលិតផល" sub="Products by stock status"/>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10 }}>
+                        {data.by_stock.map((s,i)=>(
+                            <div key={s.stock} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, padding:'12px 14px', borderTop:`3px solid ${CAT_COLORS[i%CAT_COLORS.length]}` }}>
+                                <p style={{ fontSize:10, color:C.sub, margin:'0 0 4px', fontWeight:600, textTransform:'uppercase' }}>{s.stock}</p>
+                                <p style={{ fontSize:20, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length], margin:0 }}>{fmtNum(s.count)}</p>
                             </div>
                         ))}
                     </div>
@@ -453,16 +496,17 @@ export default function AdminReports({
     const today = new Date().toISOString().split('T')[0];
     const d30   = new Date(Date.now()-29*86400000).toISOString().split('T')[0];
 
-    const [startDate,     setStartDate]     = useState(d30);
-    const [endDate,       setEndDate]       = useState(today);
-    const [activeTab,     setActiveTab]     = useState('overview');
-    const [reportType,    setReportType]    = useState('sales');
-    const [loading,       setLoading]       = useState(false);
-    const [generated,     setGenerated]     = useState<GeneratedReport|null>(null);
-    const [archives,      setArchives]      = useState<RecentArchive[]>(recentArchives??[]);
-    const [toast,         setToast]         = useState<{msg:string;kind:ToastKind}|null>(null);
-    const [archiveLoading,setArchiveLoading]= useState<number|null>(null);
-    const [viewArchive,   setViewArchive]   = useState<any>(null);
+    const [startDate,      setStartDate]     = useState(d30);
+    const [endDate,        setEndDate]       = useState(today);
+    const [activeTab,      setActiveTab]     = useState('overview');
+    const [reportType,     setReportType]    = useState('sales');
+    const [loading,        setLoading]       = useState(false);
+    const [generated,      setGenerated]     = useState<GeneratedReport|null>(null);
+    const [archives,       setArchives]      = useState<RecentArchive[]>(recentArchives??[]);
+    const [toast,          setToast]         = useState<{msg:string;kind:ToastKind}|null>(null);
+    const [archiveLoading, setArchiveLoading]= useState<number|null>(null);
+    // FIX: store loaded archive as a GeneratedReport (same shape) + metadata
+    const [viewArchive,    setViewArchive]   = useState<{report:GeneratedReport; meta:RecentArchive}|null>(null);
 
     const showToast = (msg:string,kind:ToastKind='success') => setToast({msg,kind});
     const getCsrf   = () => (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
@@ -480,7 +524,6 @@ export default function AdminReports({
             });
             if (!res.ok) {
                 const err = await res.json().catch(()=>({})) as any;
-                // validation errors from Laravel
                 if (res.status===422&&err.errors) {
                     const msgs = Object.values(err.errors as Record<string,string[]>).flat().join(', ');
                     throw new Error(msgs);
@@ -502,7 +545,6 @@ export default function AdminReports({
                 showToast('មានបញ្ហាក្នុងការបង្កើតរបាយការណ៍','error');
             }
         } catch(e:any) {
-            console.error('Report error:',e);
             showToast(`Error: ${e.message??'Unknown'}`, 'error');
         } finally {
             setLoading(false);
@@ -516,18 +558,33 @@ export default function AdminReports({
         window.location.href=`/admin/reports/export/csv?${p}`;
     },[reportType,startDate,endDate]);
 
-    /* Load archive */
-    const handleViewArchive = useCallback(async(id:number)=>{
-        setArchiveLoading(id);
+    /**
+     * Load an archive and display it in the archives tab as a GeneratedReportView.
+     *
+     * FIX: The backend now returns archive.data as the flat merged shape that
+     * GeneratedReportView expects, and also report_type without the 'admin_' prefix
+     * (we strip it here so REPORT_TYPES.find() resolves correctly).
+     */
+    const handleViewArchive = useCallback(async(archiveRow:RecentArchive)=>{
+        setArchiveLoading(archiveRow.id);
         setViewArchive(null);
         try {
-            const res = await fetch(`/admin/reports/archive/${id}`,{
+            const res = await fetch(`/admin/reports/archive/${archiveRow.id}`,{
                 headers:{'Accept':'application/json','X-CSRF-TOKEN':getCsrf()},
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             if (json.success) {
-                setViewArchive(json.archive);
+                const arch = json.archive;
+                // Convert archived shape → GeneratedReport shape
+                const fakeReport:GeneratedReport = {
+                    success:     true,
+                    report_type: arch.report_type.replace('admin_',''), // strip prefix for label lookup
+                    archive_id:  arch.id,
+                    period:      arch.period,
+                    data:        arch.data ?? {},  // backend now provides flat data
+                };
+                setViewArchive({ report:fakeReport, meta:archiveRow });
                 showToast('បានផ្ទុករបាយការណ៍','info');
             }
         } catch(e:any) {
@@ -569,11 +626,6 @@ export default function AdminReports({
     return (
         <AppLayout>
             <Head title="របាយការណ៍ - Admin"/>
-            {/* <Head>
-                <link rel="preconnect" href="https://fonts.googleapis.com"/>
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-                <link href="https://fonts.googleapis.com/css2?family=Moul&family=Battambang:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-            </Head> */}
 
             {toast&&<Toast msg={toast.msg} kind={toast.kind} onClose={()=>setToast(null)}/>}
 
@@ -603,18 +655,18 @@ export default function AdminReports({
 
                     {/* Filter bar */}
                     <div style={{ ...card, padding:'14px 18px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-                        <span style={{ fontSize:16, color:C.sub, fontWeight:600, display:'flex', alignItems:'center', gap:5 }}>
+                        <span style={{ fontSize:12, color:C.sub, fontWeight:600, display:'flex', alignItems:'center', gap:5 }}>
                             <Calendar size={13}/> រយៈពេល
                         </span>
                         <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={inputStyle}/>
                         <span style={{ color:C.muted }}>—</span>
                         <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={inputStyle}/>
                         <div style={{ width:1, height:24, background:C.border, margin:'0 4px' }}/>
-                        <span style={{ fontSize:16, color:C.sub, fontWeight:600 }}>ប្រភេទ</span>
+                        <span style={{ fontSize:12, color:C.sub, fontWeight:600 }}>ប្រភេទ</span>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                             {REPORT_TYPES.map(rt=>(
                                 <button key={rt.value} onClick={()=>setReportType(rt.value)}
-                                    style={{ padding:'6px 12px', borderRadius:8, fontSize:16, fontWeight:600,
+                                    style={{ padding:'6px 12px', borderRadius:8, fontSize:12, fontWeight:600,
                                         background:reportType===rt.value?C.bgG:'transparent',
                                         color:reportType===rt.value?C.p:C.sub,
                                         border:reportType===rt.value?'1px solid #86efac':`1px solid ${C.border}`,
@@ -627,7 +679,7 @@ export default function AdminReports({
                         <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
                             {[{l:'7ថ្ងៃ',d:7},{l:'30ថ្ងៃ',d:30},{l:'90ថ្ងៃ',d:90}].map(r=>(
                                 <button key={r.d} onClick={()=>setQuickRange(r.d)}
-                                    style={{ padding:'5px 10px', borderRadius:7, fontSize:14, background:C.bgG, color:C.p, border:'1px solid #d1fae5', cursor:'pointer', fontFamily:C.font, fontWeight:600 }}>
+                                    style={{ padding:'5px 10px', borderRadius:7, fontSize:11, background:C.bgG, color:C.p, border:'1px solid #d1fae5', cursor:'pointer', fontFamily:C.font, fontWeight:600 }}>
                                     {r.l}
                                 </button>
                             ))}
@@ -649,13 +701,13 @@ export default function AdminReports({
                     {/* ── OVERVIEW TAB ── */}
                     {activeTab==='overview'&&(
                         <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
-                            {/* KPI */}
+                            {/* KPI cards */}
                             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
                                 {[
-                                    {label:'ចំណូលសរុប',       value:fmtKHR(km.total_revenue??0),  growth:km.revenue_growth??0, icon:<DollarSign size={18} color={C.p}/>,    bg:C.bgG, bl:C.p},
-                                    {label:'ការបញ្ជាទិញ',     value:fmtNum(km.total_orders??0),   growth:km.orders_growth??0,  icon:<ShoppingCart size={18} color={C.goldD}/>,bg:C.bgY,bl:C.gold},
+                                    {label:'ចំណូលសរុប',        value:fmtKHR(km.total_revenue??0),  growth:km.revenue_growth??0, icon:<DollarSign size={18} color={C.p}/>,    bg:C.bgG, bl:C.p},
+                                    {label:'ការបញ្ជាទិញ',      value:fmtNum(km.total_orders??0),   growth:km.orders_growth??0,  icon:<ShoppingCart size={18} color={C.goldD}/>,bg:C.bgY,bl:C.gold},
                                     {label:'អ្នកប្រើប្រាស់ថ្មី',value:fmtNum(km.new_users??0),     growth:km.users_growth??0,   icon:<Users size={18} color={C.dark}/>,        bg:C.bgG,bl:C.dark},
-                                    {label:'កសិករសកម្ម',       value:fmtNum(km.active_sellers??0), growth:0,                    icon:<Store size={18} color={C.a}/>,           bg:C.bgG,bl:C.a},
+                                    {label:'កសិករសកម្ម',        value:fmtNum(km.active_sellers??0), growth:0,                    icon:<Store size={18} color={C.a}/>,           bg:C.bgG,bl:C.a},
                                 ].map(k=>(
                                     <div key={k.label} style={{ ...card, borderLeft:`4px solid ${k.bl}`, padding:18, transition:'box-shadow 0.2s,transform 0.2s' }}
                                         onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.boxShadow='0 4px 16px rgba(0,0,0,0.10)';(e.currentTarget as HTMLDivElement).style.transform='translateY(-1px)';}}
@@ -664,12 +716,13 @@ export default function AdminReports({
                                             <div style={{ width:38, height:38, borderRadius:10, background:k.bg, display:'flex', alignItems:'center', justifyContent:'center' }}>{k.icon}</div>
                                             <TrendBadge val={k.growth}/>
                                         </div>
-                                        <p style={{ fontSize:16, color:C.sub, margin:'12px 0 2px', fontWeight:500 }}>{k.label}</p>
-                                        <p style={{ fontSize:28, fontWeight:700, color:C.strong, margin:0 }}>{k.value}</p>
-                                        <p style={{ fontSize:14, color:C.muted, margin:'4px 0 0' }}>AOV: {fmtKHR(km.avg_order_value??0)}</p>
+                                        <p style={{ fontSize:12, color:C.sub, margin:'12px 0 2px', fontWeight:500 }}>{k.label}</p>
+                                        <p style={{ fontSize:26, fontWeight:700, color:C.strong, margin:0 }}>{k.value}</p>
+                                        <p style={{ fontSize:11, color:C.muted, margin:'4px 0 0' }}>AOV: {fmtKHR(km.avg_order_value??0)}</p>
                                     </div>
                                 ))}
                             </div>
+
                             {/* Area + Pie */}
                             <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:14 }}>
                                 <div style={card}>
@@ -716,6 +769,7 @@ export default function AdminReports({
                                     </div>
                                 </div>
                             </div>
+
                             {/* Category + User growth */}
                             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
                                 <div style={card}>
@@ -743,12 +797,13 @@ export default function AdminReports({
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-                            {/* Tables row */}
+
+                            {/* Top sellers + top products tables */}
                             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
                                 <div style={card}>
-                                    <SectionTitle title="អ្នកលក់ដែលល្អបំផុត" sub="អ្នកលក់ដែលល្អបំផុតតាមរយៈការបញ្ជាទិញ"/>
+                                    <SectionTitle title="អ្នកលក់ដែលល្អបំផុត" sub="Top sellers by order count"/>
                                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                                        <thead><tr>{['#','ឈ្មោះ','ចំណូល','ការបញ្ជាទិញ','ការវាយតម្លៃ'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 8px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
+                                        <thead><tr>{['#','ឈ្មោះ','ចំណូល','ការបញ្ជា','ការវាយតម្លៃ'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 8px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
                                         <tbody>
                                             {(d.top_sellers??[]).map((s,i)=>(
                                                 <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')} style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s', cursor:'pointer' }}>
@@ -767,7 +822,7 @@ export default function AdminReports({
                                     <SectionTitle title="ផលិតផលដែលលក់ដាច់បំផុត" sub="Top products by revenue"/>
                                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
                                         <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 8px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
-                                        <tbody> 
+                                        <tbody>
                                             {(d.top_products??[]).map((p,i)=>(
                                                 <tr key={i} onMouseEnter={e=>(e.currentTarget.style.background=C.bgG)} onMouseLeave={e=>(e.currentTarget.style.background='transparent')} style={{ borderBottom:`1px solid ${C.border}`, transition:'background 0.1s', cursor:'pointer' }}>
                                                     <td style={{ padding:'10px 8px' }}><Rank n={i}/></td>
@@ -776,14 +831,15 @@ export default function AdminReports({
                                                     <td style={{ padding:'10px 8px', fontSize:12, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                                 </tr>
                                             ))}
-                                            {!d.top_products?.length&&<EmptyRow cols={5}/>}
+                                            {!d.top_products?.length&&<EmptyRow cols={4}/>}
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
+
                             {/* Payment methods */}
                             <div style={card}>
-                                <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="ការចែកចាយវិធីសាស្រ្តទូទាត់"/>
+                                <SectionTitle title="វិធីសាស្ត្រទូទាត់" sub="Payment method breakdown (from payments ledger)"/>
                                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:12 }}>
                                     {(d.payment_method_breakdown??[]).map((pm,i)=>{
                                         const maxC=Math.max(...(d.payment_method_breakdown??[]).map(x=>x.count),1);
@@ -809,12 +865,12 @@ export default function AdminReports({
                         <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
                             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
                                 {[
-                                    {label:'ចំណូលសរុប',         value:fmtKHR(km.total_revenue??0),                    color:C.p},
-                                    {label:'ចំណូលបានទូទាត់',   value:fmtKHR(d.sales_summary?.paid_revenue??0),       color:C.dark},
-                                    {label:'ការបញ្ជាមធ្យម',    value:fmtKHR(km.avg_order_value??0),                  color:C.goldD},
-                                    {label:'ការបញ្ជាទាំងអស់',   value:fmtNum(km.total_orders??0),                    color:C.p},
-                                    {label:'ការបញ្ជាបានបញ្ចប់', value:fmtNum(d.sales_summary?.completed_orders??0),  color:C.a},
-                                    {label:'ការបញ្ជាបានបោះបង់', value:fmtNum(d.sales_summary?.cancelled_orders??0),  color:'#dc2626'},
+                                    {label:'ចំណូលសរុប',         value:fmtKHR(km.total_revenue??0),               color:C.p},
+                                    {label:'ចំណូលបានទូទាត់',   value:fmtKHR(d.sales_summary?.paid_revenue??0),  color:C.dark},
+                                    {label:'ការបញ្ជាមធ្យម',    value:fmtKHR(km.avg_order_value??0),             color:C.goldD},
+                                    {label:'ការបញ្ជាទាំងអស់',  value:fmtNum(km.total_orders??0),                color:C.p},
+                                    {label:'ការបញ្ជាបានបញ្ចប់',value:fmtNum(d.sales_summary?.completed_orders??0),color:C.a},
+                                    {label:'ការបញ្ជាបានបោះបង់',value:fmtNum(d.sales_summary?.cancelled_orders??0),color:'#dc2626'},
                                 ].map(m=>(
                                     <div key={m.label} style={{ ...card, padding:'16px 18px' }}>
                                         <p style={{ fontSize:11, color:C.sub, margin:'0 0 6px', fontWeight:500 }}>{m.label}</p>
@@ -857,9 +913,9 @@ export default function AdminReports({
                         <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
                             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
                                 {[
-                                    {label:'អ្នកប្រើថ្មី', value:fmtNum(km.new_users??0),   color:C.p},
-                                    {label:'កំណើន',        value:fmtPct(km.users_growth??0), color:(km.users_growth??0)>=0?C.p:'#dc2626'},
-                                    {label:'ការបញ្ជាទិញ', value:fmtNum(km.total_orders??0), color:C.goldD},
+                                    {label:'អ្នកប្រើថ្មី', value:fmtNum(km.new_users??0),    color:C.p},
+                                    {label:'កំណើន',        value:fmtPct(km.users_growth??0),  color:(km.users_growth??0)>=0?C.p:'#dc2626'},
+                                    {label:'ការបញ្ជាទិញ', value:fmtNum(km.total_orders??0),  color:C.goldD},
                                 ].map(m=>(
                                     <div key={m.label} style={{ ...card, padding:'16px 18px' }}>
                                         <p style={{ fontSize:11, color:C.sub, margin:'0 0 6px' }}>{m.label}</p>
@@ -920,11 +976,10 @@ export default function AdminReports({
                                             <td style={{ padding:'12px 10px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{p.category}</span></td>
                                             <td style={{ padding:'12px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                             <td style={{ padding:'12px 10px', fontSize:12, color:C.sub }}>{fmtNum(p.units_sold)}</td>
-                                            
                                             <td style={{ padding:'12px 10px', fontSize:11, color:C.muted }}>{p.unit}</td>
                                         </tr>
                                     ))}
-                                    {!d.top_products?.length&&<EmptyRow cols={7}/>}
+                                    {!d.top_products?.length&&<EmptyRow cols={6}/>}
                                 </tbody>
                             </table>
                         </div>
@@ -954,38 +1009,26 @@ export default function AdminReports({
                     {activeTab==='archives'&&(
                         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
-                            {/* Loaded archive detail */}
-                            {viewArchive&&(
-                                <div style={{ ...card, borderLeft:`4px solid ${C.goldD}`, padding:'16px 20px' }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                                        <div>
-                                            <p style={{ fontFamily:C.display, color:C.goldD, fontSize:14, margin:0 }}>
-                                                Archive #{viewArchive.id} — {ARCHIVE_LABELS[viewArchive.report_type]??viewArchive.report_type}
-                                            </p>
-                                            <p style={{ color:C.sub, fontSize:11, margin:'3px 0 0', display:'flex', alignItems:'center', gap:4, flexWrap:'wrap' }}>
-                                                <Calendar size={11}/>{viewArchive.period?.label}
-                                                <span style={{ margin:'0 4px' }}>·</span>
-                                                <Clock size={11}/>{viewArchive.generated_at}
-                                                <span style={{ margin:'0 4px' }}>·</span>
-                                                by {viewArchive.generated_by}
-                                            </p>
-                                        </div>
-                                        <button onClick={()=>setViewArchive(null)} style={{ background:C.bgR, color:'#dc2626', border:'1px solid #fecaca', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontFamily:C.font }}>
+                            {/* Loaded archive rendered as GeneratedReportView */}
+                            {viewArchive && (
+                                <div>
+                                    <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:8 }}>
+                                        <button onClick={()=>setViewArchive(null)}
+                                            style={{ background:C.bgR, color:'#dc2626', border:'1px solid #fecaca', borderRadius:7, padding:'5px 12px', fontSize:11, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontFamily:C.font }}>
                                             <X size={12}/> បិទ
                                         </button>
                                     </div>
-                                    {viewArchive.summary&&Object.keys(viewArchive.summary).length>0&&(
-                                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10 }}>
-                                            {Object.entries(viewArchive.summary).map(([k,v]:any,i)=>(
-                                                <div key={k} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:'10px 12px', borderTop:`2px solid ${CAT_COLORS[i%CAT_COLORS.length]}` }}>
-                                                    <p style={{ fontSize:9, color:C.muted, margin:'0 0 3px', textTransform:'uppercase', letterSpacing:'0.05em', fontWeight:600 }}>{k.replace(/_/g,' ')}</p>
-                                                    <p style={{ fontSize:16, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length], margin:0 }}>
-                                                        {typeof v==='number'&&v>999?fmtKHR(v):fmtNum(v)}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <GeneratedReportView
+                                        report={viewArchive.report}
+                                        onExport={()=>{}}
+                                        isArchive={true}
+                                        archiveMeta={{
+                                            id: viewArchive.meta.id,
+                                            period: viewArchive.meta.period,
+                                            generated_at: viewArchive.meta.generated_at,
+                                            generated_by: viewArchive.meta.generated_by,
+                                        }}
+                                    />
                                 </div>
                             )}
 
@@ -1033,7 +1076,7 @@ export default function AdminReports({
                                                         </span>
                                                     </td>
                                                     <td style={{ padding:'12px' }}>
-                                                        <button onClick={()=>handleViewArchive(a.id)} disabled={archiveLoading===a.id}
+                                                        <button onClick={()=>handleViewArchive(a)} disabled={archiveLoading===a.id}
                                                             style={{ background:C.bgG, color:C.p, border:`1px solid #d1fae5`, borderRadius:7, padding:'5px 11px', fontSize:11, fontWeight:600, cursor:archiveLoading===a.id?'wait':'pointer', display:'flex', alignItems:'center', gap:4, fontFamily:C.font, opacity:archiveLoading===a.id?0.6:1 }}>
                                                             {archiveLoading===a.id?<Spin size={11}/>:<Eye size={11}/>} មើល
                                                         </button>

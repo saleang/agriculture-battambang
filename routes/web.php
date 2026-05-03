@@ -87,6 +87,19 @@ Route::get('/check-email', function (Request $request) {
     return response()->json(['available' => !$exists]);
 });
 
+Route::get('/check-phone', function (Request $request) {
+    $phone = (string) $request->query('phone', '');
+    if ($phone === '') {
+        return response()->json(['available' => null], 200);
+    }
+    $query = User::where('phone', $phone);
+    if ($request->filled('except_id')) {
+        $query->where('user_id', '<>', $request->query('except_id'));
+    }
+    $exists = $query->exists();
+    return response()->json(['available' => !$exists]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes

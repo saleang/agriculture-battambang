@@ -19,8 +19,8 @@ Route::middleware('guest')->group(function () {
 
     // Validation endpoints
     // Route::get('/check-username', [RegisteredUserController::class, 'checkUsername']);
-    Route::get('/check-email', [RegisteredUserController::class, 'checkEmail']);
-    Route::get('/check-phone', [RegisteredUserController::class, 'checkPhone']);
+    // Route::get('/check-email', [RegisteredUserController::class, 'checkEmail']);
+    // Route::get('/check-phone', [RegisteredUserController::class, 'checkPhone']);
 
     // Location API endpoints for registration form
     

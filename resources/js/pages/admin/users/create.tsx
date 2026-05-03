@@ -1,5 +1,6 @@
 // pages/admin/users/create.tsx
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
+import axios from 'axios';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
@@ -27,8 +28,22 @@ export default function CreateUser() {
         province_id: '', district_id: '', commune_id: '', village_id: '',
     });
 
+    type AvailabilityStatus = 'idle' | 'checking' | 'valid' | 'invalid' | 'taken';
+
     const [activeTab, setActiveTab] = useState(0);
+    const [emailStatus, setEmailStatus] = useState<AvailabilityStatus>('idle');
+    const [phoneStatus, setPhoneStatus] = useState<AvailabilityStatus>('idle');
     const isSeller = data.role === 'seller';
+
+    const passwordChecks = [
+        { label: 'យ៉ាងតិច ៨ តួអក្សរ', valid: data.password.length >= 8 },
+        { label: 'មានអក្សរធំ១តួ', valid: /[A-Z]/.test(data.password) },
+        { label: 'មានអក្សរតូច១តួ', valid: /[a-z]/.test(data.password) },
+        { label: 'មានលេខ១តួ', valid: /[0-9]/.test(data.password) },
+        { label: 'មានតួអក្សរពិសេស១តួ', valid: /[!@#$%^&*(),.?"{}|<>]/.test(data.password) },
+    ];
+
+    const isPasswordComplex = passwordChecks.every(check => check.valid);
 
     const handleRoleChange = (role: Role) => {
         setData(prev => ({
@@ -38,6 +53,64 @@ export default function CreateUser() {
                 : {}),
         }));
     };
+
+    const checkEmailAvailability = async (email: string): Promise<boolean | null> => {
+        try {
+            const resp = await axios.get('/check-email', { params: { email } });
+            return resp?.data?.available ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    const checkPhoneAvailability = async (phone: string): Promise<boolean | null> => {
+        try {
+            const resp = await axios.get('/check-phone', { params: { phone } });
+            return resp?.data?.available ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        if (!data.email) {
+            setEmailStatus('idle');
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+            setEmailStatus('invalid');
+            return;
+        }
+
+        setEmailStatus('checking');
+        const timeout = setTimeout(async () => {
+            const available = await checkEmailAvailability(data.email);
+            setEmailStatus(available ? 'valid' : 'taken');
+        }, 600);
+
+        return () => clearTimeout(timeout);
+    }, [data.email]);
+
+    useEffect(() => {
+        if (!data.phone) {
+            setPhoneStatus('idle');
+            return;
+        }
+
+        if (!/^[0-9]{9,10}$/.test(data.phone)) {
+            setPhoneStatus('invalid');
+            return;
+        }
+
+        setPhoneStatus('checking');
+        const timeout = setTimeout(async () => {
+            const available = await checkPhoneAvailability(data.phone);
+            setPhoneStatus(available ? 'valid' : 'taken');
+        }, 600);
+
+        return () => clearTimeout(timeout);
+    }, [data.phone]);
 
     const locVal: LocationValue = {
         province_id: data.province_id || null,
@@ -58,6 +131,15 @@ export default function CreateUser() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        if (emailStatus === 'taken' || phoneStatus === 'taken') {
+            toast.error('អ៊ីមែល ឬលេខទូរស័ព្ទនេះបានប្រើរួចហើយ។ សូមប្រើមួយទៀត។');
+            return;
+        }
+        if (!isPasswordComplex) {
+            toast.error('ពាក្យសម្ងាត់ត្រូវមាន ៨ តួអក្សរ និងមានអក្សរធំ, អក្សរតូច, លេខ និងតួអក្សរពិសេស។');
+            return;
+        }
         post('/admin/users', {
             preserveState: false,
             onSuccess: () => toast.success('បានបង្កើតអ្នកប្រើប្រាស់ថ្មីដោយជោគជ័យ!'),
@@ -220,17 +302,27 @@ export default function CreateUser() {
                                             <label className="mb-2 block text-base font-medium text-gray-700">អ៊ីមែល <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className={inputCls('email')} placeholder="email@example.com" />
+                                                <input type="email" value={data.email} onChange={e => setData('email', e.target.value)}
+                                                    className={`${inputCls('email')} ${emailStatus === 'taken' || emailStatus === 'invalid' ? 'border-rose-300 focus:ring-rose-500 focus:border-rose-500' : emailStatus === 'valid' ? 'border-green-500' : ''}`}
+                                                    placeholder="email@gmail.com" />
                                             </div>
                                             <Err f="email" />
+                                            {emailStatus === 'taken' && (
+                                                <p className="mt-1 text-sm text-rose-500">អ៊ីមែលនេះបានប្រើរួចហើយ។</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">លេខទូរស័ព្ទ <span className="text-rose-500">*</span></label>
                                             <div className="relative">
                                                 <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="tel" value={data.phone} onChange={e => setData('phone', e.target.value)} className={inputCls('phone')} placeholder="0XX XXX XXXX" />
+                                                <input type="tel" value={data.phone} onChange={e => setData('phone', e.target.value)}
+                                                    className={`${inputCls('phone')} ${phoneStatus === 'taken' || phoneStatus === 'invalid' ? 'border-rose-300 focus:ring-rose-500 focus:border-rose-500' : phoneStatus === 'valid' ? 'border-green-500' : ''}`}
+                                                    placeholder="0XX XXX XXXX" />
                                             </div>
                                             <Err f="phone" />
+                                            {phoneStatus === 'taken' && (
+                                                <p className="mt-1 text-sm text-rose-500">លេខទូរស័ព្ទនេះបានប្រើរួចហើយ។</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">ស្ថានភាព</label>
@@ -310,7 +402,14 @@ export default function CreateUser() {
                                                     className={inputCls('password')} placeholder="••••••••" autoComplete="new-password" />
                                             </div>
                                             <Err f="password" />
-                                            <p className="mt-1 text-base text-gray-400">យ៉ាងតិច ៨ តួអក្សរ</p>
+                                            <div className="mt-2 space-y-1 text-sm">
+                                                {passwordChecks.map((check) => (
+                                                    <p key={check.label} className={`flex items-center gap-2 ${check.valid ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                        <span className={`inline-flex h-2.5 w-2.5 rounded-full ${check.valid ? 'bg-emerald-600' : 'bg-gray-300'}`} />
+                                                        {check.label}
+                                                    </p>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">បញ្ជាក់ពាក្យសម្ងាត់ <span className="text-rose-500">*</span></label>
@@ -346,7 +445,14 @@ export default function CreateUser() {
                                                     className={inputCls('password')} placeholder="••••••••" autoComplete="new-password" />
                                             </div>
                                             <Err f="password" />
-                                            <p className="mt-1 text-base text-gray-400">យ៉ាងតិច ៨ តួអក្សរ</p>
+                                            <div className="mt-2 space-y-1 text-sm">
+                                                {passwordChecks.map((check) => (
+                                                    <p key={check.label} className={`flex items-center gap-2 ${check.valid ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                        <span className={`inline-flex h-2.5 w-2.5 rounded-full ${check.valid ? 'bg-emerald-600' : 'bg-gray-300'}`} />
+                                                        {check.label}
+                                                    </p>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-base font-medium text-gray-700">បញ្ជាក់ពាក្យសម្ងាត់ <span className="text-rose-500">*</span></label>
