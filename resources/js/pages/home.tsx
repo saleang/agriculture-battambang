@@ -12,7 +12,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Footer } from './customer/footer-customer';
@@ -293,7 +293,6 @@ export default function Home({
     return (
         <div className="min-h-screen bg-white">
             <Head title="ទំព័រដើម - កសិផលខេត្តបាត់ដំបង" />
-            <Toaster position="top-right" richColors />
 
             {/* Top Bar */}
             <div className="bg-gray-900 px-4 py-2.5 text-sm text-white">
@@ -340,14 +339,14 @@ export default function Home({
                 <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="max-w-2xl">
                         {/* Badge */}
-                        <div className="mb-6 inline-flex items-center rounded-full border border-yellow-500/50 bg-black/30 px-4 py-1.5 text-sm font-medium text-yellow-500 backdrop-blur-sm">
+                        <div className="mt-15 mb-10 inline-flex items-center rounded-full border border-yellow-500/50 bg-black/30 px-4 py-1.5 text-sm font-medium text-yellow-500 backdrop-blur-sm">
                             ថ្មី! កសិផលពីហាងនៅបាត់ដំបង
                         </div>
 
                         {/* Heading */}
-                        <h1 className="mb-6 text-4xl leading-tight font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
+                        <h1 className="mb-6 whitespace-nowrap text-xl sm:text-2xl md:text-4xl lg:text-6xl leading-tight font-moul text-white">
                             កសិផលស្រស់ៗពីចម្ការខ្មែរ <br />
-                            <span className="text-green-400">សរីរាង្គ</span>
+                            <span className="text-green-500">សរីរាង្គ</span>
                         </h1>
 
                         {/* Description */}
@@ -359,7 +358,7 @@ export default function Home({
                         {/* Buttons */}
                         <div className="flex flex-wrap items-center gap-4">
                             <Link
-                                href={user ? '/shop' : '/login'}
+                                href={user ? '#products' : '/login'}
                                 className="group inline-flex items-center justify-center rounded-full bg-[#4a7c2b] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#3a6222]"
                             >
                                 {user ? 'ទិញឥឡូវនេះ' : 'ចូលគណនីដើម្បីទិញ'}

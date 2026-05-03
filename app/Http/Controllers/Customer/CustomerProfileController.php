@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -53,46 +54,42 @@ class CustomerProfileController extends Controller
         }
 
         try {
-            $validated = $request->validated();
+            $user->fill($request->validated());
 
-            // Handle photo upload
             if ($request->hasFile('photo')) {
-                Log::info('Processing photo upload', [
-                    'user_id' => $user->user_id,
-                    'photo_size' => $request->file('photo')->getSize(),
-                    'photo_mime' => $request->file('photo')->getMimeType(),
-                ]);
+                Log::info('[DEBUG] Has photo file.');
 
-                // Delete old photo if exists
-                if ($user->photo) {
-                    if (Storage::disk('public')->exists($user->photo)) {
-                        Storage::disk('public')->delete($user->photo);
-                        Log::info('Deleted old photo', ['path' => $user->photo]);
-                    }
+                // Delete old photo if it exists
+                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                    Log::info('[DEBUG] Deleted old photo: ' . $user->photo);
                 }
 
-                // Store new photo
+                // Store new photo and update the user's photo attribute
                 $path = $request->file('photo')->store('users', 'public');
-                $validated['photo'] = $path;
-
-                Log::info('Photo uploaded successfully', [
-                    'user_id' => $user->user_id,
-                    'path' => $path
-                ]);
+                Log::info('[DEBUG] New photo stored at path: ' . $path);
+                $user->photo = $path;
+                Log::info('[DEBUG] User photo attribute set to: ' . $user->photo);
             } else {
-                // Don't overwrite photo if not uploading new one
-                unset($validated['photo']);
+                Log::info('[DEBUG] No photo file in request.');
             }
 
-            // Update user
-            $user->update($validated);
+            Log::info('[DEBUG] User object before save:', $user->toArray());
+
+            $saveResult = $user->save();
+
+            Log::info('[DEBUG] Save result: ' . ($saveResult ? 'true' : 'false'));
+            // Let's get a fresh instance from DB to be 100% sure
+            $freshUser = $user->fresh();
+            Log::info('[DEBUG] Fresh user from DB:', $freshUser->toArray());
+
 
             Log::info('Customer profile updated successfully', [
                 'user_id' => $user->user_id,
-                'updated_fields' => array_keys($validated),
+                'updated_fields' => $user->getDirty(),
             ]);
 
-            return back()->with('success', 'Profile updated successfully!');
+            return Redirect::route('customer.profile.edit')->with('success', 'បានធ្វើបច្ចុប្បន្នភាពប្រវត្តិរូបដោយជោគជ័យ!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Customer profile validation failed', [
                 'user_id' => $user->user_id,

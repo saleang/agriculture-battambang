@@ -74,8 +74,6 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
 
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat('km-KH', {
-            style: 'currency',
-            currency: 'KHR',
             minimumFractionDigits: 0
         }).format(Math.floor(amount)) + ' ៛';
     };
@@ -115,24 +113,8 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
             <Head title="ការគ្រប់គ្រងការទូទាត់" />
 
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 font-moul">ទីផ្សារកសិកម្ម</h1>
-                </div>
-
-                {/* Navigation */}
-                <div className="flex flex-wrap gap-4 mb-8 text-blue-600 font-medium">
-                    <Link href="/seller/dashboard" className="hover:underline">ផ្ទាំងគ្រប់គ្រង</Link>
-                    <span className="text-gray-400">•</span>
-                    <Link href="/seller/profile" className="hover:underline">ព័ត៌មានផ្ទាល់ខ្លួន</Link>
-                    <span className="text-gray-400">•</span>
-                    <Link href="/seller/product" className="hover:underline">ផលិតផល</Link>
-                    <span className="text-gray-400">•</span>
-                    <Link href="/seller/orders" className="hover:underline">ការបញ្ជាទិញ</Link>
-                </div>
-
-                <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2 font-moul">ការគ្រប់គ្រងការទូទាត់</h2>
+                    <h2 className="text-2xl text-gray-800 mb-2 font-moul">ការគ្រប់គ្រងការទូទាត់</h2>
                     <p className="text-gray-600">តាមដានចំណូល និងគ្រប់គ្រងការទូទាត់របស់អ្នក</p>
                 </div>
 

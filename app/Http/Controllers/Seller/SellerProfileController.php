@@ -124,7 +124,7 @@ class SellerProfileController extends Controller
 
         Log::info('Seller profile updated successfully', ['user_id' => $user->user_id]);
 
-        return back()->with('success', 'Profile updated successfully!');
+        return redirect()->route('seller.profile.edit')->with('success', 'ព័ត៌មាន​ប្រវត្តិរូប​របស់​អ្នក​ត្រូវ​បាន​ធ្វើ​បច្ចុប្បន្នភាព​ដោយ​ជោគជ័យ។');
     }
 
     /**
@@ -271,7 +271,7 @@ class SellerProfileController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->withErrors(['error' => 'Failed to update farm information. Please try again.']);
+            return back()->with('error', 'ការធ្វើបច្ចុប្បន្នភាពព័ត៌មានកសិដ្ឋានបានបរាជ័យ។ សូម​ព្យាយាម​ម្តង​ទៀត។');
         }
     }
 

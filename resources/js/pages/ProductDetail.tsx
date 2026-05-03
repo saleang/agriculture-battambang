@@ -18,7 +18,7 @@ import {
     Truck,
 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 
 import { Footer } from './customer/footer-customer';
 import { useCart } from './customer/orders/cart-context';
@@ -563,7 +563,6 @@ export default function ProductDetail({
     return (
         <div className="min-h-screen bg-gray-50">
             <Head title={`${product.productname} - កសិផលខេត្តបាត់ដំបង`} />
-            <Toaster position="top-right" richColors />
 
             <Header
                 searchQuery=""
