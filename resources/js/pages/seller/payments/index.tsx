@@ -115,7 +115,7 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
 
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-8">
-                    <h2 className="text-2xl text-gray-800 mb-2 font-moul">ការគ្រប់គ្រងការទូទាត់</h2>
+                    <h2 className="text-2xl font-moul text-green-700 mb-2">ការគ្រប់គ្រងការទូទាត់</h2>
                     <p className="text-gray-600">តាមដានចំណូល និងគ្រប់គ្រងការទូទាត់របស់អ្នក</p>
                 </div>
 
