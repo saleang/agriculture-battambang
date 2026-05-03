@@ -128,8 +128,6 @@ const AllProducts = ({
             seller_id: product.seller.seller_id,
             farm_name: product.seller.farm_name,
         });
-
-        toast.success(`${product.productname} បានបញ្ចូលក្នុងកន្ត្រក`);
     };
 
     const handleWishlistToggle = async (productId: number) => {
@@ -278,11 +276,13 @@ const AllProducts = ({
                                         className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
                                     >
                                         <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                                            <img
-                                                src={primaryImage(product)}
-                                                alt={product.productname}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                            />
+                                            <Link href={`/farm/${product.seller.seller_id}`}>
+                                                <img
+                                                    src={primaryImage(product)}
+                                                    alt={product.productname}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                            </Link>
 
                                             {/* Hover action buttons */}
                                             <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
