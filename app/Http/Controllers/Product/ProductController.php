@@ -260,7 +260,7 @@ class ProductController extends Controller
 
     public function allProducts(Request $request)
     {
-        $filters = $request->only(['max_price', 'tags']);
+        $filters = $request->only(['max_price', 'tags', 'search']);
 
         $baseQuery = Product::where('is_active', true);
 
@@ -282,6 +282,15 @@ class ProductController extends Controller
         if ($request->filled('tags')) {
             $tagIds = $request->input('tags');
             $productsQuery->whereIn('category_id', $tagIds);
+        }
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $productsQuery->where(function ($query) use ($searchTerm) {
+                $query->where('productname', 'like', "%{$searchTerm}%")
+                      ->orWhere('price', 'like', "%{$searchTerm}%");
+            });
         }
 
         $products = $productsQuery->paginate(18)->withQueryString();

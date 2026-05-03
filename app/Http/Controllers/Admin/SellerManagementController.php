@@ -47,7 +47,7 @@ class SellerManagementController extends Controller
             'total'    => User::where('role', 'seller')->count(),
             'active'   => User::where('role', 'seller')->where('status', 'active')->count(),
             'inactive' => User::where('role', 'seller')->where('status', 'inactive')->count(),
-            'banned'   => User::where('role', 'seller')->where('status', 'banned')->count(),
+            // 'banned'   => User::where('role', 'seller')->where('status', 'banned')->count(),
         ];
 
         return Inertia::render('admin/sellers/index', [

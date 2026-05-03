@@ -43,15 +43,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user()? [
-                    'user_id' => $request->user()->user_id,
-                    'username' => $request->user()->username,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->role,
-                    'phone' => $request->user()->phone,
-                    'photo_url' => $request->user()->photo_url,
-                    'gender' => $request->user()->gender,
-                ]:null,
+                'user' => $request->user() ? $request->user()->load('seller') : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

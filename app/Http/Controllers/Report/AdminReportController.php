@@ -369,7 +369,6 @@ class AdminReportController extends Controller
             'total_products'  => Product::count(),
             'active_products' => Product::where('is_active', true)->count(),
             'out_of_stock'    => Product::where('stock', 'out_of_stock')->count(),
-            'total_views'     => Product::sum('views_count'),
         ];
     }
 
@@ -532,7 +531,6 @@ class AdminReportController extends Controller
                 DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
                 DB::raw('SUM(order_items.quantity) as units_sold'),
                 // FIX: MAX() to avoid ONLY_FULL_GROUP_BY error
-                DB::raw('MAX(product.views_count) as views'),
                 DB::raw('MAX(product.unit) as unit')
             )
             ->groupBy('product.product_id', 'product.productname', 'category.category_name')
@@ -545,7 +543,6 @@ class AdminReportController extends Controller
                 'category'   => $r->category,
                 'revenue'    => (float) $r->revenue,
                 'units_sold' => (int)   $r->units_sold,
-                'views'      => (int)   $r->views,
                 'unit'       => $r->unit,
             ]);
     }

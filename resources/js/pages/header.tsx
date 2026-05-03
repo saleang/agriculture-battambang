@@ -8,8 +8,8 @@ import {
     ChevronDown,
     Heart,
     Home,
+    LayoutDashboard,
     Leaf,
-    Tractor,
     LogOut,
     Menu,
     Package,
@@ -17,6 +17,7 @@ import {
     ShoppingBag,
     ShoppingCart,
     Store,
+    Tractor,
     User,
     Users,
 } from 'lucide-react';
@@ -35,7 +36,7 @@ interface HeaderProps {
     userPhoto?: string | null;
 }
 
-type UserRole = 'customer' | 'seller';
+type UserRole = 'customer' | 'seller' | 'admin';
 
 const getHrefMap = (role: UserRole): Record<string, string> => ({
     home: '/',
@@ -43,13 +44,17 @@ const getHrefMap = (role: UserRole): Record<string, string> => ({
     profile:
         role === 'seller'
             ? route('seller.dashboard')
-            : route('customer.profile.edit'),
+            : role === 'admin'
+              ? route('admin.dashboard')
+              : route('customer.profile.edit'),
     cart: route('cart.index'), // ✅ Always use the correct cart route
     wishlist: route('wishlist.index'),
     orders:
         role === 'seller'
             ? route('seller.orders.index')
-            : route('customer.orders.index'),
+            : role === 'admin'
+              ? route('admin.orders.index')
+              : route('customer.orders.index'),
     logout: route('logout'),
     about: '/about', // Assuming static pages
     faq: '/faq',
@@ -72,7 +77,12 @@ export function Header({
     const { getTotalItems } = useCart();
     const cartCount = getTotalItems() || 0;
 
-    const role: UserRole = authUser?.role === 'seller' ? 'seller' : 'customer';
+    const role: UserRole =
+        authUser?.role === 'seller'
+            ? 'seller'
+            : authUser?.role === 'admin'
+              ? 'admin'
+              : 'customer';
 
     const hrefMap = getHrefMap(role);
 
@@ -213,7 +223,10 @@ export function Header({
                 <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4 sm:px-6 md:h-20 md:gap-8">
                     {/* Logo mobile */}
                     <div className="md:hidden">
-                        <a href={hrefMap.home} className="flex items-center">
+                        <a
+                            href={hrefMap.home}
+                            className="flex cursor-pointer items-center"
+                        >
                             <img
                                 src={logoSrc}
                                 alt="កសិផលខេត្តបាត់ដំបង"
@@ -226,7 +239,7 @@ export function Header({
                     <div className="hidden items-center md:flex">
                         <a
                             href={hrefMap.home}
-                            className="inline-flex items-center text-2xl font-bold text-green-700"
+                            className="inline-flex cursor-pointer items-center text-2xl font-bold text-green-700"
                         >
                             <img
                                 src={logoSrc}
@@ -260,31 +273,31 @@ export function Header({
                         <nav className="hidden items-center gap-6 md:flex">
                             <a
                                 href="#hero"
-                                className="text-gray-700 transition-colors hover:text-green-600"
+                                className="cursor-pointer text-gray-700 transition-colors hover:text-green-600"
                             >
                                 ទំព័រដើម
                             </a>
                             <a
                                 href="#advantages"
-                                className="text-gray-700 transition-colors hover:text-green-600"
+                                className="cursor-pointer text-gray-700 transition-colors hover:text-green-600"
                             >
                                 អត្ថប្រយោជន៍
                             </a>
                             <a
                                 href="#categories"
-                                className="text-gray-700 transition-colors hover:text-green-600"
+                                className="cursor-pointer text-gray-700 transition-colors hover:text-green-600"
                             >
                                 ប្រភេទ
                             </a>
                             <a
                                 href="#products"
-                                className="text-gray-700 transition-colors hover:text-green-600"
+                                className="cursor-pointer text-gray-700 transition-colors hover:text-green-600"
                             >
                                 ផលិតផល
                             </a>
                             <a
                                 href="#about"
-                                className="text-gray-700 transition-colors hover:text-green-600"
+                                className="cursor-pointer text-gray-700 transition-colors hover:text-green-600"
                             >
                                 អំពីយើង
                             </a>
@@ -306,7 +319,7 @@ export function Header({
                             <>
                                 <a
                                     href={hrefMap.wishlist}
-                                    className="group relative"
+                                    className="group relative cursor-pointer"
                                 >
                                     <div className="rounded-full p-2 transition hover:bg-green-50">
                                         <Heart className="h-5 w-5 text-gray-700 group-hover:text-green-600" />
@@ -321,7 +334,7 @@ export function Header({
                                 {/* ✅ CART ICON - FIXED */}
                                 <a
                                     href={hrefMap.cart}
-                                    className="group relative"
+                                    className="group relative cursor-pointer"
                                     title="រទេះទិញទំនិញ"
                                     onClick={(e) => {
                                         // Debug click
@@ -348,7 +361,7 @@ export function Header({
                         {!effectiveIsAuthenticated ? (
                             <a
                                 href={hrefMap.login}
-                                className="hidden md:inline-block"
+                                className="hidden cursor-pointer md:inline-block"
                             >
                                 <Button className="h-9 rounded-full bg-green-600 text-sm text-white hover:bg-green-700 md:h-10 md:text-base">
                                     <User className="mr-1 h-4 w-4 md:mr-2" />
@@ -434,53 +447,94 @@ export function Header({
                                         </div>
 
                                         <div className="py-1">
-                                            <a
-                                                href={hrefMap.profile}
-                                                onClick={() =>
-                                                    setMenuOpen(false)
-                                                }
-                                                className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
-                                            >
-                                                <User className="h-4 w-4 text-gray-600" />
-                                                <span>
-                                                    {role === 'seller'
-                                                        ? 'ផ្ទាំងគ្រប់គ្រងហាង'
-                                                        : 'ប្រូហ្វាល់របស់ខ្ញុំ'}
-                                                </span>
-                                            </a>
-
-                                            <a
-                                                href={hrefMap.orders}
-                                                onClick={() =>
-                                                    setMenuOpen(false)
-                                                }
-                                                className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
-                                            >
-                                                <Package className="h-4 w-4 text-gray-600" />
-                                                <span>
-                                                    {role === 'seller'
-                                                        ? 'ការបញ្ជាទិញអតិថិជន'
-                                                        : 'ការបញ្ជាទិញរបស់ខ្ញុំ'}
-                                                </span>
-                                            </a>
-
-                                            {role === 'customer' && (
-                                                <a
-                                                    href={hrefMap.wishlist}
-                                                    onClick={() =>
-                                                        setMenuOpen(false)
-                                                    }
-                                                    className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
-                                                >
-                                                    <Heart className="h-4 w-4 text-gray-600" />
-                                                    <span>បញ្ជីចំណូលចិត្ត</span>
-                                                </a>
+                                            {authUser.role === 'admin' && (
+                                                <>
+                                                    <a
+                                                        href={route(
+                                                            'admin.dashboard',
+                                                        )}
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <LayoutDashboard className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            ផ្ទាំងគ្រប់គ្រង
+                                                        </span>
+                                                    </a>
+                                                    <div className="my-1 h-px bg-gray-200" />
+                                                </>
                                             )}
+                                            {role === 'customer' ? (
+                                                <>
+                                                    <a
+                                                        href={hrefMap.profile}
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <User className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            ប្រូហ្វាល់របស់ខ្ញុំ
+                                                        </span>
+                                                    </a>
+                                                    <a
+                                                        href={hrefMap.orders}
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <Package className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            ការបញ្ជាទិញរបស់ខ្ញុំ
+                                                        </span>
+                                                    </a>
+                                                    <a
+                                                        href={hrefMap.wishlist}
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <Heart className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            បញ្ជីចំណូលចិត្ត
+                                                        </span>
+                                                    </a>
+                                                </>
+                                            ) : role === 'seller' ? (
+                                                <>
+                                                    <a
+                                                        href={hrefMap.profile}
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <User className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            ផ្ទាំងគ្រប់គ្រងហាង
+                                                        </span>
+                                                    </a>
+                                                    <a
+                                                        href={hrefMap.orders}
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
+                                                    >
+                                                        <Package className="h-4 w-4 text-gray-600" />
+                                                        <span>
+                                                            ការបញ្ជាទិញអតិថិជន
+                                                        </span>
+                                                    </a>
+                                                </>
+                                            ) : null}
                                         </div>
 
                                         <hr className="my-1" />
                                         <Link
-                                            className="flex w-full items-center gap-2 px-4 py-2.5 text-red-600 transition hover:bg-red-50"
+                                            className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-red-600 transition hover:bg-red-50"
                                             href="/logout"
                                             method="post"
                                             as="button"
@@ -508,45 +562,45 @@ export function Header({
                                     <>
                                         <a
                                             href="/"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <Home className="h-4 w-4" />
                                             ទំព័រដើម
                                         </a>
                                         <a
                                             href="/allproducts"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <ShoppingBag className="h-4 w-4" />
                                             ទិញទំនិញ
                                         </a>
                                         <a
                                             href="/farmers"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <Store className="h-4 w-4" />
                                             ហាងកសិផល
                                         </a>
                                     </>
-                                ) : (
+                                ) : role === 'seller' ? (
                                     <>
                                         <a
                                             href="/"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <Home className="h-4 w-4" />
                                             ទំព័រដើម
                                         </a>
                                         <a
                                             href="/farmers"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <Store className="h-4 w-4" />
                                             ហាងកសិផល
                                         </a>
                                         <a
                                             href="/allproducts"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <ShoppingBag className="h-4 w-4" />
                                             កសិផលទាំងអស់
@@ -557,17 +611,34 @@ export function Header({
                                                     ? `/farm/${authUser.seller.seller_id}`
                                                     : '/seller/farm_info'
                                             }
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
                                             <Tractor className="h-4 w-4" />
                                             ព័ត៌មានហាងខ្ញុំ
                                         </a>
+                                    </>
+                                ) : (
+                                    <>
                                         <a
-                                            href="/seller/orders"
-                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                            href="/"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
                                         >
-                                            <ShoppingCart className="h-4 w-4" />
-                                            ការបញ្ជាទិញរបស់អតិថិជន
+                                            <Home className="h-4 w-4" />
+                                            ទំព័រដើម
+                                        </a>
+                                        <a
+                                            href="/farmers"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Store className="h-4 w-4" />
+                                            ហាងកសិផល
+                                        </a>
+                                        <a
+                                            href="/allproducts"
+                                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <ShoppingBag className="h-4 w-4" />
+                                            កសិផលទាំងអស់
                                         </a>
                                     </>
                                 )}
@@ -576,7 +647,7 @@ export function Header({
 
                         {/* Mobile Navigation */}
                         <div className="flex w-full items-center justify-between md:hidden">
-                            <Button className="font-siemreap h-9 gap-2 rounded-lg bg-green-800 px-3 text-sm text-white hover:bg-green-900">
+                            <Button className="font-siemreap h-9 cursor-pointer gap-2 rounded-lg bg-green-800 px-3 text-sm text-white hover:bg-green-900">
                                 <Menu className="h-4 w-4" />
                                 ម៉ឺនុយ
                             </Button>
