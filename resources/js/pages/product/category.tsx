@@ -92,7 +92,7 @@ const CategoryPage: React.FC = () => {
 
                     {/* Header */}
                     <div className="mb-6">
-                        <h1 className="text-3xl font-moul text-green-900 dark:text-white">ប្រភេទផលិតផល</h1>
+                        <h2 className="text-2xl font-moul text-green-700 mb-2">ប្រភេទផលិតផល</h2>
                         <p className="text-base text-gray-500 mt-3">ជ្រើសរើសប្រភេទដែលអ្នកចង់លក់ — ប្រភេទដែលបានជ្រើសនឹងបង្ហាញក្នុង dropdown ផលិតផល</p>
                     </div>
 
