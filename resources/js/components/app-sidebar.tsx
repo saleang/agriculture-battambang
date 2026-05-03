@@ -9,7 +9,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import {
     Bell,
     Box,
@@ -46,12 +46,12 @@ const adminNavItems: NavItem[] = [
     {
         title: 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
         href: '/admin/users',
-        icon: LayoutGrid,
+        icon: User,
     },
     {
         title: 'គ្រប់គ្រងអាជីវករ',
         href: '/admin/sellers',
-        icon: Folder,
+        icon: Store,
     },
     {
         title: 'គ្រប់គ្រងផលិតផល',
@@ -61,7 +61,7 @@ const adminNavItems: NavItem[] = [
     {
         title: 'គ្រប់គ្រងប្រភេទផលិតផល',
         href: '/admin/categories',
-        icon: Package,
+        icon: Tags,
     },
     {
         title: 'ការ​វាយតម្លៃ',
@@ -85,18 +85,30 @@ const sellerNavItems: NavItem[] = [
         title: 'គណនីរបស់ខ្ញុំ',
         icon: User,
         children: [
-    { title: 'ប្រវត្តិរូបរបស់ខ្ញុំ',      href: '/seller/profile',           icon: User        },
-    { title: 'ព័ត៌មានហាង',               href: '/seller/farm_info',         icon: Store       },
-    { title: 'ការកំណត់ការបង់ប្រាក់',     href: '/seller/payment_info',      icon: CreditCard  },
-    { title: 'ពាក្យសម្ងាត់',             href: '/seller/password',          icon: Lock        },
-    { title: 'ការកំណត់ការជូនដំណឹង',      href: '/seller/telegram_settings', icon: Bell        },
-],
+            {
+                title: 'ប្រវត្តិរូបរបស់ខ្ញុំ',
+                href: '/seller/profile',
+                icon: User,
+            },
+            { title: 'ព័ត៌មានហាង', href: '/seller/farm_info', icon: Store },
+            {
+                title: 'ការកំណត់ការបង់ប្រាក់',
+                href: '/seller/payment_info',
+                icon: CreditCard,
+            },
+            { title: 'ពាក្យសម្ងាត់', href: '/seller/password', icon: Lock },
+            {
+                title: 'ការកំណត់ការជូនដំណឹង',
+                href: '/seller/telegram_settings',
+                icon: Bell,
+            },
+        ],
     },
     {
         title: 'ផលិតផលរបស់ខ្ញុំ',
         icon: Box,
         children: [
-            { title: 'ផលិតផល',      href: '/seller/product',  icon: ShoppingBasket },
+            { title: 'ផលិតផល', href: '/seller/product', icon: ShoppingBasket },
             { title: 'ក្រុមផលិតផល', href: '/seller/category', icon: Tags },
         ],
     },
@@ -108,7 +120,7 @@ const sellerNavItems: NavItem[] = [
     {
         title: 'គ្រប់គ្រងការបង់ក្រាក់',
         href: '/seller/payments',
-        icon: Star,
+        icon: CreditCard,
     },
     {
         title: 'ការវាយតម្លៃរបស់ខ្ញុំ',
