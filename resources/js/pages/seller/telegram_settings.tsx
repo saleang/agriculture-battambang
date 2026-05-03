@@ -40,102 +40,106 @@ export default function TelegramSettings() {
             <Head title="ការកំណត់ Telegram" />
 
             <SellerLayout>
-                <div className="space-y-6 max-w-2xl">
-                    
-                    <div>
-                         <h2 className="font-moul text-base text-gray-900">ការជូនដំណឹងតាម Telegram</h2>
-                         <p className="text-sm text-gray-500 mb-4">កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង</p>
-                    </div>
-
-                    <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">
-                        <form onSubmit={handleSubmit}>
-
-                            {/* Bot Token */}
-                            <div className="px-5 py-4">
-                                <Label htmlFor="telegram_bot_token" className="text-xs font-medium text-gray-700">
-                                    Bot Token
-                                </Label>
-                                <Input
-                                    id="telegram_bot_token"
-                                    name="telegram_bot_token"
-                                    type="text"
-                                    value={data.telegram_bot_token}
-                                    onChange={handleChange}
-                                    placeholder="បញ្ចូល Bot Token (ស្រេចចិត្ត)"
-                                    className="mt-1.5 h-9 text-sm"
-                                />
-                                {errors.telegram_bot_token && (
-                                    <p className="mt-1 text-xs text-red-500">{errors.telegram_bot_token}</p>
-                                )}
+                <div className="min-h-screen bg-gray-50 py-6 font-khmer">
+                    <div className="mx-auto max-w-6xl px-2 sm:px-3 lg:px-4">
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="font-moul text-xl text-gray-900">ការជូនដំណឹងតាម Telegram</h2>
+                                <p className="text-base text-gray-500 mt-1">កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង</p>
                             </div>
 
-                            {/* Chat ID */}
-                            <div className="px-5 py-4">
-                                <Label htmlFor="telegram_chat_id" className="text-xs font-medium text-gray-700">
-                                    Chat ID
-                                </Label>
-                                <Input
-                                    id="telegram_chat_id"
-                                    name="telegram_chat_id"
-                                    type="text"
-                                    value={data.telegram_chat_id}
-                                    onChange={handleChange}
-                                    placeholder="បញ្ចូល Chat ID (ស្រេចចិត្ត)"
-                                    className="mt-1.5 h-9 text-sm"
-                                />
-                                {errors.telegram_chat_id && (
-                                    <p className="mt-1 text-xs text-red-500">{errors.telegram_chat_id}</p>
-                                )}
-                            </div>
+                            <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">
+                                <form onSubmit={handleSubmit}>
 
-                            {/* Toggle */}
-                            <div className="flex items-center justify-between px-5 py-4">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-800">បើកការជូនដំណឹង</p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                        ទទួលការជូនដំណឹងថ្មីៗតាម Telegram
-                                    </p>
-                                </div>
-                                <button
-    type="button"
-    role="switch"
-    aria-checked={data.telegram_notifications_enabled}
-    onClick={() => setData('telegram_notifications_enabled', !data.telegram_notifications_enabled)}
-    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
-                transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2
-                ${data.telegram_notifications_enabled ? 'bg-emerald-600' : 'bg-gray-200'}`}
->
-    <span
-        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
-                    ${data.telegram_notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`}
-    />
-</button>
-                            </div>
+                                    {/* Bot Token */}
+                                    <div className="px-5 py-4">
+                                        <Label htmlFor="telegram_bot_token" className="text-base font-medium text-gray-700">
+                                            Bot Token
+                                        </Label>
+                                        <Input
+                                            id="telegram_bot_token"
+                                            name="telegram_bot_token"
+                                            type="text"
+                                            value={data.telegram_bot_token}
+                                            onChange={handleChange}
+                                            placeholder="បញ្ចូល Bot Token (ស្រេចចិត្ត)"
+                                            className="mt-1.5 h-10 text-base"
+                                        />
+                                        {errors.telegram_bot_token && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.telegram_bot_token}</p>
+                                        )}
+                                    </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center justify-between px-5 py-4 bg-gray-50">
-                                {recentlySuccessful ? (
-                                    <p className="text-xs text-emerald-600 font-medium">✓ ការកំណត់បានរក្សាទុករួចហើយ</p>
-                                ) : (
-                                    <span />
-                                )}
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="cursor-pointer bg-emerald-600 hover:bg-emerald-800 text-white border-none">
-                                    {processing ? (
-                                        <span className="flex items-center gap-1.5">
-                                            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                                            </svg>
-                                            កំពុងរក្សា...
-                                        </span>
-                                    ) : 'រក្សាទុក'}
-                                </Button>
-                            </div>
+                                    {/* Chat ID */}
+                                    <div className="px-5 py-4">
+                                        <Label htmlFor="telegram_chat_id" className="text-base font-medium text-gray-700">
+                                            Chat ID
+                                        </Label>
+                                        <Input
+                                            id="telegram_chat_id"
+                                            name="telegram_chat_id"
+                                            type="text"
+                                            value={data.telegram_chat_id}
+                                            onChange={handleChange}
+                                            placeholder="បញ្ចូល Chat ID (ស្រេចចិត្ត)"
+                                            className="mt-1.5 h-10 text-base"
+                                        />
+                                        {errors.telegram_chat_id && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.telegram_chat_id}</p>
+                                        )}
+                                    </div>
 
-                        </form>
+                                    {/* Toggle */}
+                                    <div className="flex items-center justify-between px-5 py-4">
+                                        <div>
+                                            <p className="text-base font-medium text-gray-800">បើកការជូនដំណឹង</p>
+                                            <p className="text-sm text-gray-500 mt-0.5">
+                                                ទទួលការជូនដំណឹងថ្មីៗតាម Telegram
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={data.telegram_notifications_enabled}
+                                            onClick={() => setData('telegram_notifications_enabled', !data.telegram_notifications_enabled)}
+                                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent
+                                                        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2
+                                                        ${data.telegram_notifications_enabled ? 'bg-emerald-600' : 'bg-gray-200'}`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200
+                                                            ${data.telegram_notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`}
+                                            />
+                                        </button>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center justify-between px-5 py-4 bg-gray-50">
+                                        {recentlySuccessful ? (
+                                            <p className="text-sm text-emerald-600 font-medium">✓ ការកំណត់បានរក្សាទុករួចហើយ</p>
+                                        ) : (
+                                            <span />
+                                        )}
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white border-none px-5 py-2.5 text-base"
+                                        >
+                                            {processing ? (
+                                                <span className="flex items-center gap-1.5">
+                                                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                                    </svg>
+                                                    កំពុងរក្សា...
+                                                </span>
+                                            ) : 'រក្សាទុក'}
+                                        </Button>
+                                    </div>
+
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </SellerLayout>
