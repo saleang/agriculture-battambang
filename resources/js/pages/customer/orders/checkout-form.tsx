@@ -116,8 +116,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ cartItems, user, onSuccess 
                 ...formData,
                 items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
             });
-            toast.success('ការបញ្ជាទិញបានដាក់ជោគជ័យ!');
-            if (onSuccess) onSuccess(response.data.data);
+            if (onSuccess) {
+                onSuccess(response.data.data);
+            } else {
+                toast.success('ការបញ្ជាទិញបានដាក់ជោគជ័យ!');
+            }
         } catch (error: any) {
             if (error.response?.status === 419) {
                 toast.error('សម័យប្រើប្រាស់ផុតកំណត់។ សូមផ្ទុកទំព័រឡើងវិញ។');
