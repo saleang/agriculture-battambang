@@ -11,6 +11,7 @@ use App\Models\Province;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -23,29 +24,27 @@ class SellerProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $user = $request->user();
-
-        if (!$user->isSeller()) {
-            abort(403, 'You are not authorized to access this page.');
-        }
-
+        // Eager load the seller relationship and check for orders
+        $user = $request->user()->load('seller');
         $seller = $user->seller;
 
-        // If seller profile does not exist yet, create an empty one
         if (!$seller) {
+            // This should not happen for a logged-in seller, but as a fallback:
             $seller = $user->seller()->create([
-                'user_id' => $user->user_id,
                 'farm_name' => '',
-                'province_id' => null,
-                'district_id' => null,
-                'commune_id' => null,
-                'village_id' => null,
+                // Add other required fields for seller creation
             ]);
         }
 
-        // Load all provinces for the dropdown
+        // Check if the seller has any orders by looking at the order_items table
+        $hasOrders = DB::table('order_items')
+            ->where('seller_id', $seller->seller_id)
+            ->exists();
+
+        // Append the has_orders attribute to the seller model
+        $seller->has_orders = $hasOrders;
+
         $provinces = Province::select('province_id', 'name_en', 'name_km')
-            ->distinct()
             ->orderBy('name_en')
             ->get();
 
