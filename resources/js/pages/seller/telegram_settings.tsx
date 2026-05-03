@@ -43,8 +43,8 @@ export default function TelegramSettings() {
                 <div className="space-y-6 max-w-2xl">
                     
                     <div>
-                         <h2 className="font-moul text-base text-gray-900">ការជូនដំណឹងតាម Telegram</h2>
-                         <p className="text-sm text-gray-500 mb-4">កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង</p>
+                         <h2 className="text-xl font-moul text-green-700 mb-2">ការជូនដំណឹងតាម Telegram</h2>
+                         <p className="text-base text-gray-500 mb-4">កំណត់រចនាសម្ព័ន្ធ Bot Token, Chat ID និងបើកការជូនដំណឹង</p>
                     </div>
 
                     <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">

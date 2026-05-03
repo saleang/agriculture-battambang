@@ -33,8 +33,8 @@ export default function FarmInfo() {
             <SellerLayout>
                  <div className="space-y-6">
         <div>
-            <h2 className="font-moul text-base text-gray-900">ព័ត៌មានហាង</h2>
-            <p className="text-sm text-gray-500 mt-0.5">មើល និងគ្រប់គ្រងព័ត៌មានហាងរបស់អ្នក</p>
+            <h2 className="text-xl font-moul text-green-700 mb-2">ព័ត៌មានហាង</h2>
+            <p className="text-base text-gray-500 mt-0.5">មើល និងគ្រប់គ្រងព័ត៌មានហាងរបស់អ្នក</p>
         </div>
 
                     <div className="bg-white rounded-lg shadow p-6 space-y-6">

@@ -45,8 +45,8 @@ export default function SellerProfile() {
                     {/* Section heading */}
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-base font-moul text-gray-900">ព័ត៌មានផ្ទាល់ខ្លួន</h2>
-                            <p className="text-sm text-gray-500 mt-0.5">គ្រប់គ្រងទិន្នន័យគណនីរបស់អ្នក</p>
+                            <h2 className="text-xl font-moul text-green-700 mb-2">ព័ត៌មានផ្ទាល់ខ្លួន</h2>
+                            <p className="text-base text-gray-500 mt-0.5">គ្រប់គ្រងទិន្នន័យគណនីរបស់អ្នក</p>
                         </div>
                         <Button
     size="sm"
