@@ -83,8 +83,6 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Profile updated successfully');
-                router.reload({ only: ['auth', 'seller'] });
                 onClose();
             },
             onError: (errors) => {

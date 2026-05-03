@@ -483,9 +483,20 @@ class AdminReportController extends Controller
     private function getTopSellers(Carbon $start, Carbon $end, int $limit = 5)
 {
     return DB::table('sellers')
-        ->join('users',       'sellers.user_id',      '=', 'users.user_id')
-        ->join('order_items', 'sellers.seller_id',    '=', 'order_items.seller_id')
-        ->join('orders',      'order_items.order_id', '=', 'orders.order_id')
+        ->join('users', 'sellers.user_id', '=', 'users.user_id')
+        ->join('order_items', 'sellers.seller_id', '=', 'order_items.seller_id')
+        ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
+        ->leftJoinSub(
+            DB::table('ratings')
+                ->select(
+                    'seller_id',
+                    DB::raw('ROUND(AVG(rating), 2) as rating_average'),
+                    DB::raw('COUNT(rating_id) as rating_count')
+                )
+                ->groupBy('seller_id'),
+            'ratings',
+            'sellers.seller_id', '=', 'ratings.seller_id'
+        )
         ->whereBetween('orders.created_at', [$start, $end])
         ->where('orders.status', '!=', Order::STATUS_CANCELLED)
         ->select(
@@ -494,12 +505,10 @@ class AdminReportController extends Controller
             DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
             DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
             DB::raw('SUM(order_items.quantity) as units_sold'),
-            // MAX() makes these valid aggregates — fixes the GROUP BY / ONLY_FULL_GROUP_BY issue
-            // that was causing rating to return 0 or null in strict MySQL mode
-            DB::raw('ROUND(MAX(sellers.rating_average), 2) as rating'),
-            DB::raw('MAX(sellers.rating_count) as rating_count')
+            DB::raw('COALESCE(ratings.rating_average, 0) as rating'),
+            DB::raw('COALESCE(ratings.rating_count, 0) as rating_count')
         )
-        ->groupBy('sellers.seller_id', 'sellers.farm_name')
+        ->groupBy('sellers.seller_id', 'sellers.farm_name', 'ratings.rating_average', 'ratings.rating_count')
         ->orderByDesc('order_count')
         ->take($limit)
         ->get()
@@ -633,7 +642,8 @@ class AdminReportController extends Controller
             ->map(fn($r) => ['province' => $r->province, 'count' => (int) $r->count]);
     }
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═════════════════════════════════════════════del "c:\xampp\htdocs\agriculture-battambang\database\migrations\2026_01_01_102001_create_table_category copy.php"
+══════════════
      │  PRIVATE — Archive
      ═══════════════════════════════════════════════════════════ */
 
