@@ -1,12 +1,12 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
-import { Header } from './header';
-import { Footer } from './customer/footer-customer';
 import { PageProps } from '@/types';
-import { ShoppingCart, Heart } from 'lucide-react';
-import { useCart } from './customer/orders/cart-context';
-import { toast } from 'sonner';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
+import { Heart, ShoppingCart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Footer } from './customer/footer-customer';
+import { useCart } from './customer/orders/cart-context';
+import { Header } from './header';
 
 interface Product {
     product_id: number;
@@ -18,7 +18,8 @@ interface Product {
         seller_id: number; // Added for cart context
         farm_name: string;
     };
-    category: { // Added to display category name
+    category: {
+        // Added to display category name
         name: string;
     };
 }
@@ -43,41 +44,59 @@ const AllProducts = ({
     maxPrice = 50000,
     filters = {},
 }: {
-    products: PaginatedProducts,
-    wishlistProductIds?: number[],
-    categories?: Category[],
-    minPrice?: number,
-    maxPrice?: number,
-    filters?: { max_price?: string, tags?: number[] },
+    products: PaginatedProducts;
+    wishlistProductIds?: number[];
+    categories?: Category[];
+    minPrice?: number;
+    maxPrice?: number;
+    filters?: { max_price?: string; tags?: number[], search?: string };
 }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTags, setActiveTags] = useState<number[]>((filters.tags || []).map(Number));
-    const [priceLimit, setPriceLimit] = useState(filters.max_price ? parseInt(filters.max_price, 10) : maxPrice);
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [activeTags, setActiveTags] = useState<number[]>(
+        (filters.tags || []).map(Number),
+    );
+    const [priceLimit, setPriceLimit] = useState(
+        filters.max_price ? parseInt(filters.max_price, 10) : maxPrice,
+    );
 
     // Effect to sync state with props when filters change (e.g., browser back/forward)
     useEffect(() => {
-        setPriceLimit(filters.max_price ? parseInt(filters.max_price, 10) : maxPrice);
+        setPriceLimit(
+            filters.max_price ? parseInt(filters.max_price, 10) : maxPrice,
+        );
         setActiveTags((filters.tags || []).map(Number));
     }, [filters]);
 
     // Debounced effect for all filters
     useEffect(() => {
         const handler = setTimeout(() => {
-            const queryParams: { max_price?: number; tags?: number[] } = {};
+            const queryParams: {
+                max_price?: number;
+                tags?: number[];
+                search?: string;
+            } = {};
 
             const currentFilterTags = (filters.tags || []).map(Number);
-            const currentFilterPrice = filters.max_price ? parseInt(filters.max_price, 10) : maxPrice;
+            const currentFilterPrice = filters.max_price
+                ? parseInt(filters.max_price, 10)
+                : maxPrice;
+            const currentSearch = filters.search || '';
 
             const priceChanged = priceLimit !== currentFilterPrice;
-            const tagsChanged = JSON.stringify(activeTags.sort()) !== JSON.stringify(currentFilterTags.sort());
+            const tagsChanged =
+                JSON.stringify(activeTags.sort()) !==
+                JSON.stringify(currentFilterTags.sort());
+            const searchChanged = searchQuery !== currentSearch;
 
-
-            if (priceChanged || tagsChanged) {
+            if (priceChanged || tagsChanged || searchChanged) {
                 if (priceLimit < maxPrice) {
                     queryParams.max_price = priceLimit;
                 }
                 if (activeTags.length > 0) {
                     queryParams.tags = activeTags;
+                }
+                if (searchQuery) {
+                    queryParams.search = searchQuery;
                 }
 
                 router.get('/allproducts', queryParams as any, {
@@ -88,24 +107,28 @@ const AllProducts = ({
         }, 300);
 
         return () => clearTimeout(handler);
-    }, [priceLimit, activeTags, filters, maxPrice]);
-
+    }, [priceLimit, activeTags, searchQuery, filters, maxPrice]);
 
     const { data, links, next_page_url, prev_page_url } = products;
     const page = usePage<PageProps>();
     const user = page.props.auth?.user;
+    const isSeller = user?.role === 'seller';
 
     const { addToCart } = useCart();
-    const [wishlist, setWishlist] = useState<Set<number>>(new Set(wishlistProductIds));
+    const [wishlist, setWishlist] = useState<Set<number>>(
+        new Set(wishlistProductIds),
+    );
 
     useEffect(() => {
         setWishlist(new Set(wishlistProductIds));
     }, [wishlistProductIds]);
 
     const primaryImage = (product: Product) =>
-        product.images.length > 0 ? product.images[0].image_url : 'https://via.placeholder.com/400x300?text=No+Image';
+        product.images.length > 0
+            ? product.images[0].image_url
+            : 'https://via.placeholder.com/400x300?text=No+Image';
 
-    const requireLogin = () => window.location.href = '/login';
+    const requireLogin = () => (window.location.href = '/login');
 
     const handleAddToCart = (product: Product) => {
         if (!user) {
@@ -156,9 +179,11 @@ const AllProducts = ({
             const response = await axios({ method, url });
 
             if (response.data.success) {
-                window.dispatchEvent(new CustomEvent('wishlist-updated', {
-                    detail: { count: response.data.wishlist_count },
-                }));
+                window.dispatchEvent(
+                    new CustomEvent('wishlist-updated', {
+                        detail: { count: response.data.wishlist_count },
+                    }),
+                );
             } else {
                 setWishlist(originalWishlist);
                 toast.error('មានបញ្ហាក្នុងការកែប្រែ Wishlist');
@@ -169,57 +194,77 @@ const AllProducts = ({
         }
     };
     const toggleTag = (tagId: number) => {
-        setActiveTags(prev =>
+        setActiveTags((prev) =>
             prev.includes(tagId)
-                ? prev.filter(id => id !== tagId)
-                : [...prev, tagId]
+                ? prev.filter((id) => id !== tagId)
+                : [...prev, tagId],
         );
     };
 
     return (
         <>
             <Head title="ផលិតផលទាំងអស់" />
-            <Header searchQuery={searchQuery} onSearchChange={(q) => setSearchQuery(q)} isAuthenticated={!!user} userName={user?.username} />
+            <Header
+                isAuthenticated={!!user}
+                userName={user?.username ?? ''}
+                userPhoto={user?.photo_url ?? null}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+            />
 
-            <main className="bg-white min-h-screen py-45">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                    <div className="flex flex-col lg:flex-row gap-10">
-
+            <main className="min-h-screen bg-white py-45">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col gap-10 lg:flex-row">
                         {/* LEFT SIDEBAR */}
-                        <div className="lg:w-72 flex-shrink-0">
+                        <div className="flex-shrink-0 lg:w-72">
                             <div className="sticky top-6 space-y-10">
                                 {/* Sort by Price Range */}
                                 <div>
-                                    <h3 className="font-semibold text-lg mb-4">ចម្រាញ់តាមតម្លៃ</h3>
+                                    <h3 className="mb-4 text-lg font-semibold">
+                                        ចម្រាញ់តាមតម្លៃ
+                                    </h3>
                                     <div className="px-1">
                                         <input
                                             type="range"
                                             min={minPrice}
                                             max={maxPrice}
                                             value={priceLimit}
-                                            onChange={(e) => setPriceLimit(Number(e.target.value))}
+                                            onChange={(e) =>
+                                                setPriceLimit(
+                                                    Number(e.target.value),
+                                                )
+                                            }
                                             className="w-full accent-green-600"
                                         />
-                                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                            <span>{minPrice.toLocaleString()} ៛</span>
-                                            <span>{priceLimit.toLocaleString()} ៛</span>
+                                        <div className="mt-1 flex justify-between text-xs text-gray-500">
+                                            <span>
+                                                {minPrice.toLocaleString()} ៛
+                                            </span>
+                                            <span>
+                                                {priceLimit.toLocaleString()} ៛
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* ==================== SORT BY TAGS ==================== */}
                                 <div>
-                                    <h3 className="font-semibold text-lg mb-4">ចម្រាញ់តាមស្លាក</h3>
+                                    <h3 className="mb-4 text-lg font-semibold">
+                                        ចម្រាញ់តាមស្លាក
+                                    </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {categories.map((cat) => (
                                             <button
                                                 key={cat.category_id}
-                                                onClick={() => toggleTag(cat.category_id)}
-                                                className={`px-5 py-2 text-sm rounded-full border transition-all ${
-                                                    activeTags.includes(cat.category_id)
-                                                        ? 'bg-green-600 text-white border-green-600'
-                                                        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                                                onClick={() =>
+                                                    toggleTag(cat.category_id)
+                                                }
+                                                className={`rounded-full border px-5 py-2 text-sm transition-all ${
+                                                    activeTags.includes(
+                                                        cat.category_id,
+                                                    )
+                                                        ? 'border-green-600 bg-green-600 text-white'
+                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                                                 }`}
                                             >
                                                 {cat.name}
@@ -231,27 +276,36 @@ const AllProducts = ({
 
                                 {/* Best Sellers */}
                                 <div>
-                                    <h3 className="font-semibold text-lg mb-4">Best Sellers</h3>
+                                    <h3 className="mb-4 text-lg font-semibold">
+                                        Best Sellers
+                                    </h3>
                                     <div className="space-y-4">
-                                        {data.slice(0, 4).map(product => (
+                                        {data.slice(0, 4).map((product) => (
                                             <Link
                                                 key={product.product_id}
                                                 href={`/product/${product.product_id}`}
-                                                className="flex gap-3 group"
+                                                className="group flex gap-3"
                                             >
-                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                                                <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
                                                     <img
-                                                        src={primaryImage(product)}
-                                                        alt={product.productname}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                                        src={primaryImage(
+                                                            product,
+                                                        )}
+                                                        alt={
+                                                            product.productname
+                                                        }
+                                                        className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                                     />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-medium line-clamp-2 leading-tight text-gray-800">
+                                                    <p className="line-clamp-2 text-sm leading-tight font-medium text-gray-800">
                                                         {product.productname}
                                                     </p>
-                                                    <p className="text-green-600 font-semibold mt-1 text-base">
-                                                        {parseInt(product.price).toLocaleString()} ៛ /{product.unit}
+                                                    <p className="mt-1 text-base font-semibold text-green-600">
+                                                        {parseInt(
+                                                            product.price,
+                                                        ).toLocaleString()}{' '}
+                                                        ៛ /{product.unit}
                                                     </p>
                                                 </div>
                                             </Link>
@@ -263,88 +317,147 @@ const AllProducts = ({
 
                         {/* MAIN PRODUCT GRID */}
                         <div className="flex-1">
-
-                            <div className="flex items-center justify-between mb-8">
-                                <h1 className="text-3xl font-bold text-gray-900">កសិផលទាំងអស់</h1>
+                            <div className="mb-8 flex items-center justify-between">
+                                <h1 className="text-3xl font-bold text-gray-900">
+                                    កសិផលទាំងអស់
+                                </h1>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                 {data.map((product) => (
-                                    <div
+                                    <Link
+                                        href={`/product/${product.product_id}`}
                                         key={product.product_id}
-                                        className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+                                        className="group block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-xl"
                                     >
-                                        <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                                            <Link href={`/farm/${product.seller.seller_id}`}>
-                                                <img
-                                                    src={primaryImage(product)}
-                                                    alt={product.productname}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                />
-                                            </Link>
+                                        <div className="relative aspect-square overflow-hidden bg-gray-50">
+                                            <img
+                                                src={primaryImage(product)}
+                                                alt={product.productname}
+                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            />
 
                                             {/* Hover action buttons */}
-                                            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
                                                 <button
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleWishlistToggle(product.product_id); }}
-                                                    className="w-9 h-9 bg-white rounded-full shadow flex items-center justify-center hover:bg-pink-50 active:scale-95"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        handleWishlistToggle(
+                                                            product.product_id,
+                                                        );
+                                                    }}
+                                                    disabled={isSeller}
+                                                    className={`flex h-9 w-9 items-center justify-center rounded-full shadow active:scale-95 ${
+                                                        isSeller
+                                                            ? 'cursor-not-allowed bg-gray-100'
+                                                            : 'bg-white hover:bg-pink-50'
+                                                    }`}
                                                 >
                                                     <Heart
-                                                        className={`h-5 w-5 text-pink-500 ${wishlist.has(product.product_id) ? 'fill-current' : ''}`}
+                                                        className={`h-5 w-5 ${
+                                                            isSeller
+                                                                ? 'text-gray-400'
+                                                                : 'text-pink-500'
+                                                        } ${wishlist.has(product.product_id) ? 'fill-current' : ''}`}
                                                     />
                                                 </button>
                                                 <button
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(product); }}
-                                                    className="w-9 h-9 bg-white rounded-full shadow flex items-center justify-center hover:bg-green-50 active:scale-95"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        handleAddToCart(
+                                                            product,
+                                                        );
+                                                    }}
+                                                    disabled={isSeller}
+                                                    className={`flex h-9 w-9 items-center justify-center rounded-full shadow active:scale-95 ${
+                                                        isSeller
+                                                            ? 'cursor-not-allowed bg-gray-100'
+                                                            : 'bg-white hover:bg-green-50'
+                                                    }`}
                                                 >
-                                                    <ShoppingCart className="h-5 w-5 text-green-600" />
+                                                    <ShoppingCart
+                                                        className={`h-5 w-5 ${
+                                                            isSeller
+                                                                ? 'text-gray-400'
+                                                                : 'text-green-600'
+                                                        }`}
+                                                    />
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div className="p-4 text-center">
-                                            <p className="text-xs text-gray-500 mb-1">{product.category.name}</p>
-                                            <h3 className="font-semibold text-lg text-gray-900 line-clamp-2 min-h-[2.2rem]">
+                                            <p className="mb-1 text-xs text-gray-500">
+                                                {product.category.name}
+                                            </p>
+                                            <h3 className="line-clamp-2 min-h-[2.2rem] text-lg font-semibold text-gray-900">
                                                 {product.productname}
                                             </h3>
                                             <div className="mt-0">
                                                 <p className="text-2xl font-bold text-green-600">
-                                                    {parseInt(product.price).toLocaleString()}​ ៛
+                                                    {parseInt(
+                                                        product.price,
+                                                    ).toLocaleString()}
+                                                    ​ ៛
                                                     <span className="ml-1 text-base font-normal text-gray-600">
-                                                / {product.unit}
-                                            </span>
+                                                        / {product.unit}
+                                                    </span>
                                                 </p>
                                             </div>
 
-                                            <p className="text-xs text-gray-500 mt-2">
+                                            <p className="mt-2 text-xs text-gray-500">
                                                 {product.seller.farm_name}
                                             </p>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
 
                             {/* Pagination */}
                             {links.length > 3 && (
                                 <div className="mt-16 flex justify-center">
-                                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-3xl px-2 py-2 shadow-sm">
-                                        {prev_page_url && <Link href={prev_page_url} className="px-6 py-3 text-sm text-gray-600 hover:bg-gray-100 rounded-2xl">← Previous</Link>}
+                                    <div className="flex items-center gap-1 rounded-3xl border border-gray-200 bg-white px-2 py-2 shadow-sm">
+                                        {prev_page_url && (
+                                            <Link
+                                                href={prev_page_url}
+                                                className="rounded-2xl px-6 py-3 text-sm text-gray-600 hover:bg-gray-100"
+                                            >
+                                                ← Previous
+                                            </Link>
+                                        )}
                                         <div className="flex gap-1 px-4">
                                             {links.map((link, index) => {
-                                                if (index === 0 || index === links.length - 1) return null;
+                                                if (
+                                                    index === 0 ||
+                                                    index === links.length - 1
+                                                )
+                                                    return null;
                                                 return (
                                                     <Link
                                                         key={index}
                                                         href={link.url || '#'}
-                                                        className={`px-5 py-3 text-sm font-medium rounded-2xl transition-all ${
-                                                            link.active ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                                                        className={`rounded-2xl px-5 py-3 text-sm font-medium transition-all ${
+                                                            link.active
+                                                                ? 'bg-green-600 text-white'
+                                                                : 'text-gray-600 hover:bg-gray-100'
                                                         }`}
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
                                                     />
                                                 );
                                             })}
                                         </div>
-                                        {next_page_url && <Link href={next_page_url} className="px-6 py-3 text-sm text-gray-600 hover:bg-gray-100 rounded-2xl">Next →</Link>}
+                                        {next_page_url && (
+                                            <Link
+                                                href={next_page_url}
+                                                className="rounded-2xl px-6 py-3 text-sm text-gray-600 hover:bg-gray-100"
+                                            >
+                                                Next →
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             )}

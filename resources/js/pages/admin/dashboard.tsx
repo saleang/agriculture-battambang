@@ -387,9 +387,7 @@ export default function AdminDashboard({
     const activities = recentActivities ?? [];
     const calEvents  = calendarEvents   ?? {};
 
-    const headerButtons: { icon: React.ReactNode; label: string; badge: boolean }[] = [
-        { icon: <Settings size={13}/>, label: 'ការកំណត់', badge: false },
-    ];
+
 
     const kpiCards = [
         {
@@ -470,18 +468,6 @@ export default function AdminDashboard({
                                 <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>ផ្ទាំងគ្រប់គ្រង</h1>
                                 <p style={{ color: C.sub, fontSize: 14, margin: 0 }}>សូមស្វាគមន៍ត្រឡប់មកវិញ!</p>
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            {headerButtons.map(btn => (
-                                <button key={btn.label} style={{ position: 'relative', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 12px', color: C.sub, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, fontFamily: C.font }}>
-                                    {btn.icon} {btn.label}
-                                    {btn.badge && s.pending_approvals > 0 && (
-                                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: '#ef4444', border: `2px solid ${C.bg}`, fontSize: 9, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
-                                            {s.pending_approvals}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
                         </div>
                     </div>
 

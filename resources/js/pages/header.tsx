@@ -1,11 +1,15 @@
 // header.tsx - CORRECTED VERSION
-import { useCart } from './customer/orders/cart-context';
+import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { route } from '@/lib/route';
+import { Link, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
     Award,
     ChevronDown,
     Heart,
     Home,
     Leaf,
+    Tractor,
     LogOut,
     Menu,
     Package,
@@ -16,15 +20,11 @@ import {
     User,
     Users,
 } from 'lucide-react';
-import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { logout } from '@/routes';
-import { route } from '@/lib/route';
-import { Link, router, usePage } from '@inertiajs/react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { useCart } from './customer/orders/cart-context';
 
 interface HeaderProps {
     onNavigate?: (page: string) => void;
@@ -40,10 +40,16 @@ type UserRole = 'customer' | 'seller';
 const getHrefMap = (role: UserRole): Record<string, string> => ({
     home: '/',
     login: route('login'),
-    profile: role === 'seller' ? route('seller.dashboard') : route('customer.profile.edit'),
+    profile:
+        role === 'seller'
+            ? route('seller.dashboard')
+            : route('customer.profile.edit'),
     cart: route('cart.index'), // ✅ Always use the correct cart route
     wishlist: route('wishlist.index'),
-    orders: role === 'seller' ? route('seller.orders.index') : route('customer.orders.index'),
+    orders:
+        role === 'seller'
+            ? route('seller.orders.index')
+            : route('customer.orders.index'),
     logout: route('logout'),
     about: '/about', // Assuming static pages
     faq: '/faq',
@@ -66,13 +72,13 @@ export function Header({
     const { getTotalItems } = useCart();
     const cartCount = getTotalItems() || 0;
 
-    const role: UserRole = 
-        authUser?.role === 'seller' ? 'seller' : 'customer';
+    const role: UserRole = authUser?.role === 'seller' ? 'seller' : 'customer';
 
     const hrefMap = getHrefMap(role);
 
     const displayPhoto = authUser?.photo_url ?? userPhoto ?? null;
-    const displayName = authUser?.name ?? authUser?.username ?? userName ?? 'អ្នកប្រើ';
+    const displayName =
+        authUser?.name ?? authUser?.username ?? userName ?? 'អ្នកប្រើ';
     const effectiveIsAuthenticated = !!authUser || isAuthenticated;
 
     const cleanup = useMobileNavigation();
@@ -122,15 +128,16 @@ export function Header({
 
     useEffect(() => {
         function handleClick(e: MouseEvent) {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(e.target as Node)
+            ) {
                 setMenuOpen(false);
             }
         }
         window.addEventListener('click', handleClick);
         return () => window.removeEventListener('click', handleClick);
     }, []);
-
-
 
     // Listen for wishlist updates from other components
     useEffect(() => {
@@ -144,7 +151,10 @@ export function Header({
         window.addEventListener('wishlist-updated', handleWishlistUpdate);
 
         return () => {
-            window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+            window.removeEventListener(
+                'wishlist-updated',
+                handleWishlistUpdate,
+            );
         };
     }, []);
 
@@ -169,14 +179,25 @@ export function Header({
                         <div className="relative mx-auto h-6 w-full max-w-3xl overflow-hidden">
                             <div
                                 className="absolute w-full transition-all duration-500 ease-in-out"
-                                style={{ transform: `translateY(-${currentMessageIndex * 24}px)` }}
+                                style={{
+                                    transform: `translateY(-${currentMessageIndex * 24}px)`,
+                                }}
                             >
                                 {messages.map((message, index) => (
-                                    <div key={index} className="flex h-6 items-center justify-center">
+                                    <div
+                                        key={index}
+                                        className="flex h-6 items-center justify-center"
+                                    >
                                         <span className="flex w-full items-center justify-center gap-2 text-center text-sm font-medium whitespace-nowrap">
-                                            {index === 0 && <Award className="h-3.5 w-3.5" />}
-                                            {index === 1 && <Users className="h-3.5 w-3.5" />}
-                                            {index === 2 && <Leaf className="h-3.5 w-3.5" />}
+                                            {index === 0 && (
+                                                <Award className="h-3.5 w-3.5" />
+                                            )}
+                                            {index === 1 && (
+                                                <Users className="h-3.5 w-3.5" />
+                                            )}
+                                            {index === 2 && (
+                                                <Leaf className="h-3.5 w-3.5" />
+                                            )}
                                             {message}
                                         </span>
                                     </div>
@@ -193,17 +214,32 @@ export function Header({
                     {/* Logo mobile */}
                     <div className="md:hidden">
                         <a href={hrefMap.home} className="flex items-center">
-                            <img src={logoSrc} alt="កសិផលខេត្តបាត់ដំបង" className="h-10" />
+                            <img
+                                src={logoSrc}
+                                alt="កសិផលខេត្តបាត់ដំបង"
+                                className="h-10"
+                            />
                         </a>
                     </div>
 
                     {/* Logo desktop */}
                     <div className="hidden items-center md:flex">
-                        <a href={hrefMap.home} className="inline-flex items-center text-2xl font-bold text-green-700">
-                            <img src={logoSrc} alt="កសិផលខេត្តបាត់ដំបង" className="h-14" />
+                        <a
+                            href={hrefMap.home}
+                            className="inline-flex items-center text-2xl font-bold text-green-700"
+                        >
+                            <img
+                                src={logoSrc}
+                                alt="កសិផលខេត្តបាត់ដំបង"
+                                className="h-14"
+                            />
                             <div className="ml-2">
-                                <div className="font-moul text-lg font-bold text-green-800">កសិផលខេត្តបាត់ដំបង</div>
-                                <div className="text-xs text-gray-600">ទំនាក់ទំនងកសិករដោយផ្ទាល់</div>
+                                <div className="font-moul text-lg font-bold text-green-800">
+                                    កសិផលខេត្តបាត់ដំបង
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                    ទំនាក់ទំនងកសិករដោយផ្ទាល់
+                                </div>
                             </div>
                         </a>
                     </div>
@@ -222,11 +258,36 @@ export function Header({
                     {/* Navigation for home page */}
                     {page.url === '/' && (
                         <nav className="hidden items-center gap-6 md:flex">
-                            <a href="#hero" className="text-gray-700 hover:text-green-600 transition-colors">ទំព័រដើម</a>
-                            <a href="#advantages" className="text-gray-700 hover:text-green-600 transition-colors">អត្ថប្រយោជន៍</a>
-                            <a href="#categories" className="text-gray-700 hover:text-green-600 transition-colors">ប្រភេទ</a>
-                            <a href="#products" className="text-gray-700 hover:text-green-600 transition-colors">ផលិតផល</a>
-                            <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">អំពីយើង</a>
+                            <a
+                                href="#hero"
+                                className="text-gray-700 transition-colors hover:text-green-600"
+                            >
+                                ទំព័រដើម
+                            </a>
+                            <a
+                                href="#advantages"
+                                className="text-gray-700 transition-colors hover:text-green-600"
+                            >
+                                អត្ថប្រយោជន៍
+                            </a>
+                            <a
+                                href="#categories"
+                                className="text-gray-700 transition-colors hover:text-green-600"
+                            >
+                                ប្រភេទ
+                            </a>
+                            <a
+                                href="#products"
+                                className="text-gray-700 transition-colors hover:text-green-600"
+                            >
+                                ផលិតផល
+                            </a>
+                            <a
+                                href="#about"
+                                className="text-gray-700 transition-colors hover:text-green-600"
+                            >
+                                អំពីយើង
+                            </a>
                         </nav>
                     )}
 
@@ -234,7 +295,7 @@ export function Header({
                     <div className="flex items-center gap-2 md:gap-5">
                         {/* Mobile search icon */}
                         <button
-                            onClick={() => setMobileSearchVisible(s => !s)}
+                            onClick={() => setMobileSearchVisible((s) => !s)}
                             className="rounded-full p-2 hover:bg-gray-100 md:hidden"
                         >
                             <Search className="h-5 w-5 text-gray-700" />
@@ -243,7 +304,10 @@ export function Header({
                         {/* Cart & Wishlist - customer only */}
                         {role === 'customer' && (
                             <>
-                                <a href={hrefMap.wishlist} className="group relative">
+                                <a
+                                    href={hrefMap.wishlist}
+                                    className="group relative"
+                                >
                                     <div className="rounded-full p-2 transition hover:bg-green-50">
                                         <Heart className="h-5 w-5 text-gray-700 group-hover:text-green-600" />
                                     </div>
@@ -261,27 +325,36 @@ export function Header({
                                     title="រទេះទិញទំនិញ"
                                     onClick={(e) => {
                                         // Debug click
-                                        console.log('🛒 Cart clicked! Navigating to:', hrefMap.cart);
+                                        console.log(
+                                            '🛒 Cart clicked! Navigating to:',
+                                            hrefMap.cart,
+                                        );
                                     }}
                                 >
                                     <div className="rounded-full p-2 transition hover:bg-green-50">
                                         <ShoppingCart className="h-5 w-5 text-gray-700 group-hover:text-green-600" />
                                     </div>
-                                    {effectiveIsAuthenticated && cartCount > 0 && (
-                                        <Badge className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center bg-green-600 p-0 text-xs text-white">
-                                            {cartCount}
-                                        </Badge>
-                                    )}
+                                    {effectiveIsAuthenticated &&
+                                        cartCount > 0 && (
+                                            <Badge className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center bg-green-600 p-0 text-xs text-white">
+                                                {cartCount}
+                                            </Badge>
+                                        )}
                                 </a>
                             </>
                         )}
 
                         {/* Auth / Profile Dropdown */}
                         {!effectiveIsAuthenticated ? (
-                            <a href={hrefMap.login} className="hidden md:inline-block">
+                            <a
+                                href={hrefMap.login}
+                                className="hidden md:inline-block"
+                            >
                                 <Button className="h-9 rounded-full bg-green-600 text-sm text-white hover:bg-green-700 md:h-10 md:text-base">
                                     <User className="mr-1 h-4 w-4 md:mr-2" />
-                                    <span className="hidden md:inline">ចូលគណនី</span>
+                                    <span className="hidden md:inline">
+                                        ចូលគណនី
+                                    </span>
                                     <span className="md:hidden">ចូល</span>
                                 </Button>
                             </a>
@@ -302,7 +375,11 @@ export function Header({
                                                 alt={displayName}
                                                 className="h-full w-full object-cover"
                                                 onError={(e) => {
-                                                    e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName);
+                                                    e.currentTarget.src =
+                                                        'https://ui-avatars.com/api/?name=' +
+                                                        encodeURIComponent(
+                                                            displayName,
+                                                        );
                                                 }}
                                             />
                                         </div>
@@ -316,7 +393,9 @@ export function Header({
                                             {displayName}
                                         </div>
                                     </div>
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDown
+                                        className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                                    />
                                 </Button>
 
                                 {menuOpen && (
@@ -330,7 +409,11 @@ export function Header({
                                                             alt={displayName}
                                                             className="h-full w-full object-cover"
                                                             onError={(e) => {
-                                                                e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName);
+                                                                e.currentTarget.src =
+                                                                    'https://ui-avatars.com/api/?name=' +
+                                                                    encodeURIComponent(
+                                                                        displayName,
+                                                                    );
                                                             }}
                                                         />
                                                     </div>
@@ -340,8 +423,12 @@ export function Header({
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <div className="font-medium text-gray-900">{displayName}</div>
-                                                    <div className="text-xs text-gray-500">សូមស្វាគមន៍អ្នកវិញ!</div>
+                                                    <div className="font-medium text-gray-900">
+                                                        {displayName}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        សូមស្វាគមន៍អ្នកវិញ!
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -349,26 +436,40 @@ export function Header({
                                         <div className="py-1">
                                             <a
                                                 href={hrefMap.profile}
-                                                onClick={() => setMenuOpen(false)}
+                                                onClick={() =>
+                                                    setMenuOpen(false)
+                                                }
                                                 className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
                                             >
                                                 <User className="h-4 w-4 text-gray-600" />
-                                                <span>{role === 'seller' ? 'ផ្ទាំងគ្រប់គ្រងហាង' : 'ប្រូហ្វាល់របស់ខ្ញុំ'}</span>
+                                                <span>
+                                                    {role === 'seller'
+                                                        ? 'ផ្ទាំងគ្រប់គ្រងហាង'
+                                                        : 'ប្រូហ្វាល់របស់ខ្ញុំ'}
+                                                </span>
                                             </a>
 
                                             <a
                                                 href={hrefMap.orders}
-                                                onClick={() => setMenuOpen(false)}
+                                                onClick={() =>
+                                                    setMenuOpen(false)
+                                                }
                                                 className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
                                             >
                                                 <Package className="h-4 w-4 text-gray-600" />
-                                                <span>{role === 'seller' ? 'ការបញ្ជាទិញអតិថិជន' : 'ការបញ្ជាទិញរបស់ខ្ញុំ'}</span>
+                                                <span>
+                                                    {role === 'seller'
+                                                        ? 'ការបញ្ជាទិញអតិថិជន'
+                                                        : 'ការបញ្ជាទិញរបស់ខ្ញុំ'}
+                                                </span>
                                             </a>
 
                                             {role === 'customer' && (
                                                 <a
                                                     href={hrefMap.wishlist}
-                                                    onClick={() => setMenuOpen(false)}
+                                                    onClick={() =>
+                                                        setMenuOpen(false)
+                                                    }
                                                     className="flex items-center gap-2 px-4 py-2.5 text-gray-700 transition hover:bg-green-50"
                                                 >
                                                     <Heart className="h-4 w-4 text-gray-600" />
@@ -405,26 +506,68 @@ export function Header({
                             <nav className="flex flex-1 gap-4">
                                 {role === 'customer' ? (
                                     <>
-                                        <a href="/" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <Home className="h-4 w-4" />ទំព័រដើម
+                                        <a
+                                            href="/"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Home className="h-4 w-4" />
+                                            ទំព័រដើម
                                         </a>
-                                        <a href="/allproducts" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <ShoppingBag className="h-4 w-4" />ទិញទំនិញ
+                                        <a
+                                            href="/allproducts"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <ShoppingBag className="h-4 w-4" />
+                                            ទិញទំនិញ
                                         </a>
-                                        <a href="/farmers" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">    
-                                            <Store className="h-4 w-4" />ហាងកសិផល
+                                        <a
+                                            href="/farmers"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Store className="h-4 w-4" />
+                                            ហាងកសិផល
                                         </a>
                                     </>
                                 ) : (
                                     <>
-                                        <a href="/" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <Store className="h-4 w-4" />ទំព័រដើម
+                                        <a
+                                            href="/"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Home className="h-4 w-4" />
+                                            ទំព័រដើម
                                         </a>
-                                        <a href="/seller/farm-info" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <Package className="h-4 w-4" />ព័ត៌មានហាង
+                                        <a
+                                            href="/farmers"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Store className="h-4 w-4" />
+                                            ហាងកសិផល
                                         </a>
-                                        <a href="/seller/orders" className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200">
-                                            <ShoppingCart className="h-4 w-4" />ការបញ្ជាទិញរបស់អតិថិជន
+                                        <a
+                                            href="/allproducts"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <ShoppingBag className="h-4 w-4" />
+                                            កសិផលទាំងអស់
+                                        </a>
+                                        <a
+                                            href={
+                                                authUser && authUser.seller
+                                                    ? `/farm/${authUser.seller.seller_id}`
+                                                    : '/seller/farm_info'
+                                            }
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <Tractor className="h-4 w-4" />
+                                            ព័ត៌មានហាងខ្ញុំ
+                                        </a>
+                                        <a
+                                            href="/seller/orders"
+                                            className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-green-800/30 hover:text-green-200"
+                                        >
+                                            <ShoppingCart className="h-4 w-4" />
+                                            ការបញ្ជាទិញរបស់អតិថិជន
                                         </a>
                                     </>
                                 )}
@@ -438,16 +581,24 @@ export function Header({
                                 ម៉ឺនុយ
                             </Button>
                             <div className="px-2 text-center text-xs text-white">
-                                <div className="font-medium">កសិផលខេត្តបាត់ដំបង</div>
-                                <div className="truncate text-green-200">ទំនាក់ទំនងកសិករដោយផ្ទាល់</div>
+                                <div className="font-medium">
+                                    កសិផលខេត្តបាត់ដំបង
+                                </div>
+                                <div className="truncate text-green-200">
+                                    ទំនាក់ទំនងកសិករដោយផ្ទាល់
+                                </div>
                             </div>
                             <div className="w-9"></div>
                         </div>
 
                         {/* Desktop welcome */}
                         <div className="ml-4 hidden items-center text-sm text-white md:flex">
-                            <span className="font-medium text-green-200">ស្វាគមន៍!</span>
-                            <span className="ml-2">ទិញកសិផលពីកសិករបាត់ដំបងដោយផ្ទាល់</span>
+                            <span className="font-medium text-green-200">
+                                ស្វាគមន៍!
+                            </span>
+                            <span className="ml-2">
+                                ទិញកសិផលពីកសិករបាត់ដំបងដោយផ្ទាល់
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -455,7 +606,7 @@ export function Header({
 
             {/* Mobile search bar */}
             {isMobileSearchVisible && (
-                <div className="md:hidden p-4 border-t bg-white">
+                <div className="border-t bg-white p-4 md:hidden">
                     <div className="relative">
                         <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <Input

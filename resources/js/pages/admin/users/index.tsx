@@ -203,11 +203,11 @@ export default function UserIndex({
                 text: 'text-amber-700',
                 dot: 'bg-amber-500',
             },
-            banned: {
+            /* banned: {
                 bg: 'bg-rose-50',
                 text: 'text-rose-700',
                 dot: 'bg-rose-500',
-            },
+            }, */
         })[status] ?? {
             bg: 'bg-slate-50',
             text: 'text-slate-700',
@@ -225,7 +225,7 @@ export default function UserIndex({
         ({ admin: 'អ្នកគ្រប់គ្រង', seller: 'កសិករ', customer: 'អតិថិជន' })[r] ??
         r;
     const getStatusLabel = (s: string) =>
-        ({ active: 'សកម្ម', inactive: 'មិនសកម្ម', banned: 'បានបិទ' })[s] ?? s;
+        ({ active: 'សកម្ម', inactive: 'មិនសកម្ម' /* banned: 'បានបិទ' */ })[s] ?? s;
     const KM_MONTHS = [
         'មករា',
         'កុម្ភៈ',
@@ -368,7 +368,7 @@ export default function UserIndex({
                                     <option value="">គ្រប់ស្ថានភាព</option>
                                     <option value="active">សកម្ម</option>
                                     <option value="inactive">មិនសកម្ម</option>
-                                    <option value="banned">បានបិទ</option>
+                                    {/* <option value="banned">បានបិទ</option> */}
                                 </select>
                                 <button
                                     onClick={handleFilter}
