@@ -199,10 +199,13 @@ class ProductController extends Controller
         $products = \App\Models\Product::with([
             'images',
             'category',
-            'seller.user:user_id,photo', // Eager load seller and their user's photo
+            'seller.user:user_id,photo',
         ])
             ->where('is_active', true)
-            ->get(); // only show active products
+            ->whereHas('seller.user', function ($query) {
+                $query->where('status', 'active');
+            })
+            ->get();
 
         // Append the primary image URL and category name to each product
         $products->each(function ($product) {
@@ -277,6 +280,9 @@ class ProductController extends Controller
             $query->select('seller_id', 'farm_name', 'user_id')->with('user:user_id,photo');
         }, 'category'])
             ->where('is_active', true)
+            ->whereHas('seller.user', function ($query) {
+                $query->where('status', 'active');
+            })
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('max_price')) {
