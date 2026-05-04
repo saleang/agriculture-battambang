@@ -82,11 +82,7 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
         post('/seller/profile', {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Profile updated successfully');
-                router.reload({ only: ['auth', 'seller'] });
-                onClose();
-            },
+            onSuccess: () => onClose(),
             onError: (errors) => {
                 const firstError = Object.values(errors)[0];
                 toast.error(firstError ? (firstError as string) : 'Failed to update profile');
@@ -334,21 +330,6 @@ export default function SellerEditForm({ seller, provinces, onClose }: SellerEdi
                     ) : 'រក្សាទុក'}
                 </Button>
             </div>
-
-            {/* Success Toast */}
-            <Transition
-                show={recentlySuccessful}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 translate-y-1"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition ease-in duration-150"
-                leaveTo="opacity-0"
-            >
-                <p className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 border border-emerald-100">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    ការធ្វើបច្ចុប្បន្នភាពបានជោគជ័យ!
-                </p>
-            </Transition>
         </form>
     );
 }

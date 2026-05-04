@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Seller;
 use App\Models\User;
 use Inertia\Inertia;
@@ -59,6 +60,7 @@ class FarmController extends Controller
     $isFollowing = false;
     $user = $request->user();
     $wishlistedProductIds = [];
+    $canReview = false;
 
     if ($user) {
         $isFollowing = $user->following()
@@ -75,6 +77,13 @@ class FarmController extends Controller
             ->whereIn('product_id', $productIds)
             ->pluck('product_id')
             ->toArray();
+
+        $canReview = Order::where('user_id', $user->user_id)
+            ->whereHas('items.product.seller', function ($query) use ($id) {
+                $query->where('seller_id', $id);
+            })
+            ->where('status', 'completed')
+            ->exists();
     }
 
     return Inertia::render('FarmDetail', [
@@ -124,6 +133,7 @@ class FarmController extends Controller
         'isFollowing'    => $isFollowing,
         'followersCount' => $followersCount,
         'wishlistedProductIds' => $wishlistedProductIds,
+        'canReview' => $canReview,
     ]);
 }
 

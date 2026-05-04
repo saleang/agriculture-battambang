@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import {
     User, Phone, MapPin, CreditCard, Wallet,
     FileText, ChevronRight, ShieldCheck, Package,
@@ -116,8 +116,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ cartItems, user, onSuccess 
                 ...formData,
                 items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
             });
-            toast.success('ការបញ្ជាទិញបានដាក់ជោគជ័យ!');
-            if (onSuccess) onSuccess(response.data.data);
+            if (onSuccess) {
+                onSuccess(response.data.data);
+            } else {
+                toast.success('ការបញ្ជាទិញបានដាក់ជោគជ័យ!');
+            }
         } catch (error: any) {
             if (error.response?.status === 419) {
                 toast.error('សម័យប្រើប្រាស់ផុតកំណត់។ សូមផ្ទុកទំព័រឡើងវិញ។');
@@ -141,7 +144,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ cartItems, user, onSuccess 
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Toaster position="top-right" richColors />
 
             {/* Top secure bar
             <div className="bg-white border-b border-gray-100 px-6 py-4">

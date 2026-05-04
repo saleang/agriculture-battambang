@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,13 +60,34 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        try {
+            Auth::logout();
+            $user->delete();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/');
+        } catch (QueryException $e) {
+            // Log the full error for debugging
+            Log::error('Failed to delete user due to foreign key constraint.', [
+                'user_id' => $user->user_id,
+                'error_code' => $e->getCode(),
+                'error_message' => $e->getMessage(),
+            ]);
 
-        $user->delete();
+            // Re-authenticate the user since they were logged out
+            Auth::login($user);
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            // Check if it's a foreign key constraint violation
+            if ($e->getCode() === '23000') {
+                return back()->withErrors([
+                    'password' => 'មិនអាចលុបគណនីបានទេ ព្រោះមានទិន្នន័យដែលជាប់ទាក់ទង។ សូមទំនាក់ទំនងអ្នកគ្រប់គ្រង។',
+                ]);
+            }
 
-        return redirect('/');
+            // For other database errors, return a generic message
+            return back()->withErrors([
+                'password' => 'មានបញ្ហាក្នុងការលុបគណនី។ សូមព្យាយាមម្តងទៀត។',
+            ]);
+        }
     }
 }
