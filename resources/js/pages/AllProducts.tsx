@@ -17,6 +17,9 @@ interface Product {
     seller: {
         seller_id: number; // Added for cart context
         farm_name: string;
+        user?: {
+            photo?: string;
+        };
     };
     category: {
         // Added to display category name
@@ -150,6 +153,7 @@ const AllProducts = ({
             image: primaryImage(product),
             seller_id: product.seller.seller_id,
             farm_name: product.seller.farm_name,
+            seller_photo: product.seller.user?.photo, // <-- Add this
         });
     };
 

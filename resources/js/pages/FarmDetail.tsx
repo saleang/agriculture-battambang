@@ -317,6 +317,7 @@ export default function FarmDetail({
                 image: product.images?.[0]?.image_url, // Use the first image
                 seller_id: farm.id, // Get seller_id from the main farm object
                 farm_name: farm.farm_name, // Get farm_name from the main farm object
+                seller_photo: farm.user.photo, // <-- Add this
             },
             quantity,
         );

@@ -185,34 +185,23 @@ export default function CartPage({ auth }: CartPageProps) {
                                             <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
                                                 <div className="flex items-center justify-between text-white">
                                                     <div className="flex items-center gap-3">
-                                                         {items[0]?.seller_photo ? (
-    <img
-        src={items[0].seller_photo.startsWith('http')
-            ? items[0].seller_photo
-            : `/storage/${items[0].seller_photo}`}
-        alt={farmName}
-        className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
-        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-    />
-) : (
-    <div className="w-10 h-10 rounded-full border-2 border-white/50 bg-white/20 flex items-center justify-center flex-shrink-0">
-        <span className="text-white font-bold text-sm">
-            {farmName.trim().split(/\s+/).length === 1
-                ? farmName.trim().charAt(0)
-                : farmName.trim().split(/\s+/)[0].charAt(0) + farmName.trim().split(/\s+/)[1].charAt(0)
-            }
-        </span>
-    </div>
-)}
+                                                        {items[0]?.seller_photo ? (
+                                                            <img
+                                                                src={items[0].seller_photo.startsWith('http') ? items[0].seller_photo : `/storage/${items[0].seller_photo}`}
+                                                                alt={farmName}
+                                                                className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
+                                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-full border-2 border-white/50 bg-white/20 flex items-center justify-center flex-shrink-0">
+                                                                <Store className="w-5 h-5 text-white" />
+                                                            </div>
+                                                        )}
                                                         <div>
                                                             <h3 className="font-bold text-lg">{farmName}</h3>
                                                             <p className="text-sm text-green-100">
                                                                 {items.length} ផលិតផល
                                                             </p>
-                                                            {/* shipping line below name */}
-                                                            {/* <p className="text-xs text-green-200">
-                                                                ដឹកជញ្ជូន: {toKhmerPrice(shipping)} ៛
-                                                            </p> */}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">

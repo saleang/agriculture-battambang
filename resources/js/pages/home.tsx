@@ -31,6 +31,9 @@ interface Product {
     unit: string;
     category_name?: string;
     images?: ProductImage[];
+    seller_id?: number;
+    farm_name?: string;
+    seller_photo?: string;
 }
 
 interface Category {
@@ -87,7 +90,7 @@ export default function Home({
             })
             .then((data) => {
                 const rawProducts = data.products ?? [];
-                const mappedProducts: Product[] = rawProducts.map((p: Product) => ({
+                const mappedProducts: Product[] = rawProducts.map((p: any) => ({
                     product_id: p.product_id,
                     productname: p.productname || 'គ្មានឈ្មោះ',
                     price: Number(p.price) || 0,
@@ -99,6 +102,9 @@ export default function Home({
                             'https://via.placeholder.com/400?text=គ្មានរូបភាព',
                         is_primary: !!img.is_primary,
                     })),
+                    seller_id: p.seller?.seller_id,
+                    farm_name: p.seller?.farm_name,
+                    seller_photo: p.seller?.user?.photo,
                 }));
                 setProducts(mappedProducts);
 
@@ -137,7 +143,9 @@ export default function Home({
             price: product.price,
             unit: product.unit,
             image: mainImageUrl, // Pass the single image URL string
-            // seller_id and farm_name are intentionally omitted to trigger the fetch.
+            seller_id: product.seller_id,
+            farm_name: product.farm_name,
+            seller_photo: product.seller_photo,
         };
 
         addToCart(cartProduct);
