@@ -87,17 +87,16 @@ class AdminReportController extends Controller
 
     public function showArchive(ReportArchive $archive)
     {
-        // FIX: Reconstruct the data shape that GeneratedReportView expects
-        // The archive stores data split across summary_metrics / chart_data / table_data.
-        // We must re-merge them back into the flat 'data' shape.
         $charts = $archive->chart_data  ?? [];
         $tables = $archive->table_data  ?? [];
 
         $data = array_merge(
             ['summary' => $archive->summary_metrics ?? []],
-            $charts,   // daily_revenue, daily_user_growth / daily_growth, by_category, by_status, by_payment_method
-            $tables,   // top_sellers, top_products, top_performers, by_province
+            $charts,
+            $tables,
         );
+
+        $data = array_filter($data, fn($v) => $v !== null);
 
         return response()->json([
             'success' => true,
@@ -114,7 +113,6 @@ class AdminReportController extends Controller
                 'summary'      => $archive->summary_metrics,
                 'charts'       => $archive->chart_data,
                 'tables'       => $archive->table_data,
-                // Also provide the flat 'data' key so frontend GeneratedReportView works
                 'data'         => $data,
             ],
         ]);
@@ -209,7 +207,8 @@ class AdminReportController extends Controller
         return [
             'summary'      => $this->getProductsSummary(),
             'top_products' => $this->getTopProducts($start, $end, 10),
-            'by_category'  => $this->getProductsByCategory(),
+            // by_category feeds the bar chart (needs revenue dataKey)
+            'by_category'  => $this->getSalesByCategory($start, $end),
             'by_stock'     => $this->getProductsByStock(),
         ];
     }
@@ -227,33 +226,17 @@ class AdminReportController extends Controller
      │  PRIVATE — Metric helpers
      ═══════════════════════════════════════════════════════════ */
 
-    /**
-     * Key metrics for the dashboard header cards.
-     *
-     * FIX 1 — Growth > 100% bug:
-     *   The old code used diffInDays() between startOfDay() timestamps which could
-     *   produce one less day than the actual window (e.g. 29 instead of 30) because
-     *   $end was endOfDay() but its startOfDay() was compared. We now count whole
-     *   calendar days inclusive: if start=Apr 1 and end=Apr 30 → 30 days.
-     *   The previous window is then exactly the same number of days immediately
-     *   before $start, so growth is always compared apple-to-apple.
-     *
-     *   Also, when the previous period has 0 value, growth is capped at 100 % to
-     *   avoid showing an absurd percentage.
-     */
     private function getKeyMetrics(Carbon $start, Carbon $end): array
     {
-        // Inclusive day count: Apr 1 → Apr 30 = 30 days
         $periodDays = (int) $start->copy()->startOfDay()
             ->diffInDays($end->copy()->startOfDay()) + 1;
 
         $prevStart = $start->copy()->subDays($periodDays)->startOfDay();
-        $prevEnd   = $start->copy()->subSecond();   // one second before current window starts
+        $prevEnd   = $start->copy()->subSecond();
 
-        /* ── Current period ── */
-        $totalRevenue = (float) Order::whereBetween('created_at', [$start, $end])
-            ->whereNotIn('status', [Order::STATUS_CANCELLED])
-            ->sum('total_amount');
+        // Use paid revenue (payments table) as the canonical revenue figure.
+        // Fall back to orders.payment_status = 'paid' if no payment rows exist yet.
+        $totalRevenue = $this->getPaidRevenue($start, $end);
 
         $totalOrders = Order::whereBetween('created_at', [$start, $end])
             ->whereNotIn('status', [Order::STATUS_CANCELLED])
@@ -261,7 +244,6 @@ class AdminReportController extends Controller
 
         $newUsers = User::whereBetween('created_at', [$start, $end])->count();
 
-        // Count sellers who had at least one non-cancelled order item in the period
         $activeSellers = Seller::whereHas('user', fn($q) => $q->where('status', 'active'))
             ->whereHas(
                 'orderItems',
@@ -273,10 +255,7 @@ class AdminReportController extends Controller
             )
             ->count();
 
-        /* ── Previous period ── */
-        $prevRevenue = (float) Order::whereBetween('created_at', [$prevStart, $prevEnd])
-            ->whereNotIn('status', [Order::STATUS_CANCELLED])
-            ->sum('total_amount');
+        $prevRevenue = $this->getPaidRevenue($prevStart, $prevEnd);
 
         $prevOrders = Order::whereBetween('created_at', [$prevStart, $prevEnd])
             ->whereNotIn('status', [Order::STATUS_CANCELLED])
@@ -298,26 +277,13 @@ class AdminReportController extends Controller
         ];
     }
 
-    /**
-     * Sales summary.
-     *
-     * FIX 2 — Double-query bug:
-     *   In the original code, $orders was a query builder. Calling ->sum() on it
-     *   executes and exhausts the builder; the subsequent ->count() call then runs
-     *   a second query on the *already-consumed* builder and returns 0.
-     *   Fix: run sum() and count() as separate, independent queries.
-     *
-     * FIX 3 — paid_revenue now comes from the payments table, not order.payment_status,
-     *   so it reflects what was actually captured in the payments ledger.
-     */
     private function getSalesSummary(Carbon $start, Carbon $end): array
     {
-        // Run each aggregate as its own independent query
-        $baseQuery = fn() => Order::whereBetween('created_at', [$start, $end])
-            ->whereNotIn('status', [Order::STATUS_CANCELLED]);
+        // Paid revenue IS the total revenue — only count money that was actually received.
+        $totalAmount = $this->getPaidRevenue($start, $end);
 
-        $totalAmount = (float) $baseQuery()->sum('total_amount');
-        $totalCount  = $baseQuery()->count();
+        // Total orders = ALL orders in the period (including cancelled)
+        $totalOrders = Order::whereBetween('created_at', [$start, $end])->count();
 
         $completedOrders = Order::whereBetween('created_at', [$start, $end])
             ->where('status', Order::STATUS_COMPLETED)
@@ -327,39 +293,25 @@ class AdminReportController extends Controller
             ->where('status', Order::STATUS_CANCELLED)
             ->count();
 
-        // FIX: Use the payments table for actual captured revenue
-        $paidRevenue = (float) Payment::whereBetween('payment_date', [$start, $end])
-            ->where('payment_status', 'completed')
-            ->sum('amount');
-
-        // Fallback to order-level payment_status if payments table has no rows yet
-        if ($paidRevenue === 0.0) {
-            $paidRevenue = (float) Order::whereBetween('created_at', [$start, $end])
-                ->where('payment_status', 'paid')
-                ->sum('total_amount');
-        }
-
         return [
             'total_revenue'    => round($totalAmount, self::KHR_FORMAT),
-            'total_orders'     => $totalCount,
-            'avg_order_value'  => $totalCount > 0
-                ? round($totalAmount / $totalCount, self::KHR_FORMAT)
-                : 0,
+            'total_orders'     => $totalOrders,
             'completed_orders' => $completedOrders,
             'cancelled_orders' => $cancelledOrders,
-            'paid_revenue'     => round($paidRevenue, self::KHR_FORMAT),
         ];
     }
 
     private function getUsersSummary(Carbon $start, Carbon $end): array
     {
+        // total_users = all users ever registered (not scoped to period)
+        // new_users   = registered within the selected period only
         return [
             'total_users'     => User::count(),
             'new_users'       => User::whereBetween('created_at', [$start, $end])->count(),
             'total_sellers'   => User::where('role', 'seller')->count(),
             'total_customers' => User::where('role', 'customer')->count(),
             'active_users'    => User::where('status', 'active')->count(),
-            'banned_users'    => User::where('status', 'banned')->count(),
+            'inactive_users'  => User::where('status', 'inactive')->count(),
         ];
     }
 
@@ -374,11 +326,17 @@ class AdminReportController extends Controller
 
     private function getSellersSummary(Carbon $start, Carbon $end): array
     {
+        // total_sellers = users with role 'seller' (single source of truth)
+        $totalSellers   = User::where('role', 'seller')->count();
+        $activeSellers  = User::where('role', 'seller')->where('status', 'active')->count();
+        $pendingSellers = User::where('role', 'seller')->where('status', 'inactive')->count();
+        $topRated       = Seller::where('rating_average', '>=', 4.0)->count();
+
         return [
-            'total_sellers'   => Seller::count(),
-            'active_sellers'  => Seller::whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
-            'pending_sellers' => User::where('role', 'seller')->where('status', 'inactive')->count(),
-            'top_rated'       => Seller::where('rating_average', '>=', 4.0)->count(),
+            'total_sellers'   => $totalSellers,
+            'active_sellers'  => $activeSellers,
+            'pending_sellers' => $pendingSellers,
+            'top_rated'       => $topRated,
         ];
     }
 
@@ -463,59 +421,56 @@ class AdminReportController extends Controller
         return $result;
     }
 
-    /**
-     * Top sellers.
-     * MAX() is used for non-grouped columns to satisfy ONLY_FULL_GROUP_BY.
-     */
     private function getTopSellers(Carbon $start, Carbon $end, int $limit = 5)
-{
-    return DB::table('sellers')
-        ->join('users', 'sellers.user_id', '=', 'users.user_id')
-        ->join('order_items', 'sellers.seller_id', '=', 'order_items.seller_id')
-        ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
-        ->leftJoinSub(
-            DB::table('ratings')
-                ->select(
-                    'seller_id',
-                    DB::raw('ROUND(AVG(rating), 2) as rating_average'),
-                    DB::raw('COUNT(rating_id) as rating_count')
-                )
-                ->groupBy('seller_id'),
-            'ratings',
-            'sellers.seller_id', '=', 'ratings.seller_id'
-        )
-        ->whereBetween('orders.created_at', [$start, $end])
-        ->where('orders.status', '!=', Order::STATUS_CANCELLED)
-        ->select(
-            'sellers.seller_id',
-            'sellers.farm_name as name',
-            DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
-            DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
-            DB::raw('SUM(order_items.quantity) as units_sold'),
-            DB::raw('COALESCE(ratings.rating_average, 0) as rating'),
-            DB::raw('COALESCE(ratings.rating_count, 0) as rating_count')
-        )
-        ->groupBy('sellers.seller_id', 'sellers.farm_name', 'ratings.rating_average', 'ratings.rating_count')
-        ->orderByDesc('order_count')
-        ->take($limit)
-        ->get()
-        ->map(fn($r) => [
-            'seller_id'    => $r->seller_id,
-            'name'         => $r->name,
-            'revenue'      => (float) $r->revenue,
-            'orders'       => (int)   $r->order_count,
-            'units_sold'   => (int)   $r->units_sold,
-            'rating'       => round((float) ($r->rating ?? 0), 1),
-            'rating_count' => (int)   ($r->rating_count ?? 0),
-        ]);
-}
+    {
+        return DB::table('sellers')
+            ->join('users', 'sellers.user_id', '=', 'users.user_id')
+            ->join('order_items', 'sellers.seller_id', '=', 'order_items.seller_id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
+            ->leftJoinSub(
+                DB::table('ratings')
+                    ->select(
+                        'seller_id',
+                        DB::raw('ROUND(AVG(rating), 2) as rating_average'),
+                        DB::raw('COUNT(rating_id) as rating_count')
+                    )
+                    ->groupBy('seller_id'),
+                'ratings',
+                'sellers.seller_id',
+                '=',
+                'ratings.seller_id'
+            )
+            ->whereBetween('orders.created_at', [$start, $end])
+            ->where('orders.status', '!=', Order::STATUS_CANCELLED)
+            ->select(
+                'sellers.seller_id',
+                'sellers.farm_name as name',
+                DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
+                DB::raw('COUNT(DISTINCT orders.order_id) as order_count'),
+                DB::raw('SUM(order_items.quantity) as units_sold'),
+                DB::raw('COALESCE(ratings.rating_average, 0) as rating'),
+                DB::raw('COALESCE(ratings.rating_count, 0) as rating_count')
+            )
+            ->groupBy(
+                'sellers.seller_id',
+                'sellers.farm_name',
+                'ratings.rating_average',
+                'ratings.rating_count'
+            )
+            ->orderByDesc('order_count')
+            ->take($limit)
+            ->get()
+            ->map(fn($r) => [
+                'seller_id'    => $r->seller_id,
+                'name'         => $r->name,
+                'revenue'      => (float) $r->revenue,
+                'orders'       => (int)   $r->order_count,
+                'units_sold'   => (int)   $r->units_sold,
+                'rating'       => round((float) ($r->rating ?? 0), 1),
+                'rating_count' => (int)   ($r->rating_count ?? 0),
+            ]);
+    }
 
-    /**
-     * Top products.
-     *
-     * FIX 4 — ONLY_FULL_GROUP_BY: views_count and unit were in the SELECT but
-     *   not in GROUP BY in strict MySQL mode. Use MAX() to satisfy the constraint.
-     */
     private function getTopProducts(Carbon $start, Carbon $end, int $limit = 5)
     {
         return DB::table('product')
@@ -530,7 +485,6 @@ class AdminReportController extends Controller
                 'category.category_name as category',
                 DB::raw('ROUND(SUM(order_items.quantity * order_items.price_per_unit), 2) as revenue'),
                 DB::raw('SUM(order_items.quantity) as units_sold'),
-                // FIX: MAX() to avoid ONLY_FULL_GROUP_BY error
                 DB::raw('MAX(product.unit) as unit')
             )
             ->groupBy('product.product_id', 'product.productname', 'category.category_name')
@@ -543,7 +497,7 @@ class AdminReportController extends Controller
                 'category'   => $r->category,
                 'revenue'    => (float) $r->revenue,
                 'units_sold' => (int)   $r->units_sold,
-                'unit'       => $r->unit,
+                'unit'       => $r->unit ?? '—',
             ]);
     }
 
@@ -565,29 +519,26 @@ class AdminReportController extends Controller
             ]);
     }
 
-    /**
-     * Payment method breakdown.
-     *
-     * FIX 5 — Use the payments table (not orders) so we reflect actual payment
-     *   transactions. Group by payment_method from the payments table and use
-     *   payment_date for the period filter. If the payments table is empty we
-     *   fall back gracefully to querying orders.payment_method.
-     */
     private function getPaymentMethodBreakdown(Carbon $start, Carbon $end)
     {
-        $rows = DB::table('payments')
+        $paymentRowsExist = DB::table('payments')
             ->whereBetween('payment_date', [$start, $end])
             ->where('payment_status', 'completed')
-            ->select(
-                'payment_method',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('ROUND(SUM(amount), 2) as total')
-            )
-            ->groupBy('payment_method')
-            ->get();
+            ->exists();
 
-        // Fallback: if the payments table is empty, read from orders directly
-        if ($rows->isEmpty()) {
+        if ($paymentRowsExist) {
+            $rows = DB::table('payments')
+                ->whereBetween('payment_date', [$start, $end])
+                ->where('payment_status', 'completed')
+                ->select(
+                    'payment_method',
+                    DB::raw('COUNT(*) as count'),
+                    DB::raw('ROUND(SUM(amount), 2) as total')
+                )
+                ->groupBy('payment_method')
+                ->orderByDesc('count')
+                ->get();
+        } else {
             $rows = DB::table('orders')
                 ->whereBetween('created_at', [$start, $end])
                 ->where('status', '!=', Order::STATUS_CANCELLED)
@@ -597,6 +548,7 @@ class AdminReportController extends Controller
                     DB::raw('ROUND(SUM(total_amount), 2) as total')
                 )
                 ->groupBy('payment_method')
+                ->orderByDesc('count')
                 ->get();
         }
 
@@ -657,49 +609,45 @@ class AdminReportController extends Controller
             ->map(fn($r) => ['province' => $r->province, 'count' => (int) $r->count]);
     }
 
-    /* ═════════════════════════════════════════════del "c:\xampp\htdocs\agriculture-battambang\database\migrations\2026_01_01_102001_create_table_category copy.php"
-══════════════
+    /* ═══════════════════════════════════════════════════════════
      │  PRIVATE — Archive
      ═══════════════════════════════════════════════════════════ */
 
-    /**
-     * FIX 6 — archiveReport: store ALL relevant data keys so that showArchive()
-     *   can reconstruct every report type faithfully.
-     *   - chart_data now includes by_province (sellers) and by_status / by_payment_method
-     *   - table_data now includes by_province for sellers
-     */
     private function archiveReport(string $type, Carbon $start, Carbon $end, array $data): int
     {
-        $archiveType = 'admin_' . $type;
+        $toArray = fn($v) => $v instanceof \Illuminate\Support\Collection
+            ? $v->toArray()
+            : (is_array($v) ? $v : null);
 
-        $chartData = [
-            'daily_revenue'     => $data['daily_revenue']     ?? null,
-            'daily_growth'      => $data['daily_growth']      ?? null,
-            'by_category'       => $data['by_category']       ?? null,
-            'by_status'         => $data['by_status']         ?? null,
-            'by_payment_method' => $data['by_payment_method'] ?? null,
-            'by_role'           => $data['by_role']           ?? null,
-            'by_province'       => $data['by_province']       ?? null,
-            'by_stock'          => $data['by_stock']          ?? null,
-        ];
+        $chartData = array_filter([
+            'daily_revenue'     => $toArray($data['daily_revenue']     ?? null),
+            'daily_growth'      => $toArray($data['daily_growth']      ?? null),
+            'by_category'       => $toArray($data['by_category']       ?? null),
+            'by_status'         => $toArray($data['by_status']         ?? null),
+            'by_payment_method' => $toArray($data['by_payment_method'] ?? null),
+            'by_role'           => $toArray($data['by_role']           ?? null),
+            'by_province'       => $toArray($data['by_province']       ?? null),
+            'by_stock'          => $toArray($data['by_stock']          ?? null),
+        ], fn($v) => $v !== null);
 
-        $tableData = [
-            'top_sellers'  => $data['top_sellers']  ?? null,
-            'top_products' => $data['top_products'] ?? null,
-        ];
+        $tableData = array_filter([
+            'top_sellers'  => $toArray($data['top_sellers']  ?? null),
+            'top_products' => $toArray($data['top_products'] ?? null),
+        ], fn($v) => $v !== null);
 
-        // Remove null keys to keep the JSON lean
-        $chartData = array_filter($chartData, fn($v) => $v !== null);
-        $tableData = array_filter($tableData, fn($v) => $v !== null);
+        $summaryMetrics = $data['summary'] ?? null;
+        if ($summaryMetrics instanceof \Illuminate\Support\Collection) {
+            $summaryMetrics = $summaryMetrics->toArray();
+        }
 
         $archive = ReportArchive::create([
-            'report_type'     => $archiveType,
+            'report_type'     => 'admin_' . $type,
             'user_type'       => 'admin',
             'generated_by'    => Auth::id(),
             'generated_for'   => null,
             'period_start'    => $start->toDateString(),
             'period_end'      => $end->toDateString(),
-            'summary_metrics' => $data['summary'] ?? null,
+            'summary_metrics' => $summaryMetrics,
             'chart_data'      => $chartData,
             'table_data'      => $tableData,
             'activity_logs'   => [
@@ -754,6 +702,13 @@ class AdminReportController extends Controller
         }
         fputcsv($file, []);
 
+        fputcsv($file, ['=== ORDER STATUS ===']);
+        fputcsv($file, ['Status', 'Count', 'Total (KHR)']);
+        foreach ($data['by_status'] as $r) {
+            fputcsv($file, [$r['status'], $r['count'], $r['total']]);
+        }
+        fputcsv($file, []);
+
         fputcsv($file, ['=== PAYMENT METHODS ===']);
         fputcsv($file, ['Method', 'Count', 'Total (KHR)']);
         foreach ($data['by_payment_method'] as $r) {
@@ -782,21 +737,35 @@ class AdminReportController extends Controller
         foreach ($data['by_role'] as $r) {
             fputcsv($file, [$r['role'], $r['count']]);
         }
+        fputcsv($file, []);
+
+        fputcsv($file, ['=== USERS BY STATUS ===']);
+        fputcsv($file, ['Status', 'Count']);
+        foreach ($data['by_status'] as $r) {
+            fputcsv($file, [$r['status'], $r['count']]);
+        }
     }
 
     private function writeProductsCSV($file, array $data): void
     {
-        fputcsv($file, ['=== TOP PRODUCTS ===']);
-        fputcsv($file, ['Product', 'Category', 'Revenue (KHR)', 'Units Sold', 'Views', 'Unit']);
-        foreach ($data['top_products'] as $r) {
-            fputcsv($file, [$r['name'], $r['category'], $r['revenue'], $r['units_sold'], $r['views'], $r['unit']]);
+        fputcsv($file, ['=== PRODUCT SUMMARY ===']);
+        fputcsv($file, ['Metric', 'Value']);
+        foreach ($data['summary'] as $key => $val) {
+            fputcsv($file, [ucwords(str_replace('_', ' ', $key)), $val]);
         }
         fputcsv($file, []);
 
-        fputcsv($file, ['=== PRODUCTS BY CATEGORY ===']);
-        fputcsv($file, ['Category', 'Count']);
+        fputcsv($file, ['=== TOP PRODUCTS ===']);
+        fputcsv($file, ['Product', 'Category', 'Revenue (KHR)', 'Units Sold', 'Unit']);
+        foreach ($data['top_products'] as $r) {
+            fputcsv($file, [$r['name'], $r['category'], $r['revenue'], $r['units_sold'], $r['unit'] ?? '—']);
+        }
+        fputcsv($file, []);
+
+        fputcsv($file, ['=== REVENUE BY CATEGORY ===']);
+        fputcsv($file, ['Category', 'Revenue (KHR)', 'Units Sold', 'Orders']);
         foreach ($data['by_category'] as $r) {
-            fputcsv($file, [$r['name'], $r['count']]);
+            fputcsv($file, [$r['name'], $r['revenue'], $r['units_sold'], $r['orders']]);
         }
         fputcsv($file, []);
 
@@ -819,7 +788,14 @@ class AdminReportController extends Controller
         fputcsv($file, ['=== TOP SELLERS ===']);
         fputcsv($file, ['Farm Name', 'Revenue (KHR)', 'Orders', 'Units Sold', 'Rating', 'Reviews']);
         foreach ($data['top_sellers'] as $r) {
-            fputcsv($file, [$r['name'], $r['revenue'], $r['orders'], $r['units_sold'], $r['rating'], $r['rating_count']]);
+            fputcsv($file, [
+                $r['name'],
+                $r['revenue'],
+                $r['orders'],
+                $r['units_sold'],
+                $r['rating'],
+                $r['rating_count'],
+            ]);
         }
         fputcsv($file, []);
 
@@ -835,24 +811,49 @@ class AdminReportController extends Controller
      ═══════════════════════════════════════════════════════════ */
 
     /**
-     * Growth percentage between two periods.
+     * Paid revenue for a period.
+     * Checks the payments table first (completed rows); falls back to
+     * orders.payment_status = 'paid' when no payment rows exist yet.
+     */
+    private function getPaidRevenue(Carbon $start, Carbon $end): float
+    {
+        $paymentRowsExist = DB::table('payments')
+            ->whereBetween('payment_date', [$start, $end])
+            ->where('payment_status', 'completed')
+            ->exists();
+
+        if ($paymentRowsExist) {
+            return (float) DB::table('payments')
+                ->whereBetween('payment_date', [$start, $end])
+                ->where('payment_status', 'completed')
+                ->sum('amount');
+        }
+
+        // Fallback: payments table has no rows for this period
+        return (float) Order::whereBetween('created_at', [$start, $end])
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+    }
+
+    /**
      *
-     * FIX 7 — Cap growth at ±999 % to avoid absurd values when the previous
-     *   period had very few records (e.g. 1 order → 10 orders = +900 % which is
-     *   technically correct but visually confusing). The cap prevents cases where
-     *   the previous period was 0 from showing as +100 % (our special case) or
-     *   any arithmetic from producing values that overflow the badge.
+     * Rules:
+     *  - previous = 0, current = 0  →   0% (nothing happening)
+     *  - previous = 0, current > 0  → +100% (new activity appeared)
+     *  - otherwise                  → standard % change, capped at ±100%
+     *
+     * Capping at ±100 keeps badge widths consistent in the UI and prevents
+     * misleading spikes when a prior period had very few records.
      */
     private function growthPercent(float|int $current, float|int $previous): float
     {
         if ($previous == 0) {
-            // No previous data: treat new activity as +100 % (meaningful signal)
             return $current > 0 ? 100.0 : 0.0;
         }
 
         $growth = (($current - $previous) / abs($previous)) * 100;
 
-        // Cap at ±999 % so the UI badge never wraps
-        return round(max(-999, min(999, $growth)), 1);
+        // Cap at ±100% so KPI badge values stay within a readable range
+        return round(max(-100.0, min(100.0, $growth)), 1);
     }
 }
