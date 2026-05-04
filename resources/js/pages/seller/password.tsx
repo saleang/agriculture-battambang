@@ -4,7 +4,8 @@ import SellersLayout from '@/pages/seller/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const toggleCurrentPasswordVisibility = () => {
+        setShowCurrentPassword(!showCurrentPassword);
+    };
+
+    const toggleConfirmPasswordVisibility = () => {
+        setShowConfirmPassword(!showConfirmPassword);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -63,16 +79,27 @@ export default function Password() {
                                     <Label htmlFor="current_password">
                                         ពាក្យសម្ងាត់បច្ចុប្បន្ន
                                     </Label>
-
-                                    <Input
-                                        id="current_password"
-                                        ref={currentPasswordInput}
-                                        name="current_password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="current-password"
-                                        placeholder="ពាក្យសម្ងាត់បច្ចុប្បន្ន"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="current_password"
+                                            ref={currentPasswordInput}
+                                            name="current_password"
+                                            type={showCurrentPassword ? 'text' : 'password'}
+                                            className="mt-1 block w-full"
+                                            autoComplete="current-password"
+                                            placeholder="ពាក្យសម្ងាត់បច្ចុប្បន្ន"
+                                        />
+                                        <div
+                                            className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 text-gray-400"
+                                            onClick={toggleCurrentPasswordVisibility}
+                                        >
+                                            {showCurrentPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <InputError
                                         message={errors.current_password}
@@ -84,15 +111,27 @@ export default function Password() {
                                         ពាក្យសម្ងាត់ថ្មី
                                     </Label>
 
-                                    <Input
-                                        id="password"
-                                        ref={passwordInput}
-                                        name="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="ពាក្យសម្ងាត់ថ្មី"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            ref={passwordInput}
+                                            name="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            className="mt-1 block w-full"
+                                            autoComplete="new-password"
+                                            placeholder="ពាក្យសម្ងាត់ថ្មី"
+                                        />
+                                        <div
+                                            className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 text-gray-400"
+                                            onClick={togglePasswordVisibility}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <InputError message={errors.password} />
                                 </div>
@@ -102,14 +141,26 @@ export default function Password() {
                                         បញ្ជាក់ពាក្យសម្ងាត់
                                     </Label>
 
-                                    <Input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="បញ្ជាក់ពាក្យសម្ងាត់"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="password_confirmation"
+                                            name="password_confirmation"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            className="mt-1 block w-full"
+                                            autoComplete="new-password"
+                                            placeholder="បញ្ជាក់ពាក្យសម្ងាត់"
+                                        />
+                                        <div
+                                            className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 text-gray-400"
+                                            onClick={toggleConfirmPasswordVisibility}
+                                        >
+                                            {showConfirmPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <InputError
                                         message={errors.password_confirmation}
