@@ -521,9 +521,9 @@ const ProductPage: React.FC = () => {
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Page Header with Toggle */}
                     <div className="mb-4 flex items-center justify-between">
-                        <h1 className="text-3xl font-moul text-green-900">
+                        <h2 className="text-2xl font-moul text-green-700 mb-2">
                             ការគ្រប់គ្រងផលិតផល
-                        </h1>
+                        </h2>
                         <button
                             onClick={toggleForm}
                             className="flex items-center gap-2 rounded-xl border border-gray-300 bg-red-500 px-5 py-2.5 text-sm font-medium text-white shadow transition hover:bg-red-600"
@@ -551,7 +551,7 @@ const ProductPage: React.FC = () => {
                                         placeholder="ឈ្មោះផលិតផល"
                                         value={formData.productname || ''}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                        className="w-full rounded-xl border border-green-700 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
                                     />
                                 </div>
 
@@ -567,7 +567,7 @@ const ProductPage: React.FC = () => {
                                         value={displayPrice}
                                         onChange={handleChange}
                                         onKeyDown={handlePriceKeyDown}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 font-khmer text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                        className="w-full rounded-xl border border-green-700 px-4 py-3 font-khmer text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
                                     />
                                 </div>
 
@@ -580,7 +580,7 @@ const ProductPage: React.FC = () => {
                                         placeholder="ឯកតា (ឧ. គ.ក្រ)"
                                         value={formData.unit || ''}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                        className="w-full rounded-xl border border-green-700 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
                                     />
                                 </div>
 
@@ -592,7 +592,7 @@ const ProductPage: React.FC = () => {
                                         name="stock"
                                         value={formData.stock || 'available'}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                        className="w-full rounded-xl border border-green-700 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
                                     >
                                         <option value="available">
                                             មានទំនិញ
@@ -611,7 +611,7 @@ const ProductPage: React.FC = () => {
                                         name="category_id"
                                         value={formData.category_id ?? ''}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
+                                        className="w-full rounded-xl border border-green-700 px-4 py-3 text-base focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none"
                                     >
                                         <option value="">ជ្រើសរើសប្រភេទ</option>
                                         {categories.map((c) => (
@@ -654,7 +654,7 @@ const ProductPage: React.FC = () => {
                                         multiple
                                         accept="image/*"
                                         onChange={handleImagesChange}
-                                        className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-base"
+                                        className="w-full rounded-xl border border-green-700 bg-green-50 px-4 py-4 text-base"
                                     />
                                 </div>
 
@@ -744,7 +744,7 @@ const ProductPage: React.FC = () => {
                                 onChange={(e) =>
                                     setSearchBy(e.target.value as any)
                                 }
-                                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500"
+                                className="rounded-xl border border-gray-300 px-4 py-2.5 text-base focus:border-emerald-500"
                             >
                                 <option value="seller_product_id">
                                     លេខសម្គាល់
@@ -763,7 +763,7 @@ const ProductPage: React.FC = () => {
                                 placeholder="ស្វែងរក..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:ring-1"
+                                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-base focus:border-emerald-500 focus:ring-1"
                             />
                         </div>
 
@@ -780,7 +780,7 @@ const ProductPage: React.FC = () => {
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-lg">
-                                    <thead className="bg-gray-50">
+                                    <thead className="bg-green-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left">
                                                 ល.រ

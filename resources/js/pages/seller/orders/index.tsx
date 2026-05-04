@@ -324,7 +324,7 @@ const SellerOrderManagement: React.FC = () => {
             <Head title="គ្រប់គ្រងការបញ្ជាទិញ - កសិផលខេត្ត​បាត់ដំបង" />
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-3xl font-bold">គ្រប់គ្រងការបញ្ជាទិញ</h1>
+                    <h1 className="text-2xl font-moul text-green-700 mb-2">គ្រប់គ្រងការបញ្ជាទិញ</h1>
 
                     {/* Filter Tabs */}
                     <div className="flex gap-2">

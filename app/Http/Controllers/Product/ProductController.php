@@ -194,11 +194,17 @@ class ProductController extends Controller
             Log::error('Product delete failed: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to delete product.', 'error' => $e->getMessage()], 500);
         }
-    }
-    public function publicProducts()
+    }public function publicProducts()
     {
-        $products = \App\Models\Product::with('images', 'category', 'seller:seller_id,farm_name')
-            ->where('is_active', true) // only show active products
+        $products = \App\Models\Product::with([
+            'images',
+            'category',
+            'seller.user:user_id,photo',
+        ])
+            ->where('is_active', true)
+            ->whereHas('seller.user', function ($query) {
+                $query->where('status', 'active');
+            })
             ->get();
 
         // Append the primary image URL and category name to each product
@@ -270,8 +276,13 @@ class ProductController extends Controller
 
         $productsQuery = Product::with(['images' => function ($query) {
             $query->where('is_primary', true);
-        }, 'seller:seller_id,farm_name', 'category'])
+        }, 'seller' => function ($query) {
+            $query->select('seller_id', 'farm_name', 'user_id')->with('user:user_id,photo');
+        }, 'category'])
             ->where('is_active', true)
+            ->whereHas('seller.user', function ($query) {
+                $query->where('status', 'active');
+            })
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('max_price')) {
@@ -295,6 +306,11 @@ class ProductController extends Controller
 
         $products = $productsQuery->paginate(18)->withQueryString();
 
+        $products->through(function ($product) {
+            $product->seller_photo = $product->seller && $product->seller->user ? $product->seller->user->photo_url : null;
+            return $product;
+        });
+
 
         $wishlistProductIds = [];
         if (Auth::check()) {
@@ -313,5 +329,46 @@ class ProductController extends Controller
             'maxPrice' => (int)$maxPrice,
             'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Fetch full product details for cart items.
+     */
+    public function getCartProducts(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:product,product_id',
+        ]);
+
+        $products = Product::with([
+            'seller:seller_id,farm_name',
+            'seller.user:user_id,photo', // Also load the user photo for the seller
+            'images' => function ($query) {
+                $query->where('is_primary', true)->orWhere(function ($q) {
+                    $q->whereDoesntHave('product.images', function ($r) {
+                        $r->where('is_primary', true);
+                    })->orderBy('display_order', 'asc');
+                });
+            }
+        ])->findMany($validated['product_ids']);
+
+        $formatted = $products->map(function ($p) {
+            $image = $p->images->first();
+            $sellerPhoto = $p->seller && $p->seller->user ? Storage::url($p->seller->user->photo) : null;
+
+            return [
+                'product_id' => $p->product_id,
+                'productname' => $p->productname,
+                'price' => $p->price,
+                'unit' => $p->unit,
+                'seller_id' => $p->seller_id,
+                'farm_name' => $p->seller->farm_name ?? 'Unknown Farm',
+                'image' => $image ? Storage::url($image->image_url) : 'https://via.placeholder.com/150?text=No+Image',
+                'seller_photo' => $sellerPhoto,
+            ];
+        });
+
+        return response()->json($formatted);
     }
 }

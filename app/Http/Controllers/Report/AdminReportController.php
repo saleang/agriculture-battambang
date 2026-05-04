@@ -333,10 +333,13 @@ class AdminReportController extends Controller
         $topRated       = Seller::where('rating_average', '>=', 4.0)->count();
 
         return [
-            'total_sellers'   => $totalSellers,
-            'active_sellers'  => $activeSellers,
-            'pending_sellers' => $pendingSellers,
-            'top_rated'       => $topRated,
+            'total_sellers'   => Seller::count(),
+            'active_sellers'  => Seller::whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'pending_sellers' => User::where('role', 'seller')->where('status', 'inactive')->count(),
+            'top_rated'       => Seller::whereHas('ratings', function ($query) {
+                $query->select(DB::raw('avg(rating) as average_rating'))
+                    ->having('average_rating', '>=', 4.0);
+            })->count(),
         ];
     }
 

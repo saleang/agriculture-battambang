@@ -71,7 +71,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                             onClick={cleanup}
                         >
                             <Settings className="mr-2" />
-                            Seller Profile
+                            ការកំណត់
                         </Link>
                     </DropdownMenuItem>
                 )}
