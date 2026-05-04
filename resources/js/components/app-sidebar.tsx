@@ -118,7 +118,7 @@ const sellerNavItems: NavItem[] = [
         icon: Truck,
     },
     {
-        title: 'គ្រប់គ្រងការបង់ក្រាក់',
+        title: 'គ្រប់គ្រងការបង់ប្រាក់',
         href: '/seller/payments',
         icon: CreditCard,
     },

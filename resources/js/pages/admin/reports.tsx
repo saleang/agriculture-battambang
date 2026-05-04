@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-// pages/admin/reports.tsx — Fixed v3
+// pages/admin/reports.tsx
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -33,7 +33,7 @@ const card: React.CSSProperties = {
     borderRadius:14, padding:20, boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
 };
 
-/* ─── Types ─────────────────────────────────────────── */
+/* ─── Types​ ─────────────────────────────────────────── */
 interface KeyMetrics {
     total_revenue:number; total_orders:number; new_users:number;
     active_sellers:number; revenue_growth:number; orders_growth:number;
@@ -43,7 +43,8 @@ interface SalesByCategory { name:string; revenue:number; units_sold:number; orde
 interface DailyPoint      { date:string; revenue:number; orders:number; }
 interface DailyUserPoint  { date:string; users:number; }
 interface TopSeller  { name:string; revenue:number; orders:number; units_sold:number; rating:number; rating_count:number; }
-interface TopProduct { name:string; category:string; revenue:number; units_sold:number; views:number; unit:string; }
+
+interface TopProduct { name:string; category:string; revenue:number; units_sold:number; unit:string; }
 interface StatusBreak{ status:string; count:number; total:number; }
 interface PayBreak   { method:string; count:number; total:number; }
 interface InitialData {
@@ -58,19 +59,16 @@ interface RecentArchive {
     generated_at:string; generated_by:string;
 }
 
-/**
- * The flat data shape GeneratedReportView expects.
- * All keys are optional — different report types populate different subsets.
- */
+
 interface ReportData {
     summary?:Record<string,number>;
     by_category?:SalesByCategory[];
     daily_revenue?:DailyPoint[];
-    daily_growth?:DailyUserPoint[];
+    daily_growth?:DailyUserPoint[];   // users report: daily new registrations
     top_sellers?:TopSeller[];
     top_products?:TopProduct[];
     by_role?:{role:string;count:number}[];
-    by_status?:any[];
+    by_status?:StatusBreak[] | {status:string;count:number}[];
     by_payment_method?:PayBreak[];
     by_province?:{province:string;count:number}[];
     by_stock?:{stock:string;count:number}[];
@@ -92,6 +90,8 @@ const fmtKHR = (n:number) => {
 const fmtNum = (n:number) => (n??0).toLocaleString();
 const fmtPct = (n:number) => `${n>=0?'+':''}${(n??0).toFixed(1)}%`;
 
+const MONEY_KEYS = new Set(['revenue', 'total', 'ចំណូល']);
+
 /* ─── UI atoms ──────────────────────────────────────── */
 const TrendBadge = ({val}:{val:number}) => (
     <span style={{ fontSize:11, fontWeight:700, padding:'3px 8px', borderRadius:20,
@@ -108,23 +108,29 @@ const LightTooltip = ({active,payload,label}:any) => {
             <p style={{ color:C.sub, marginBottom:4, fontWeight:600 }}>{label}</p>
             {payload.map((p:any,i:number) => (
                 <p key={i} style={{ color:p.color, margin:0, fontWeight:700 }}>
-                    {p.name}: {typeof p.value==='number'&&p.value>999?fmtKHR(p.value):fmtNum(p.value)}
+                    {/* Only apply currency format to money keys */}
+                    {p.name}: {typeof p.value==='number' && MONEY_KEYS.has(p.dataKey ?? p.name)
+                        ? fmtKHR(p.value)
+                        : fmtNum(p.value)}
                 </p>
             ))}
         </div>
     );
 };
 
-const Stars = ({rating}:{rating:number}) => (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:1 }}>
-        {[1,2,3,4,5].map(i=>(
-            <Star key={i} size={10}
-                fill={i<=Math.round(Number(rating))?C.goldD:'none'}
-                color={i<=Math.round(Number(rating))?C.goldD:C.muted}/>
-        ))}
-        <span style={{ fontSize:10, color:C.sub, marginLeft:3 }}>{(Number(rating)||0).toFixed(1)}</span>
-    </span>
-);
+const Stars = ({rating}:{rating:number}) => {
+    const safe = Number(rating) || 0;
+    return (
+        <span style={{ display:'inline-flex', alignItems:'center', gap:1 }}>
+            {[1,2,3,4,5].map(i=>(
+                <Star key={i} size={10}
+                    fill={i<=Math.round(safe)?C.goldD:'none'}
+                    color={i<=Math.round(safe)?C.goldD:C.muted}/>
+            ))}
+            <span style={{ fontSize:10, color:C.sub, marginLeft:3 }}>{safe.toFixed(1)}</span>
+        </span>
+    );
+};
 
 const Rank = ({n}:{n:number}) => {
     const colors=[C.goldD,'#94a3b8','#b45309',C.p,C.p];
@@ -223,7 +229,9 @@ const GeneratedReportView = ({
     archiveMeta?: { id:number; period:string; generated_at:string; generated_by:string; };
 }) => {
     const {data, report_type, period} = report;
-    const typeLabel = REPORT_TYPES.find(r=>r.value===report_type?.replace('admin_',''))?.label ?? report_type;
+    
+    const bareType  = report_type?.replace(/^admin_/, '') ?? '';
+    const typeLabel = REPORT_TYPES.find(r => r.value === bareType)?.label ?? bareType;
 
     const btnOut:React.CSSProperties = {
         background:C.bgG, color:C.p, border:`1px solid #d1fae5`, borderRadius:9,
@@ -272,7 +280,10 @@ const GeneratedReportView = ({
                         <div key={k} style={{ ...card, padding:'14px 16px', borderTop:`3px solid ${CAT_COLORS[i%CAT_COLORS.length]}` }}>
                             <p style={{ fontSize:11, color:C.sub, margin:'0 0 4px', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{k.replace(/_/g,' ')}</p>
                             <p style={{ fontSize:19, fontWeight:700, color:CAT_COLORS[i%CAT_COLORS.length], margin:0 }}>
-                                {typeof v==='number' && v>999 ? fmtKHR(v) : fmtNum(v as number)}
+                                {/* Only apply KHR format to keys that represent money */}
+                                {typeof v==='number' && (k.includes('revenue') || k.includes('amount') || k.includes('paid'))
+                                    ? fmtKHR(v)
+                                    : fmtNum(v as number)}
                             </p>
                         </div>
                     ))}
@@ -426,6 +437,11 @@ const GeneratedReportView = ({
                     <SectionTitle title="ផលិតផលល្អបំផុត" sub="Top products by revenue"/>
                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
                         <thead><tr>
+                            {/*
+                             * BUG FIX #5 — 'Views' column header removed.
+                             *   The views column header remained but the backend no longer
+                             *   returns views data, causing a misaligned/empty column.
+                             */}
                             {['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','ឯកតា'].map(h=>(
                                 <th key={h} style={{ textAlign:'left', padding:'0 10px 10px', fontSize:10, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                             ))}
@@ -441,7 +457,7 @@ const GeneratedReportView = ({
                                     <td style={{ padding:'11px 10px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{p.category}</span></td>
                                     <td style={{ padding:'11px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                     <td style={{ padding:'11px 10px', fontSize:12, color:C.sub }}>{fmtNum(p.units_sold)}</td>
-                                    <td style={{ padding:'11px 10px', fontSize:11, color:C.muted }}>{p.unit}</td>
+                                    <td style={{ padding:'11px 10px', fontSize:11, color:C.muted }}>{p.unit ?? '—'}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -505,7 +521,6 @@ export default function AdminReports({
     const [archives,       setArchives]      = useState<RecentArchive[]>(recentArchives??[]);
     const [toast,          setToast]         = useState<{msg:string;kind:ToastKind}|null>(null);
     const [archiveLoading, setArchiveLoading]= useState<number|null>(null);
-    // FIX: store loaded archive as a GeneratedReport (same shape) + metadata
     const [viewArchive,    setViewArchive]   = useState<{report:GeneratedReport; meta:RecentArchive}|null>(null);
 
     const showToast = (msg:string,kind:ToastKind='success') => setToast({msg,kind});
@@ -559,11 +574,17 @@ export default function AdminReports({
     },[reportType,startDate,endDate]);
 
     /**
-     * Load an archive and display it in the archives tab as a GeneratedReportView.
+     * Load an archive and display it as a GeneratedReportView.
      *
-     * FIX: The backend now returns archive.data as the flat merged shape that
-     * GeneratedReportView expects, and also report_type without the 'admin_' prefix
-     * (we strip it here so REPORT_TYPES.find() resolves correctly).
+     * BUG FIX #6 — Do NOT strip 'admin_' prefix here.
+     *   The old code stripped the prefix in handleViewArchive, but
+     *   GeneratedReportView.bareType already strips it internally via
+     *   replace(/^admin_/, ''). Double-stripping turned 'admin_sales' → 'sales'
+     *   → 'sales' (fine), but if the type was already bare (e.g. 'sales') it
+     *   became '' after two strips if the regex had a bug. Keeping the raw
+     *   report_type and letting GeneratedReportView normalize it is cleaner and
+     *   consistent with how freshly generated reports work (those also don't
+     *   pre-strip because the backend returns the bare type on generate).
      */
     const handleViewArchive = useCallback(async(archiveRow:RecentArchive)=>{
         setArchiveLoading(archiveRow.id);
@@ -576,13 +597,12 @@ export default function AdminReports({
             const json = await res.json();
             if (json.success) {
                 const arch = json.archive;
-                // Convert archived shape → GeneratedReport shape
                 const fakeReport:GeneratedReport = {
                     success:     true,
-                    report_type: arch.report_type.replace('admin_',''), // strip prefix for label lookup
+                    report_type: arch.report_type,   // keep as-is; GeneratedReportView strips prefix
                     archive_id:  arch.id,
                     period:      arch.period,
-                    data:        arch.data ?? {},  // backend now provides flat data
+                    data:        arch.data ?? {},
                 };
                 setViewArchive({ report:fakeReport, meta:archiveRow });
                 showToast('បានផ្ទុករបាយការណ៍','info');
@@ -718,7 +738,7 @@ export default function AdminReports({
                                         </div>
                                         <p style={{ fontSize:12, color:C.sub, margin:'12px 0 2px', fontWeight:500 }}>{k.label}</p>
                                         <p style={{ fontSize:26, fontWeight:700, color:C.strong, margin:0 }}>{k.value}</p>
-                                        <p style={{ fontSize:11, color:C.muted, margin:'4px 0 0' }}>AOV: {fmtKHR(km.avg_order_value??0)}</p>
+                                        {/* <p style={{ fontSize:11, color:C.muted, margin:'4px 0 0' }}>AOV: {fmtKHR(km.avg_order_value??0)}</p> */}
                                     </div>
                                 ))}
                             </div>
@@ -866,11 +886,11 @@ export default function AdminReports({
                             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
                                 {[
                                     {label:'ចំណូលសរុប',         value:fmtKHR(km.total_revenue??0),               color:C.p},
-                                    {label:'ចំណូលបានទូទាត់',   value:fmtKHR(d.sales_summary?.paid_revenue??0),  color:C.dark},
-                                    {label:'ការបញ្ជាមធ្យម',    value:fmtKHR(km.avg_order_value??0),             color:C.goldD},
-                                    {label:'ការបញ្ជាទាំងអស់',  value:fmtNum(km.total_orders??0),                color:C.p},
-                                    {label:'ការបញ្ជាបានបញ្ចប់',value:fmtNum(d.sales_summary?.completed_orders??0),color:C.a},
-                                    {label:'ការបញ្ជាបានបោះបង់',value:fmtNum(d.sales_summary?.cancelled_orders??0),color:'#dc2626'},
+                                    // {label:'ចំណូលបានទូទាត់',   value:fmtKHR(d.sales_summary?.paid_revenue??0),  color:C.dark},
+                                    // {label:'ការបញ្ជាមធ្យម',    value:fmtKHR(km.avg_order_value??0),             color:C.goldD},
+                                    {label:'ការបញ្ជាទិញទាំងអស់',  value:fmtNum(km.total_orders??0),                color:C.p},
+                                    {label:'ការបញ្ជាទិញបានបញ្ចប់',value:fmtNum(d.sales_summary?.completed_orders??0),color:C.a},
+                                    {label:'ការបញ្ជាទិញបានបោះបង់',value:fmtNum(d.sales_summary?.cancelled_orders??0),color:'#dc2626'},
                                 ].map(m=>(
                                     <div key={m.label} style={{ ...card, padding:'16px 18px' }}>
                                         <p style={{ fontSize:11, color:C.sub, margin:'0 0 6px', fontWeight:500 }}>{m.label}</p>
@@ -966,6 +986,7 @@ export default function AdminReports({
                     {activeTab==='products'&&(
                         <div style={card}>
                             <SectionTitle title="ផលិតផលល្អបំផុត" sub="Products ranked by revenue"/>
+                            {/* BUG FIX #7 — 'Views' column removed from overview products tab header */}
                             <table style={{ width:'100%', borderCollapse:'collapse' }}>
                                 <thead><tr>{['#','ឈ្មោះ','ប្រភេទ','ចំណូល','ទំនិញ','ឯកតា'].map(h=><th key={h} style={{ textAlign:'left', padding:'0 10px 12px', fontSize:11, color:C.muted, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>)}</tr></thead>
                                 <tbody>
@@ -976,7 +997,7 @@ export default function AdminReports({
                                             <td style={{ padding:'12px 10px' }}><span style={{ fontSize:10, background:C.bgG, color:C.p, borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{p.category}</span></td>
                                             <td style={{ padding:'12px 10px', fontSize:13, fontWeight:700, color:C.p }}>{fmtKHR(p.revenue)}</td>
                                             <td style={{ padding:'12px 10px', fontSize:12, color:C.sub }}>{fmtNum(p.units_sold)}</td>
-                                            <td style={{ padding:'12px 10px', fontSize:11, color:C.muted }}>{p.unit}</td>
+                                            <td style={{ padding:'12px 10px', fontSize:11, color:C.muted }}>{p.unit ?? '—'}</td>
                                         </tr>
                                     ))}
                                     {!d.top_products?.length&&<EmptyRow cols={6}/>}
@@ -1009,7 +1030,7 @@ export default function AdminReports({
                     {activeTab==='archives'&&(
                         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
-                            {/* Loaded archive rendered as GeneratedReportView */}
+                            {/* Loaded archive rendered inline */}
                             {viewArchive && (
                                 <div>
                                     <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:8 }}>
