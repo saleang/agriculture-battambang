@@ -76,7 +76,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">+855 12 345 678</span>
+                <span className="text-gray-400 text-sm">+855 88 983 6146</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-green-500 flex-shrink-0" />
@@ -84,13 +84,13 @@ export function Footer() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
+              <a href="https://www.facebook.com/share/1FfwAf3D24/?mibextid=wwXIfr" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
+              <a href="https://www.instagram.com/somphors_1?igsh=MW4xMHIxbGpzanp0aA%3D%3D&utm_source=qr" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
+              <a href="mailto:agri-battambang@gmail.com" className="bg-gray-800 p-3 rounded-full hover:bg-green-500 transition">
                 <Mail className="h-5 w-5" />
               </a>
             </div>

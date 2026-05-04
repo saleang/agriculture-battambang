@@ -187,7 +187,16 @@ const Pill = ({ s }: { s: string }) => {
         </span>
     );
 };
-
+/* ─── Khmer Translation Helper ───────────────── */
+const translateActivity = (text: string): string => {
+    return text
+        .replace(/\bcompleted\b/gi, 'បានបញ្ចប់')
+        .replace(/\bseller\b/gi, 'អាជីវករ')
+        .replace(/\bcustomer\b/gi, 'អតិថិជន')
+        .replace(/\buser\b/gi, 'អ្នកប្រើ')
+        .replace(/\border\b/gi, 'ការបញ្ជាទិញ')
+        .replace(/\bproduct\b/gi, 'ផលិតផល');
+};
 /* ─── Activity icon ──────────────────────────── */
 const ActIcon = ({ type }: { type: string }) => {
     const map: Record<string, React.ReactNode> = {
@@ -378,9 +387,7 @@ export default function AdminDashboard({
     const activities = recentActivities ?? [];
     const calEvents  = calendarEvents   ?? {};
 
-    const headerButtons: { icon: React.ReactNode; label: string; badge: boolean }[] = [
-        { icon: <Settings size={13}/>, label: 'ការកំណត់', badge: false },
-    ];
+
 
     const kpiCards = [
         {
@@ -458,21 +465,9 @@ export default function AdminDashboard({
                                 <House size={20} color="#fff" />
                             </div>
                             <div>
-                                <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 18, margin: 0 }}>ផ្ទាំងគ្រប់គ្រង</h1>
-                                <p style={{ color: C.sub, fontSize: 12, margin: 0 }}>សូមស្វាគមន៍ត្រឡប់មកវិញ!</p>
+                                <h1 style={{ fontFamily: C.display, color: C.p, fontSize: 20, margin: 0 }}>ផ្ទាំងគ្រប់គ្រង</h1>
+                                <p style={{ color: C.sub, fontSize: 14, margin: 0 }}>សូមស្វាគមន៍ត្រឡប់មកវិញ!</p>
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            {headerButtons.map(btn => (
-                                <button key={btn.label} style={{ position: 'relative', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 12px', color: C.sub, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontFamily: C.font }}>
-                                    {btn.icon} {btn.label}
-                                    {btn.badge && s.pending_approvals > 0 && (
-                                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: '#ef4444', border: `2px solid ${C.bg}`, fontSize: 9, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
-                                            {s.pending_approvals}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
                         </div>
                     </div>
 
@@ -491,9 +486,9 @@ export default function AdminDashboard({
                                     </span>
                                 </div>
                                 <div style={{ marginTop: 12 }}>
-                                    <p style={{ fontSize: 12, color: C.sub, margin: '0 0 2px', fontWeight: 500 }}>{k.label}</p>
+                                    <p style={{ fontSize: 16, color: C.sub, margin: '0 0 2px', fontWeight: 500 }}>{k.label}</p>
                                     <p style={{ fontSize: 22, fontWeight: 700, color: C.strong, margin: 0, lineHeight: 1 }}>{k.value}</p>
-                                    <p style={{ fontSize: 12, color: C.muted, margin: '4px 0 0' }}>{k.sub}</p>
+                                    <p style={{ fontSize: 16, color: C.muted, margin: '4px 0 0' }}>{k.sub}</p>
                                 </div>
                                 <div style={{ marginTop: 8 }}>
                                     <Spark data={k.spark} color={k.color} />
@@ -509,10 +504,10 @@ export default function AdminDashboard({
                         <div style={card}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                 <div>
-                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ចំណូល & ការបញ្ជាទិញ</p>
-                                    <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ទិន្នន័យ ៧ ខែ</p>
+                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: 0 }}>ចំណូល និងការបញ្ជាទិញ</p>
+                                    <p style={{ color: C.sub, fontSize: 14, margin: '3px 0 0' }}>ទិន្នន័យ ៧ ខែ</p>
                                 </div>
-                                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: C.sub }}>
+                                <div style={{ display: 'flex', gap: 14, fontSize: 14, color: C.sub }}>
                                     {[{ color: C.p, label: 'ចំណូល' }, { color: C.goldD, label: 'ការបញ្ជា' }].map(l => (
                                         <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                                             <span style={{ width: 8, height: 8, borderRadius: 2, background: l.color, display: 'inline-block' }} />{l.label}
@@ -533,10 +528,10 @@ export default function AdminDashboard({
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid stroke="#f3f4f6" strokeDasharray="4 4" />
-                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: C.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<LightTooltip />} />
-                                    <Area type="monotone" dataKey="rev" name="ចំណូល (ពាន់រៀល)" stroke={C.p}     strokeWidth={2} fill="url(#lg1)" dot={false} activeDot={{ r: 4, fill: C.p }} />
+                                    <Area type="monotone" dataKey="rev" name="ចំណូល(ពាន់រៀល)" stroke={C.p}     strokeWidth={2} fill="url(#lg1)" dot={false} activeDot={{ r: 4, fill: C.p }} />
                                     <Area type="monotone" dataKey="ord" name="ការបញ្ជា"  stroke={C.goldD} strokeWidth={2} fill="url(#lg2)" dot={false} activeDot={{ r: 4, fill: C.goldD }} />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -545,14 +540,14 @@ export default function AdminDashboard({
                         {/* Bar — users */}
                         <div style={card}>
                             <div style={{ marginBottom: 14 }}>
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>អ្នកប្រើប្រាស់</p>
-                                <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ប្រចាំ ៧ ខែ</p>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: 0 }}>អ្នកប្រើប្រាស់</p>
+                                <p style={{ color: C.sub, fontSize: 14, margin: '3px 0 0' }}>ប្រចាំ ៧ ខែ</p>
                             </div>
                             <ResponsiveContainer width="100%" height={200}>
                                 <BarChart data={monthly} barSize={14} barGap={3} margin={{ top: 4, right: 4, left: -22, bottom: 0 }}>
                                     <CartesianGrid stroke="#f3f4f6" strokeDasharray="4 4" vertical={false} />
-                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <XAxis dataKey="m"   tick={{ fill: C.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: C.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<LightTooltip />} />
                                     <Bar dataKey="usr" name="អ្នកប្រើ"  fill={C.p}     radius={[4,4,0,0]} />
                                     <Bar dataKey="ord" name="ការបញ្ជា" fill={C.light}  radius={[4,4,0,0]} />
@@ -562,25 +557,25 @@ export default function AdminDashboard({
 
                         {/* Donut — categories */}
                         <div style={card}>
-                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 3px' }}>ប្រភេទផលិតផល</p>
-                            <p style={{ color: C.sub, fontSize: 12, margin: '0 0 6px' }}>ការប្រើប្រាស់ប្រភេទផលិតផល</p>
+                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: '0 0 3px' }}>ប្រភេទផលិតផល</p>
+                            <p style={{ color: C.sub, fontSize: 14, margin: '0 0 6px' }}>ការប្រើប្រាស់ប្រភេទផលិតផល</p>
                             <div style={{ position: 'relative' }}>
                                 <ResponsiveContainer width="100%" height={145}>
                                     <PieChart>
                                         <Pie data={catData} dataKey="v" innerRadius={44} outerRadius={65} paddingAngle={3} startAngle={90} endAngle={-270}>
                                             {catData.map((d, i) => <Cell key={i} fill={d.fill} stroke="none" />)}
                                         </Pie>
-                                        <Tooltip formatter={v => [`${v}%`]} contentStyle={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} />
+                                        <Tooltip formatter={v => [`${v}%`]} contentStyle={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
                                     <p style={{ fontSize: 20, fontWeight: 700, color: C.strong, margin: 0 }}>{s.total_products}</p>
-                                    <p style={{ fontSize: 9, color: C.sub, margin: 0 }}>ប.ផ</p>
+                                    <p style={{ fontSize: 12, color: C.sub, margin: 0 }}>ប.ផ</p>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                                 {catData.map(d => (
-                                    <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
+                                    <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                             <span style={{ width: 7, height: 7, borderRadius: 2, background: d.fill, display: 'inline-block' }} />
                                             <span style={{ color: C.sub }}>{d.name}</span>
@@ -604,8 +599,8 @@ export default function AdminDashboard({
                         <div style={card}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                 <div>
-                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ការបញ្ជាទិញថ្មីៗ</p>
-                                    <p style={{ color: C.sub, fontSize: 12, margin: '3px 0 0' }}>ការបញ្ជាទិញ {orders.length} ចុងក្រោយ</p>
+                                    <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: 0 }}>ការបញ្ជាទិញថ្មីៗ</p>
+                                    <p style={{ color: C.sub, fontSize: 14, margin: '3px 0 0' }}>ការបញ្ជាទិញ {orders.length} ចុងក្រោយ</p>
                                 </div>
                                 {/* <button style={{ background: C.bgG, color: C.p, border: `1px solid ${C.border2}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: C.font }}>
                                     មើលទាំងអស់ <ChevronRight size={11}/>
@@ -615,7 +610,7 @@ export default function AdminDashboard({
                                 <thead>
                                     <tr>
                                         {['លេខកូដ','អតិថិជន','ចំនួនទឹកប្រាក់','ស្ថានភាព','ថ្ងៃ'].map(h => (
-                                            <th key={h} style={{ textAlign: 'left', padding: '0 10px 10px', fontSize: 14, color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                                            <th key={h} style={{ textAlign: 'left', padding: '0 10px 10px', fontSize: 16, color: C.muted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -626,15 +621,15 @@ export default function AdminDashboard({
                                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                                             style={{ borderBottom: `1px solid ${C.border}`, transition: 'background 0.12s'}}
                                         >
-                                            <td style={{ padding: '12px 10px', fontFamily: C.mono, fontSize: 14, color: C.p, fontWeight: 600 }}>{o.id}</td>
-                                            <td style={{ padding: '12px 10px', fontSize: 14, color: C.strong }}>{o.customer}</td>
-                                            <td style={{ padding: '12px 10px', fontSize: 14, fontWeight: 700, color: C.p }}>{o.amount}</td>
-                                            <td style={{ padding: '12px 10px' }}><Pill s={o.status} /></td>
-                                            <td style={{ padding: '12px 10px', fontSize: 14, color: C.muted }}>{o.date}</td>
+                                            <td style={{ padding: '12px 10px', fontFamily: C.mono, fontSize: 16, color: C.p, fontWeight: 600 }}>{o.id}</td>
+                                            <td style={{ padding: '12px 10px', fontSize: 16, color: C.strong }}>{o.customer}</td>
+                                            <td style={{ padding: '12px 10px', fontSize: 16, fontWeight: 700, color: C.p }}>{o.amount}</td>
+                                            <td style={{ padding: '12px 10px',fontSize: 16 }}><Pill s={o.status} /></td>
+                                            <td style={{ padding: '12px 10px', fontSize: 16, color: C.muted }}>{o.date}</td>
                                         </tr>
                                     ))}
                                     {orders.length === 0 && (
-                                        <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: C.muted, fontSize: 13 }}>មិនមានការបញ្ជាទិញទេ</td></tr>
+                                        <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: C.muted, fontSize: 14 }}>មិនមានការបញ្ជាទិញទេ</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -642,8 +637,8 @@ export default function AdminDashboard({
 
                         {/* Platform health */}
                         <div style={{ ...card, padding: 18 }}>
-                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
-                            <p style={{ color: C.sub, fontSize: 12, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
+                            <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: '0 0 2px' }}>ស្ថិតិប្រព័ន្ធ</p>
+                            <p style={{ color: C.sub, fontSize: 14, margin: '0 0 10px' }}>ការវិភាគសកម្មភាព</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                                 <ResponsiveContainer width={80} height={80}>
                                     <RadialBarChart innerRadius={24} outerRadius={38}
@@ -655,9 +650,9 @@ export default function AdminDashboard({
                                 </ResponsiveContainer>
                                 <div>
                                     <p style={{ fontSize: 28, fontWeight: 700, color: C.p, margin: 0, lineHeight: 1 }}>
-                                        {ph.completion_rate}<span style={{ fontSize: 14, color: C.sub }}>%</span>
+                                        {ph.completion_rate}<span style={{ fontSize: 16, color: C.sub }}>%</span>
                                     </p>
-                                    <p style={{ fontSize: 11, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
+                                    <p style={{ fontSize: 12, color: C.sub, margin: '3px 0 0' }}>ការបញ្ចប់ការបញ្ជា</p>
                                 </div>
                             </div>
                             {[
@@ -668,8 +663,8 @@ export default function AdminDashboard({
                             ].map(r => (
                                 <div key={r.label} style={{ marginBottom: 10 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                        <span style={{ fontSize: 11, color: C.text }}>{r.label}</span>
-                                        <span style={{ fontSize: 11, fontWeight: 700, color: r.color }}>{r.pct}%</span>
+                                        <span style={{ fontSize: 14, color: C.text }}>{r.label}</span>
+                                        <span style={{ fontSize: 14, fontWeight: 700, color: r.color }}>{r.pct}%</span>
                                     </div>
                                     <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
                                         <div style={{ width: `${Math.min(r.pct, 100)}%`, height: '100%', background: r.color, borderRadius: 4, transition: 'width 0.6s ease' }} />
@@ -681,29 +676,37 @@ export default function AdminDashboard({
                         {/* Recent activities */}
                         <div style={{ ...card, padding: 18 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: 0 }}>សកម្មភាពថ្មីៗ</p>
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.a, display: 'inline-block' }} />
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {activities.map(act => (
-                                    <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                                        <ActIcon type={act.type} />
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            {/*
-                                             * FIX #6: Replaced dangerouslySetInnerHTML with safe rendering.
-                                             * The PHP controller now escapes usernames/names with e() before
-                                             * passing them, and sends structured fields instead of raw HTML.
-                                             * The TSX side renders them as plain text — no XSS risk.
-                                             */}
-                                            <p style={{ fontSize: 14, color: C.text, margin: 0, lineHeight: 1.4 }}>{act.action}</p>
-                                            <p style={{ fontSize: 10, color: C.muted, margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Clock size={9} />{formatRelativeTimeKhmer(act.time)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+    <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        <ActIcon type={act.type} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ 
+                fontSize: 16, 
+                color: C.text, 
+                margin: 0, 
+                lineHeight: 1.4 
+            }}>
+                {translateActivity(act.action)}
+            </p>
+            <p style={{ 
+                fontSize: 12, 
+                color: C.muted, 
+                margin: '3px 0 0', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 3 
+            }}>
+                <Clock size={9} />{formatRelativeTimeKhmer(act.time)}
+            </p>
+        </div>
+    </div>
+))}
                                 {activities.length === 0 && (
-                                    <p style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>មិនមានសកម្មភាព</p>
+                                    <p style={{ textAlign: 'center', color: C.muted, fontSize: 14 }}>មិនមានសកម្មភាព</p>
                                 )}
                             </div>
                         </div>
@@ -712,7 +715,7 @@ export default function AdminDashboard({
                         <div style={{ ...card, padding: 18 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                                 <div style={{ width: 4, height: 20, borderRadius: 2, background: `linear-gradient(${C.p},${C.a})` }} />
-                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 14, margin: 0 }}>ប្រតិទិន</p>
+                                <p style={{ fontFamily: C.display, color: C.p, fontSize: 16, margin: 0 }}>ប្រតិទិន</p>
                             </div>
                             <Calendar events={calEvents} />
                         </div>

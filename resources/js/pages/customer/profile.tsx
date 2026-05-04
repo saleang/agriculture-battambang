@@ -167,8 +167,48 @@ export default function ProfilePage() {
     };
 
     const handleSaveProfile = () => {
-        profileForm.post('/customer/profile', {
-            forceFormData: true,
+        const dataToSubmit: { [key: string]: any } = {
+            _method: 'PATCH',
+            // Always include username to satisfy backend validation.
+            username: profileForm.data.username,
+        };
+
+        const initialData = {
+            username: user?.username || '',
+            phone: user?.phone || '',
+            gender: user?.gender || '',
+            address: user?.address || '',
+        };
+
+        let hasChanged = false;
+
+        if (profileForm.data.username !== initialData.username) hasChanged = true;
+        
+        if (profileForm.data.phone !== initialData.phone) {
+            dataToSubmit.phone = profileForm.data.phone;
+            hasChanged = true;
+        }
+        if (profileForm.data.gender !== initialData.gender) {
+            dataToSubmit.gender = profileForm.data.gender;
+            hasChanged = true;
+        }
+        if (profileForm.data.address !== initialData.address) {
+            dataToSubmit.address = profileForm.data.address;
+            hasChanged = true;
+        }
+        if (profileForm.data.photo) {
+            dataToSubmit.photo = profileForm.data.photo;
+            hasChanged = true;
+        }
+
+        if (!hasChanged) {
+            setIsEditingProfile(false);
+            setPhotoPreview(null);
+            toast.info("មិនមានការផ្លាស់ប្តូរត្រូវបានធ្វើឡើងទេ។");
+            return;
+        }
+
+        router.post('/customer/profile', dataToSubmit, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsEditingProfile(false);
@@ -616,24 +656,6 @@ export default function ProfilePage() {
                                                         </div>
                                                     )}
                                                 </div>
-
-                                                {/* Email Verification */}
-                                                {!isVerified && (
-                                                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4">
-                                                        <div className="flex items-start gap-3">
-                                                            <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                                                            <div>
-                                                                <p className="text-yellow-800 font-medium">អ៊ីម៉ែលមិនទាន់បានផ្ទៀងផ្ទាត់</p>
-                                                                <p className="text-yellow-700 text-sm mt-1">
-                                                                    សូមផ្ទៀងផ្ទាត់អ៊ីម៉ែលរបស់អ្នកដើម្បីប្រើប្រាស់លក្ខណៈពិសេសទាំងអស់ និងទទួលបានការបន្តផ្សព្វផ្សាយពីកសិករ
-                                                                </p>
-                                                                <Button variant="link" className="text-yellow-600 p-0 h-auto mt-2">
-                                                                    ផ្ញើតំណផ្ទៀងផ្ទាត់ឡើងវិញ
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>

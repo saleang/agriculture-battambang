@@ -14,7 +14,10 @@ class FarmController extends Controller
 {
     public function index()
     {
-        $sellers = Seller::with('user', 'province', 'district', 'commune', 'village')
+        $sellers = Seller::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })
+            ->with('user', 'province', 'district', 'commune', 'village')
             ->withCount('followers')
             ->latest()
             ->get();
@@ -47,95 +50,95 @@ class FarmController extends Controller
         ]);
     }
     public function show(Request $request, $id)
-{
-    $farm = Seller::with([
-        'user',
-        'products.images',
-        'province', 'district', 'commune', 'village',
-        'ratings.user'
-    ])->findOrFail($id);
+    {
+        $farm = Seller::with([
+            'user',
+            'products' => function ($query) {
+                $query->where('is_active', true)->with('images');
+            },
+            'province', 'district', 'commune', 'village',
+            'ratings.user'
+        ])->whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->find($id);
 
-    $followersCount = $farm->followers()->count();
+        if (!$farm) {
+            abort(404);
+        }
 
-    $isFollowing = false;
-    $user = $request->user();
-    $wishlistedProductIds = [];
-    $canReview = false;
+        $followersCount = $farm->followers()->count();
 
-    if ($user) {
-        $isFollowing = $user->following()
-            ->where('sellers.seller_id', $id)
-            ->exists();
+        $isFollowing = false;
+        $user = $request->user();
+        $wishlistedProductIds = [];
+        $canReview = false;
 
-        // Get the product IDs for the current farm
-        $productIds = $farm->products->pluck('product_id');
+        if ($user) {
+            $isFollowing = $user->following()
+                ->where('sellers.seller_id', $id)
+                ->exists();
 
-        // Find which of those products are in the user's wishlist
-        // The fix is here: use `user_id` which is the correct primary key for the User model.
-        $wishlistedProductIds = DB::table('wishlists')
-            ->where('user_id', $user->user_id)
-            ->whereIn('product_id', $productIds)
-            ->pluck('product_id')
-            ->toArray();
+            $productIds = $farm->products->pluck('product_id');
 
-        $canReview = Order::where('user_id', $user->user_id)
-            ->whereHas('items.product.seller', function ($query) use ($id) {
-                $query->where('seller_id', $id);
-            })
-            ->where('status', 'completed')
-            ->exists();
-    }
+            $wishlistedProductIds = DB::table('wishlists')
+                ->where('user_id', $user->user_id)
+                ->whereIn('product_id', $productIds)
+                ->pluck('product_id')
+                ->toArray();
 
-    return Inertia::render('FarmDetail', [
-        'farm' => [
-            'id'            => $farm->seller_id,
-            'farm_name'     => $farm->farm_name,
-            'description'   => $farm->description,
-            'full_location' => $farm->full_location,
-            'user' => [
-                'photo' => $farm->user->photo ?? null,
-                'email' => $farm->user->email ?? null,
-                'phone' => $farm->user->phone ?? null,
-            ],
-            'products' => $farm->products->map(function ($product) {
-                return [
-                    'product_id'   => $product->product_id,
-                    'productname'  => $product->productname,
-                    'price'        => $product->price,
-                    'unit'         => $product->unit,
-                    'images'       => $product->images->map(fn($image) => [
-                        'image_url' => $image->image_url,
-                    ]),
-                ];
-            })->toArray(),  // ← toArray() is safer for Inertia
+            $canReview = Order::where('user_id', $user->user_id)
+                ->whereHas('items.product.seller', function ($query) use ($id) {
+                    $query->where('seller_id', $id);
+                })
+                ->where('status', 'completed')
+                ->exists();
+        }
 
-            // Optional: add social links if you have them in the model
-            // 'facebook'  => $farm->facebook ?? null,
-            // 'telegram'  => $farm->telegram ?? null,
-            // 'whatsapp'  => $farm->whatsapp ?? null,
-            'phone'     => $farm->phone ?? null,
-        ],
-
-        'ratings' => $farm->ratings->map(function ($rating) {
-            return [
-                'id'         => $rating->id,
-                'user'       => [
-                    'id'     => $rating->user->id,
-                    'name'   => $rating->user->name ?? $rating->user->username,
-                    'avatar' => $rating->user->avatar ?? $rating->user->photo ?? null,
+        return Inertia::render('FarmDetail', [
+            'farm' => [
+                'id'            => $farm->seller_id,
+                'farm_name'     => $farm->farm_name,
+                'description'   => $farm->description,
+                'full_location' => $farm->full_location,
+                'user' => [
+                    'photo' => $farm->user->photo ?? null,
+                    'email' => $farm->user->email ?? null,
+                    'phone' => $farm->user->phone ?? null,
                 ],
-                'rating'     => $rating->rating,
-                'comment'    => $rating->comment,
-                'created_at' => $rating->created_at->toIso8601String(),
-            ];
-        })->toArray(),
+                'products' => $farm->products->map(function ($product) {
+                    return [
+                        'product_id'   => $product->product_id,
+                        'productname'  => $product->productname,
+                        'price'        => $product->price,
+                        'unit'         => $product->unit,
+                        'images'       => $product->images->map(fn($image) => [
+                            'image_url' => $image->image_url,
+                        ]),
+                    ];
+                })->toArray(),
+                'phone'     => $farm->phone ?? null,
+            ],
 
-        'isFollowing'    => $isFollowing,
-        'followersCount' => $followersCount,
-        'wishlistedProductIds' => $wishlistedProductIds,
-        'canReview' => $canReview,
-    ]);
-}
+            'ratings' => $farm->ratings->map(function ($rating) {
+                return [
+                    'id'         => $rating->id,
+                    'user'       => [
+                        'id'     => $rating->user->id,
+                        'name'   => $rating->user->name ?? $rating->user->username,
+                        'avatar' => $rating->user->avatar ?? $rating->user->photo ?? null,
+                    ],
+                    'rating'     => $rating->rating,
+                    'comment'    => $rating->comment,
+                    'created_at' => $rating->created_at->toIso8601String(),
+                ];
+            })->toArray(),
+
+            'isFollowing'    => $isFollowing,
+            'followersCount' => $followersCount,
+            'wishlistedProductIds' => $wishlistedProductIds,
+            'canReview' => $canReview,
+        ]);
+    }
 
     public function toggleFollow(Request $request, Seller $farm)
     {

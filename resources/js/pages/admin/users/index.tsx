@@ -20,6 +20,7 @@ import {
     Trash2,
     User as UserIcon,
     Users2,
+    RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
@@ -202,11 +203,11 @@ export default function UserIndex({
                 text: 'text-amber-700',
                 dot: 'bg-amber-500',
             },
-            banned: {
+            /* banned: {
                 bg: 'bg-rose-50',
                 text: 'text-rose-700',
                 dot: 'bg-rose-500',
-            },
+            }, */
         })[status] ?? {
             bg: 'bg-slate-50',
             text: 'text-slate-700',
@@ -224,7 +225,7 @@ export default function UserIndex({
         ({ admin: 'អ្នកគ្រប់គ្រង', seller: 'កសិករ', customer: 'អតិថិជន' })[r] ??
         r;
     const getStatusLabel = (s: string) =>
-        ({ active: 'សកម្ម', inactive: 'មិនសកម្ម', banned: 'បានបិទ' })[s] ?? s;
+        ({ active: 'សកម្ម', inactive: 'មិនសកម្ម' /* banned: 'បានបិទ' */ })[s] ?? s;
     const KM_MONTHS = [
         'មករា',
         'កុម្ភៈ',
@@ -273,14 +274,14 @@ export default function UserIndex({
                                     style={{
                                         fontFamily: C.display,
                                         color: C.p,
-                                        fontSize: 24,
+                                        fontSize: 20,
                                         margin: 0,
                                     }}
                                 >
                                     ការគ្រប់គ្រងអ្នកប្រើប្រាស់
                                 </h1>
-                                {/* Normal text — 16px */}
-                                <p style={{ color: C.sub, fontSize: 16, margin: 0 }}>
+                                {/* Normal text — 14px */}
+                                <p style={{ color: C.sub, fontSize: 14, margin: 0 }}>
                                     គ្រប់គ្រងគ្រប់អ្នកប្រើប្រាស់ទាំងអស់ក្នុងប្រព័ន្ធ
                                 </p>
                             </div>
@@ -310,7 +311,7 @@ export default function UserIndex({
                             >
                                 <div className="mb-3 flex items-center justify-between">
                                     {/* Normal text — 16px */}
-                                    <span className="text-base font-medium text-gray-600">
+                                    <span className="text-[16px] font-medium text-gray-600">
                                         {s.label}
                                     </span>
                                     {s.icon && (
@@ -344,7 +345,7 @@ export default function UserIndex({
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-                                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-11 text-base transition focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3.5 pr-4 pl-11 text-base transition focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none"
                                 />
                             </div>
                             <div className="flex flex-wrap gap-3">
@@ -352,7 +353,7 @@ export default function UserIndex({
                                 <select
                                     value={selectedRole}
                                     onChange={(e) => setSelectedRole(e.target.value)}
-                                    className="min-w-[140px] rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                    className="min-w-[140px] rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-base focus:ring-2 focus:ring-green-500 focus:outline-none cursor-pointer"
                                 >
                                     <option value="">គ្រប់តួនាទី</option>
                                     <option value="admin">អ្នកគ្រប់គ្រង</option>
@@ -362,20 +363,35 @@ export default function UserIndex({
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="min-w-[140px] rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                    className="min-w-[140px] rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-base focus:ring-2 focus:ring-green-500 focus:outline-none cursor-pointer"
                                 >
                                     <option value="">គ្រប់ស្ថានភាព</option>
                                     <option value="active">សកម្ម</option>
                                     <option value="inactive">មិនសកម្ម</option>
-                                    <option value="banned">បានបិទ</option>
+                                    {/* <option value="banned">បានបិទ</option> */}
                                 </select>
                                 <button
                                     onClick={handleFilter}
-                                    className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-base font-medium text-white transition hover:bg-green-700"
+                                    className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-base font-medium text-white transition hover:bg-green-700 cursor-pointer"
                                 >
                                     <Filter size={15} /> ស្វែងរក
                                 </button>
-                                <div className="flex rounded-lg bg-gray-100 p-1">
+                                {/* New Reset Button */}
+            <button
+                onClick={() => {
+                    setSearch('');
+                    setSelectedRole('');
+                    setSelectedStatus('');
+                    router.get(route('admin.users.index'), {}, { 
+                        preserveState: true, 
+                        replace: true 
+                    });
+                }}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 cursor-pointer"
+            >
+                <RefreshCw size={15} /> កំណត់ឡើងវិញ
+            </button>
+                                <div className="flex rounded-lg bg-gray-100 p-1 cursor-pointer">
                                     {(['list', 'grid'] as const).map((mode) => (
                                         <button
                                             key={mode}

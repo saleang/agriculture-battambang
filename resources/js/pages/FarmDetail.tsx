@@ -103,6 +103,9 @@ export default function FarmDetail({
         'default' | 'price-asc' | 'price-desc'
     >('default');
 
+    const isOwner = !!(auth.user && farm.user && auth.user.email === farm.user.email);
+    const isSeller = auth.user?.role === 'seller';
+
     const handleSort = (order: 'price-asc' | 'price-desc') => {
         setSortOrder(order);
     };
@@ -314,6 +317,7 @@ export default function FarmDetail({
                 image: product.images?.[0]?.image_url, // Use the first image
                 seller_id: farm.id, // Get seller_id from the main farm object
                 farm_name: farm.farm_name, // Get farm_name from the main farm object
+                seller_photo: farm.user.photo, // <-- Add this
             },
             quantity,
         );
@@ -476,16 +480,18 @@ export default function FarmDetail({
                                         នាក់តាមដាន
                                     </span>
                                 </div>
-                                <button
-                                    onClick={handleFollowToggle}
-                                    className={`rounded-full px-6 py-2.5 font-semibold text-white shadow-sm transition ${
-                                        isFollowing
-                                            ? 'bg-gray-500 hover:bg-gray-600'
-                                            : 'bg-red-600 hover:bg-red-700'
-                                    }`}
-                                >
-                                    {isFollowing ? 'បោះបង់តាមដាន' : 'តាមដាន'}
-                                </button>
+                                {!isOwner && (
+                                    <button
+                                        onClick={handleFollowToggle}
+                                        className={`rounded-full px-6 py-2.5 font-semibold text-white shadow-sm transition ${
+                                            isFollowing
+                                                ? 'bg-gray-500 hover:bg-gray-600'
+                                                : 'bg-red-600 hover:bg-red-700'
+                                        }`}
+                                    >
+                                        {isFollowing ? 'បោះបង់តាមដាន' : 'តាមដាន'}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -619,7 +625,12 @@ export default function FarmDetail({
                                                                     product,
                                                                 )
                                                             }
-                                                            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+                                                            disabled={isSeller}
+                                                            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+                                                                isSeller
+                                                                    ? 'cursor-not-allowed bg-gray-400'
+                                                                    : 'bg-green-600 hover:bg-green-700'
+                                                            }`}
                                                         >
                                                             <ShoppingBag className="mr-2 inline h-4 w-4" />
                                                             <span>
@@ -632,10 +643,13 @@ export default function FarmDetail({
                                                                     product.product_id,
                                                                 )
                                                             }
+                                                            disabled={isSeller}
                                                             className={`rounded-lg p-2 transition ${
-                                                                wishlist.has(
-                                                                    product.product_id,
-                                                                )
+                                                                isSeller
+                                                                    ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                                                    : wishlist.has(
+                                                                          product.product_id,
+                                                                      )
                                                                     ? 'bg-red-100 text-red-600 hover:bg-red-200'
                                                                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                                             }`}

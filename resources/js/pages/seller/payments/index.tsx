@@ -34,6 +34,7 @@ interface PaymentStatistics {
     total_earnings: number;
     pending_payouts: number;
     this_month_earnings: number;
+    total_earnings_with_shipping: number;
     total_refunds: number;
     completed_count: number;
     pending_count: number;
@@ -127,9 +128,15 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
                     </div>
                     
                     <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
-                        <p className="text-gray-600 text-sm">ការទូទាត់មិនទាន់ទទួល</p>
+                        <p className="text-gray-600 text-sm">ការទូទាត់រង់ចាំ</p>
                         <p className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(statistics.pending_payouts)}</p>
-                        <p className="text-sm text-gray-500 mt-3">{statistics.pending_count} រង់ចាំ</p>
+                        <p className="text-sm text-gray-500 mt-3">{statistics.pending_count} ករណី</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                        <p className="text-gray-600 text-sm">តម្លៃសរុបជាមួយថ្លៃដឹកជញ្ជូន</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(statistics.total_earnings_with_shipping)}</p>
+                        <p className="text-sm text-gray-500 mt-3">ចំណូល + ថ្លៃដឹកជញ្ជូន</p>
                     </div>
 
                     <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
@@ -138,12 +145,6 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
                         <p className="text-sm text-gray-500 mt-3">
                             {new Date().toLocaleString('km-KH', { month: 'long', year: 'numeric' })}
                         </p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
-                        <p className="text-gray-600 text-sm">ការបង្វិលសងសរុប</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(statistics.total_refunds)}</p>
-                        <p className="text-sm text-gray-500 mt-3">{statistics.refunded_count} លើក</p>
                     </div>
                 </div>
 
@@ -230,7 +231,7 @@ const SellerPaymentManagement: React.FC<Props> = ({ payments, statistics, filter
                                 onClick={handleExport}
                                 className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                             >
-                                ទាញយក CSV
+                                ទាញយក PDF
                             </button>
                         </div>
                     </div>

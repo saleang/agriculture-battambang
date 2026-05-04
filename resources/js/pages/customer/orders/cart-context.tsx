@@ -8,9 +8,9 @@ interface CartItem {
     quantity: number;
     unit: string;
     image?: string;
-    seller_id?: number;  // ✅ Added seller_id
-    farm_name?: string;  // ✅ Added farm_name (replace seller_name)
-     seller_photo?: string;
+    seller_id?: number;
+    farm_name?: string;
+    seller_photo?: string; // Add seller's profile picture
 }
 
 interface CartContextType {
@@ -73,40 +73,41 @@ export function CartProvider({ children, onRemoveFromCart }: { children: React.R
         const existingItem = cartItems.find(item => item.product_id === product.product_id);
 
         if (existingItem) {
-            // If item already exists, just update its quantity
+            // If item already exists, just update its quantity.
             updateQuantity(product.product_id, existingItem.quantity + quantity);
             return;
         }
 
-        // If it's a new item, prepare the complete item object before setting state.
-        let newItem: CartItem;
-
-        // Check if the incoming product object is incomplete.
-        if (!product.farm_name || !product.image) {
-            try {
-                // Fetch the full product details from the server.
-                const response = await axios.post('/api/cart-products', { product_ids: [product.product_id] });
-                
-                if (response.data && response.data.length > 0) {
-                    const fullProductDetails = response.data[0];
-                    // Create the new cart item with full details and the desired quantity.
-                    newItem = { ...fullProductDetails, quantity };
-                } else {
-                    // If API fails to find the product, create a fallback item.
-                    newItem = { ...product, quantity, farm_name: product.farm_name || 'Unknown Farm' };
-                }
-            } catch (error) {
-                console.error("Failed to fetch product details for new cart item:", error);
-                // On API error, create a fallback item.
-                newItem = { ...product, quantity, farm_name: product.farm_name || 'Unknown Farm' };
-            }
-        } else {
-            // If the provided product object is already complete.
-            newItem = { ...product, quantity };
+        // If the incoming product is already complete, add it directly.
+        if (product.farm_name && product.image) {
+            const newItem: CartItem = { ...product, quantity };
+            setCartItems(prevItems => [...prevItems, newItem]);
+            return;
         }
 
-        // Add the new, fully-detailed item to the cart.
-        setCartItems(prevItems => [...prevItems, newItem]);
+        // If the product is incomplete, fetch full details from the server.
+        try {
+            const response = await axios.post('/api/cart-products', { product_ids: [product.product_id] });
+
+            if (response.data && response.data.length > 0) {
+                const fullProductDetails = response.data[0];
+                const newItem: CartItem = { ...fullProductDetails, quantity };
+                setCartItems(prevItems => [...prevItems, newItem]);
+            } else {
+                // If API doesn't find the product, add with fallback data.
+                throw new Error('Product not found via API');
+            }
+        } catch (error) {
+            console.error("Failed to fetch product details for cart:", error);
+            // On API error, add a fallback item so the user knows something was added.
+            const fallbackItem: CartItem = {
+                ...product,
+                quantity,
+                farm_name: 'Unknown Farm',
+                image: product.image || 'https://via.placeholder.com/150?text=No+Image',
+            };
+            setCartItems(prevItems => [...prevItems, fallbackItem]);
+        }
     };
 
     const removeFromCart = (productId: number) => {

@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
@@ -320,10 +321,43 @@ class SellerReportController extends Controller
      */
     public function exportPDF(Request $request)
     {
-        // TODO: Implement PDF export
-        return response()->json([
-            'message' => 'PDF export functionality to be implemented',
-            'status' => 'pending'
+        $user = Auth::user();
+
+        if (!$user || !$user->seller) {
+            return response()->json(['message' => 'User is not a seller'], 403);
+        }
+
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
+        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+        $summaryMetrics = $this->getSummaryMetrics($user->user_id, $startDate, $endDate);
+        $monthlySales = $this->getMonthlySalesInRange($user->user_id, $startDate, $endDate);
+        $categoryBreakdown = $this->getCategoryBreakdown($user->user_id, $startDate, $endDate);
+        $topProducts = $this->getTopProducts($user->user_id, $startDate, $endDate);
+        $paymentMethods = $this->getPaymentMethodBreakdown($user->user_id, $startDate, $endDate);
+
+        $html = view('reports.seller_pdf', [
+            'summaryMetrics' => $summaryMetrics,
+            'monthlySales' => $monthlySales,
+            'categoryBreakdown' => $categoryBreakdown,
+            'topProducts' => $topProducts,
+            'paymentMethods' => $paymentMethods,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'sellerName' => $user->seller->farm_name ?? $user->name,
+        ])->render();
+
+        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+        $filename = "sales_report_{$startDate->format('Ymd')}_{$endDate->format('Ymd')}.pdf";
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 

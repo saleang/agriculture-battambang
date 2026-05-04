@@ -211,14 +211,34 @@ export default function Login({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        <Button variant="outline" className="h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                                            <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-4 h-4 mr-1.5" />
-                                            Google
-                                        </Button>
-                                        <Button variant="outline" className="h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                                            <img src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" className="w-4 h-4 mr-1.5" />
-                                            Facebook
-                                        </Button>
+                                        <a href="/login/google" className="w-full">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-full h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm"
+                                            >
+                                                <img
+                                                    src="https://www.svgrepo.com/show/355037/google.svg"
+                                                    alt="Google"
+                                                    className="w-4 h-4 mr-1.5"
+                                                />
+                                                Google
+                                            </Button>
+                                        </a>
+                                        <a href="/login/facebook" className="w-full">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-full h-9 sm:h-10 rounded-lg border-gray-300 hover:bg-gray-50 text-xs sm:text-sm"
+                                            >
+                                                <img
+                                                    src="https://www.svgrepo.com/show/448224/facebook.svg"
+                                                    alt="Facebook"
+                                                    className="w-4 h-4 mr-1.5"
+                                                />
+                                                Facebook
+                                            </Button>
+                                        </a>
                                     </div>
                                 </div>
 
